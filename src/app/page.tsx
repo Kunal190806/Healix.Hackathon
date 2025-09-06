@@ -1,8 +1,11 @@
 
+'use client';
+
+import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { UtensilsCrossed, Pill, BookHeart, Users, Droplets, Dumbbell, ArrowRight, Hospital, Stethoscope, HeartPulse, ShieldCheck } from 'lucide-react';
+import { UtensilsCrossed, Pill, BookHeart, Users, Droplets, Dumbbell, ArrowRight, Hospital, Stethoscope, HeartPulse, ShieldCheck, CalendarDays } from 'lucide-react';
 
 const modules = [
   {
@@ -18,6 +21,13 @@ const modules = [
     icon: Stethoscope,
     href: "/doctors",
     color: "text-indigo-500",
+  },
+  {
+    title: "My Appointments",
+    description: "View and manage your upcoming and past doctor consultations.",
+    icon: CalendarDays,
+    href: "/appointments",
+    color: "text-blue-500",
   },
   {
     title: "AI Meal Planner",
@@ -78,10 +88,20 @@ const modules = [
 ];
 
 export default function Home() {
+  const [userName, setUserName] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Ensure this runs only on the client
+    const storedName = localStorage.getItem('userName');
+    setUserName(storedName);
+  }, []);
+
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-3xl font-bold font-headline tracking-tight text-primary">Welcome, Kunal</h1>
+        <h1 className="text-3xl font-bold font-headline tracking-tight text-primary">
+          {userName ? `Welcome, ${userName}` : 'Welcome to HEALIX'}
+        </h1>
         <p className="text-muted-foreground mt-2">Your all-in-one platform for a healthier, more connected life.</p>
       </div>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

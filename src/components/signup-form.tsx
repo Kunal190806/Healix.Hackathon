@@ -1,6 +1,8 @@
+
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,10 +11,33 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, HeartPulse, Stethoscope, Handshake, Dumbbell } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
 export default function SignUpForm() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [patientName, setPatientName] = useState('');
+
+  const handlePatientSignUp = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (patientName.trim()) {
+      localStorage.setItem('userName', patientName);
+      toast({
+        title: "Account Created!",
+        description: `Welcome to HEALIX, ${patientName}. You are now being redirected.`,
+      });
+      router.push('/');
+    } else {
+       toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Please enter your full name.",
+      });
+    }
+  };
+
   return (
     <Tabs defaultValue="patient" className="w-full">
       <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
@@ -31,11 +56,17 @@ export default function SignUpForm() {
             <CardDescription>Create your personal health account.</CardDescription>
           </CardHeader>
           <CardContent>
-            <form className="space-y-4">
+            <form onSubmit={handlePatientSignUp} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="patient-name">Full Name</Label>
-                  <Input id="patient-name" placeholder="e.g., Rohan Verma" required />
+                  <Input 
+                    id="patient-name" 
+                    placeholder="e.g., Rohan Verma" 
+                    value={patientName}
+                    onChange={(e) => setPatientName(e.target.value)}
+                    required 
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="patient-email">Email or Phone</Label>
