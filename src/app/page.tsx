@@ -80,7 +80,7 @@ export default function Home() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-3xl font-bold font-headline tracking-tight text-primary">Welcome to HEALIX</h1>
+        <h1 className="text-3xl font-bold font-headline tracking-tight text-primary">Welcome, Kunal</h1>
         <p className="text-muted-foreground mt-2">Your all-in-one platform for a healthier, more connected life.</p>
       </div>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
