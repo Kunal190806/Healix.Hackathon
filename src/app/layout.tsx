@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { Home, Pill, Droplets, Users, UtensilsCrossed, BookHeart, Activity, Dumbbell, PanelLeft, Hospital, UserPlus, Stethoscope } from 'lucide-react';
+import { Home, Pill, Droplets, Users, UtensilsCrossed, BookHeart, Activity, Dumbbell, PanelLeft, Hospital, UserPlus, Stethoscope, HeartPulse } from 'lucide-react';
 import Link from 'next/link';
 import Logo from '@/components/logo';
 import { usePathname } from 'next/navigation';
@@ -28,7 +28,7 @@ export default function RootLayout({
     { href: '/doctors', label: 'Find a Doctor', icon: Stethoscope },
     { href: '/meal-planner', label: 'AI Meal Planner', icon: UtensilsCrossed },
     { href: '/prescriptions', label: 'Prescriptions', icon: Pill },
-    { href: '/pain-tracker', label: 'Pain Tracker', icon: Activity },
+    { href: '/vitals-tracker', label: 'Vitals Tracker', icon: HeartPulse },
     { href: '/journal', label: 'Mental Health Journal', icon: BookHeart },
     { href: '/support-groups', label: 'Support Groups', icon: Users },
     { href: '/blood-donors', label: 'Blood Donors', icon: Droplets },

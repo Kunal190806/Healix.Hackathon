@@ -1,7 +1,7 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { UtensilsCrossed, Pill, Activity, BookHeart, Users, Droplets, Dumbbell, ArrowRight, Hospital, Stethoscope } from 'lucide-react';
+import { UtensilsCrossed, Pill, Activity, BookHeart, Users, Droplets, Dumbbell, ArrowRight, Hospital, Stethoscope, HeartPulse } from 'lucide-react';
 
 const modules = [
   {
@@ -33,10 +33,10 @@ const modules = [
     color: "text-blue-500",
   },
   {
-    title: "Chronic Pain Tracker",
-    description: "Log and monitor your pain levels to identify patterns and triggers.",
-    icon: Activity,
-    href: "/pain-tracker",
+    title: "Vitals Tracker",
+    description: "Log and monitor key health metrics like blood pressure, sugar levels, and more.",
+    icon: HeartPulse,
+    href: "/vitals-tracker",
     color: "text-red-500",
   },
   {

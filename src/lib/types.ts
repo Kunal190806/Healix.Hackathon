@@ -59,3 +59,13 @@ export type Doctor = {
   bio: string;
   image: string;
 };
+
+export type VitalLog = {
+  id: string;
+  date: string;
+  bloodPressure?: { systolic: number; diastolic: number };
+  bloodSugar?: number;
+  heartRate?: number;
+  weight?: number;
+  notes?: string;
+};
