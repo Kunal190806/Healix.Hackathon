@@ -71,7 +71,7 @@ export default function PainTracker() {
       ].join(','))
     ].join('\n');
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-t;' });
     const link = document.createElement('a');
     if (link.href) {
       URL.revokeObjectURL(link.href);
@@ -92,12 +92,9 @@ export default function PainTracker() {
     const copyright = `© ${new Date().getFullYear()} MediSync. All rights reserved.`;
     const contact = "Support: support@medisync.app";
 
-    // Logo
-    const svgElement = document.createElement("div");
-    svgElement.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="M12 18v4"/><path d="m4.93 4.93 2.83 2.83"/><path d="m16.24 16.24 2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="m4.93 19.07 2.83-2.83"/><path d="m16.24 7.76 2.83-2.83"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>`;
-    const svgText = svgElement.innerHTML;
+    // Logo - SVG content
+    const svgText = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="M12 18v4"/><path d="m4.93 4.93 2.83 2.83"/><path d="m16.24 16.24 2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="m4.93 19.07 2.83-2.83"/><path d="m16.24 7.76 2.83-2.83"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>`;
     const logoDataUrl = `data:image/svg+xml;base64,${btoa(svgText)}`;
-    doc.addImage(logoDataUrl, 'SVG', 14, 12, 10, 10);
     
     // Header
     doc.setFontSize(18);
@@ -109,32 +106,47 @@ export default function PainTracker() {
     doc.setFontSize(10);
     doc.text(`Exported on: ${exportTime}`, 14, 35);
     
-    // Table
-    doc.autoTable({
-      startY: 45,
-      head: [["Date", "Time", "Pain Level (1-10)", "Symptoms"]],
-      body: logs.map(log => [
-        format(new Date(log.date), 'PPP'),
-        format(new Date(log.date), 'p'),
-        log.level,
-        log.symptoms
-      ]),
-      headStyles: { fillColor: [37, 99, 235] }, // primary color
-      styles: { cellPadding: 3, fontSize: 10 },
-      margin: { top: 40 }
-    });
+    // Add logo via canvas to support SVG
+    const img = new Image();
+    img.src = logoDataUrl;
+    img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const canvasContext = canvas.getContext('2d');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        if (canvasContext) {
+            canvasContext.drawImage(img, 0, 0);
+            const pngDataUrl = canvas.toDataURL('image/png');
+            doc.addImage(pngDataUrl, 'PNG', 14, 12, 10, 10);
+        }
 
-    // Footer
-    const pageCount = doc.internal.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFontSize(8);
-        doc.text(copyright, 14, doc.internal.pageSize.height - 10);
-        doc.text(contact, doc.internal.pageSize.width - 14, doc.internal.pageSize.height - 10, { align: 'right' });
-        doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
-    }
+        // Table
+        doc.autoTable({
+          startY: 45,
+          head: [["Date", "Time", "Pain Level (1-10)", "Symptoms"]],
+          body: logs.map(log => [
+            format(new Date(log.date), 'PPP'),
+            format(new Date(log.date), 'p'),
+            log.level,
+            log.symptoms
+          ]),
+          headStyles: { fillColor: [37, 99, 235] }, // primary color
+          styles: { cellPadding: 3, fontSize: 10 },
+          margin: { top: 40 }
+        });
 
-    doc.save(`pain-logs-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+        // Footer
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.text(copyright, 14, doc.internal.pageSize.height - 10);
+            doc.text(contact, doc.internal.pageSize.width - 14, doc.internal.pageSize.height - 10, { align: 'right' });
+            doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+        }
+
+        doc.save(`pain-logs-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    };
   };
 
   return (
