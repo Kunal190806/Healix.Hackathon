@@ -1,7 +1,7 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { UtensilsCrossed, Pill, Activity, BookHeart, Users, Droplets, Dumbbell, ArrowRight, Hospital, Stethoscope, HeartPulse } from 'lucide-react';
+import { UtensilsCrossed, Pill, BookHeart, Users, Droplets, Dumbbell, ArrowRight, Hospital, Stethoscope, HeartPulse, ShieldCheck } from 'lucide-react';
 
 const modules = [
   {
@@ -66,6 +66,13 @@ const modules = [
     icon: Dumbbell,
     href: "/fitness",
     color: "text-orange-500",
+  },
+  {
+    title: "Caregiver Hub",
+    description: "Monitor a loved one's health, appointments, and medication adherence.",
+    icon: ShieldCheck,
+    href: "/caregiver-hub",
+    color: "text-teal-500",
   },
 ];
 
