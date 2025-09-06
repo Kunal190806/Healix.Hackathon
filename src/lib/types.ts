@@ -57,6 +57,7 @@ export type Doctor = {
   experience: number;
   city: string;
   fees: number;
+  hospital: string;
   bio: string;
   image: string;
 };

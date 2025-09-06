@@ -3,12 +3,18 @@
 
 import { useState } from "react";
 import useLocalStorage from "@/hooks/use-local-storage";
-import type { Hospital } from "@/lib/types";
+import type { Hospital, Doctor, Appointment } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Hospital as HospitalIcon, Search, Stethoscope, MapPin } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Hospital as HospitalIcon, Search, Stethoscope, MapPin, IndianRupee, User, Star, CalendarDays, Clock, CheckCircle } from "lucide-react";
+import Image from "next/image";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 const sampleHospitals: Hospital[] = [
   // Mumbai
@@ -43,12 +49,158 @@ const sampleHospitals: Hospital[] = [
   { id: 'h28', name: 'Paras Hospitals', city: 'Gurgaon', specialty: 'Neurology, Spine Services', address: 'Sector 43, Gurgaon' },
 ];
 
+const sampleDoctors: Doctor[] = [
+  // Delhi
+  { id: 'd1', name: 'Dr. Priya Sharma', specialty: 'Cardiology', experience: 15, city: 'Delhi', fees: 1500, hospital: 'Max Healthcare, Saket', bio: 'Chief Cardiologist at Max Healthcare with extensive experience in interventional cardiology.', image: 'https://picsum.photos/400/400?random=1' },
+  { id: 'd7', name: 'Dr. Aisha Gupta', specialty: 'Gynecology', experience: 14, city: 'Delhi', fees: 1400, hospital: 'Fortis La Femme', bio: 'Dedicated to women\'s health, from adolescence to post-menopause. Practices at Fortis La Femme.', image: 'https://picsum.photos/400/400?random=7' },
+  { id: 'd11', name: 'Dr. Neha Sharma', specialty: 'ENT', experience: 7, city: 'Delhi', fees: 900, hospital: 'Sir Ganga Ram Hospital', bio: 'Expert in treating ear, nose, and throat disorders, including sinus issues.', image: 'https://picsum.photos/400/400?random=11' },
+  { id: 'd13', name: 'Dr. Alok Kumar', specialty: 'Orthopedics', experience: 18, city: 'Delhi', fees: 1300, hospital: 'Indraprastha Apollo Hospitals', bio: 'Senior orthopedic surgeon at Indraprastha Apollo Hospitals.', image: 'https://picsum.photos/400/400?random=13' },
+  { id: 'd14', name: 'Dr. Meenakshi Singh', specialty: 'Pediatrics', experience: 12, city: 'Delhi', fees: 850, hospital: 'Sir Ganga Ram Hospital', bio: 'Specializes in pediatric critical care at Sir Ganga Ram Hospital.', image: 'https://picsum.photos/400/400?random=14' },
+  // Mumbai
+  { id: 'd2', name: 'Dr. Amit Joshi', specialty: 'Neurology', experience: 12, city: 'Mumbai', fees: 1800, hospital: 'Kokilaben Dhirubhai Ambani Hospital', bio: 'Specializes in treating stroke and epilepsy. Affiliated with Kokilaben Ambani Hospital.', image: 'https://picsum.photos/400/400?random=2' },
+  { id: 'd8', name: 'Dr. Arjun Shetty', specialty: 'Cardiology', experience: 10, city: 'Mumbai', fees: 1600, hospital: 'Fortis Hospital, Mulund', bio: 'Consultant cardiologist focusing on preventative heart care and cardiac rehabilitation.', image: 'https://picsum.photos/400/400?random=8' },
+  { id: 'd12', name: 'Dr. Rajesh Khanna', specialty: 'Psychiatry', experience: 16, city: 'Mumbai', fees: 2000, hospital: 'Lilavati Hospital & Research Centre', bio: 'Provides counseling and treatment for various mental health conditions.', image: 'https://picsum.photos/400/400?random=12' },
+  { id: 'd15', name: 'Dr. Sneha Patil', specialty: 'Dermatology', experience: 9, city: 'Mumbai', fees: 1100, hospital: 'Lilavati Hospital & Research Centre', bio: 'Expert in laser treatments and cosmetic dermatology at Lilavati Hospital.', image: 'https://picsum.photos/400/400?random=15' },
+  { id: 'd16', name: 'Dr. Rahul Desai', specialty: 'Gastroenterology', experience: 11, city: 'Mumbai', fees: 1700, hospital: 'Breach Candy Hospital', bio: 'Specialist in liver diseases at Breach Candy Hospital.', image: 'https://picsum.photos/400/400?random=16' },
+  // Bangalore
+  { id: 'd3', name: 'Dr. Anjali Desai', specialty: 'Dermatology', experience: 8, city: 'Bangalore', fees: 1000, hospital: 'Sakra World Hospital', bio: 'Expert in cosmetic dermatology and skin allergies. Runs a private clinic in Koramangala.', image: 'https://picsum.photos/400/400?random=3' },
+  { id: 'd9', name: 'Dr. Kavita Iyer', specialty: 'Dentist', experience: 9, city: 'Bangalore', fees: 700, hospital: 'Manipal Hospitals, Old Airport Road', bio: 'Focuses on cosmetic dentistry and root canal treatments.', image: 'https://picsum.photos/400/400?random=9' },
+  { id: 'd17', name: 'Dr. Santosh Kumar', specialty: 'Urology', experience: 15, city: 'Bangalore', fees: 1400, hospital: 'Manipal Hospitals, Old Airport Road', bio: 'Leading urologist at Manipal Hospitals specializing in kidney stones.', image: 'https://picsum.photos/400/400?random=17' },
+  { id: 'd18', name: 'Dr. Divya Nair', specialty: 'Ophthalmology', experience: 10, city: 'Bangalore', fees: 950, hospital: 'Narayana Institute of Cardiac Sciences', bio: 'Cataract and refractive surgeon at Narayana Nethralaya.', image: 'https://picsum.photos/400/400?random=18' },
+  { id: 'd19', name: 'Dr. Vijay Rajan', specialty: 'Pulmonology', experience: 13, city: 'Bangalore', fees: 1250, hospital: 'Fortis Hospital, Bannerghatta Road', bio: 'Expert in treating respiratory diseases at Fortis Hospital, Bannerghatta.', image: 'https://picsum.photos/400/400?random=19' },
+  // Chennai
+  { id: 'd4', name: 'Dr. Rohan Mehra', specialty: 'Orthopedics', experience: 20, city: 'Chennai', fees: 1200, hospital: 'Apollo Hospitals, Greams Road', bio: 'Leading orthopedic surgeon specializing in knee and hip replacements at Apollo Hospitals.', image: 'https://picsum.photos/400/400?random=4' },
+  { id: 'd20', name: 'Dr. Lakshmi Menon', specialty: 'Endocrinology', experience: 11, city: 'Chennai', fees: 1350, hospital: 'MIOT International', bio: 'Specializes in diabetes and thyroid disorders at MIOT International.', image: 'https://picsum.photos/400/400?random=20' },
+  { id: 'd21', name: 'Dr. Karthik Sundaram', specialty: 'Oncology', experience: 16, city: 'Chennai', fees: 1900, hospital: 'Apollo Hospitals, Greams Road', bio: 'Surgical oncologist at Adyar Cancer Institute.', image: 'https://picsum.photos/400/400?random=21' },
+  { id: 'd22', name: 'Dr. Priya Murthy', specialty: 'Rheumatology', experience: 9, city: 'Chennai', fees: 1150, hospital: 'Gleneagles Global Health City', bio: 'Treats autoimmune and rheumatic diseases at Gleneagles Global Health City.', image: 'https://picsum.photos/400/400?random=22' },
+  { id: 'd23', name: 'Dr. Anand Selvan', specialty: 'Nephrology', experience: 14, city: 'Chennai', fees: 1550, hospital: 'SIMS Hospital', bio: 'Specialist in kidney disease and dialysis at SIMS Hospital.', image: 'https://picsum.photos/400/400?random=23' },
+];
+
+const timeSlots = ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
+
+function AppointmentBookingForm({ doctor, onBookingConfirmed }: { doctor: Doctor, onBookingConfirmed: () => void }) {
+  const [appointments, setAppointments] = useLocalStorage<Appointment[]>("appointments", []);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [isConfirmed, setIsConfirmed] = useState(false);
+  const { toast } = useToast();
+
+  const handleBookAppointment = () => {
+    if (!selectedDate || !selectedTime) {
+      toast({
+        variant: "destructive",
+        title: "Incomplete Selection",
+        description: "Please select both a date and a time slot.",
+      });
+      return;
+    }
+
+    const newAppointment: Appointment = {
+      id: crypto.randomUUID(),
+      doctorId: doctor.id,
+      doctorName: doctor.name,
+      specialty: doctor.specialty,
+      date: selectedDate.toISOString(),
+      time: selectedTime,
+      status: "Confirmed",
+    };
+
+    setAppointments([...appointments, newAppointment]);
+    setIsConfirmed(true);
+    
+    toast({
+      title: "Appointment Booked!",
+      description: `Your appointment with ${doctor.name} on ${format(selectedDate, "PPP")} at ${selectedTime} is confirmed.`,
+    });
+    
+    onBookingConfirmed();
+  };
+
+  if (isConfirmed) {
+    return (
+      <div className="flex flex-col items-center justify-center text-center p-8">
+        <CheckCircle className="h-16 w-16 text-green-500 mb-4" />
+        <h2 className="text-xl font-bold font-headline mb-2">Appointment Confirmed!</h2>
+        <p className="text-muted-foreground">
+          You have successfully booked an appointment with {doctor.name}.
+        </p>
+        <p className="text-muted-foreground text-sm">
+          on {selectedDate && format(selectedDate, "EEEE, MMMM d, yyyy")} at {selectedTime}
+        </p>
+         <DialogFooter className="mt-4">
+            <Button onClick={onBookingConfirmed}>Close</Button>
+        </DialogFooter>
+      </div>
+    );
+  }
+
+  return (
+    <DialogContent className="sm:max-w-4xl rounded-2xl">
+        <DialogHeader>
+            <div className="flex flex-col md:flex-row items-start gap-6">
+              <div className="relative h-32 w-32 rounded-full overflow-hidden flex-shrink-0">
+                  <Image src={doctor.image} alt={doctor.name} fill={true} style={{objectFit: 'cover'}} data-ai-hint="doctor person" />
+              </div>
+              <div className="flex-1 pt-2">
+                <DialogTitle className="text-3xl font-bold font-headline">{doctor.name}</DialogTitle>
+                <DialogDescription className="mt-1">
+                    <div className="text-lg text-primary font-semibold">{doctor.specialty}</div>
+                    <div>{doctor.experience} years of experience</div>
+                    <div className="flex items-center gap-1 mt-2">
+                        <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
+                        <span className="font-bold text-base">4.8</span>
+                        <span className="text-sm text-muted-foreground">(245 reviews)</span>
+                    </div>
+                    <p className="text-base text-muted-foreground mt-4">{doctor.bio}</p>
+                </DialogDescription>
+              </div>
+            </div>
+        </DialogHeader>
+
+        <div className="py-4 grid grid-cols-1 md:grid-cols-2 gap-6 p-2">
+            <div className="flex flex-col items-center">
+                <h3 className="font-semibold mb-4">Select a Date</h3>
+                <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() - 1))}
+                className="rounded-md border"
+                />
+            </div>
+            <div>
+                <h3 className="font-semibold mb-4">Select a Time Slot</h3>
+                <div className="grid grid-cols-2 gap-2">
+                {timeSlots.map(slot => (
+                    <Button
+                    key={slot}
+                    variant={selectedTime === slot ? "default" : "outline"}
+                    onClick={() => setSelectedTime(slot)}
+                    >
+                    <Clock className="mr-2 h-4 w-4" />
+                    {slot}
+                    </Button>
+                ))}
+                </div>
+                <Button onClick={handleBookAppointment} className="w-full mt-6" disabled={!selectedDate || !selectedTime}>
+                Confirm Booking
+                </Button>
+            </div>
+        </div>
+    </DialogContent>
+  );
+}
+
 
 export default function HospitalFinder() {
   const [hospitals, setHospitals] = useLocalStorage<Hospital[]>("hospitals", sampleHospitals);
+  const [doctors, setDoctors] = useLocalStorage<Doctor[]>("doctors", sampleDoctors);
   
   const [searchQuery, setSearchQuery] = useState("");
   const [searchLocation, setSearchLocation] = useState("");
+  const [isHospitalDialogOpen, setIsHospitalDialogOpen] = useState(false);
+  const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
 
   const filteredHospitals = hospitals.filter(hospital => {
     const queryMatch = searchQuery ? 
@@ -57,6 +209,21 @@ export default function HospitalFinder() {
     const locationMatch = searchLocation ? hospital.city.toLowerCase().includes(searchLocation.toLowerCase()) : true;
     return queryMatch && locationMatch;
   });
+
+  const getDoctorsByHospital = (hospitalName: string) => {
+    return doctors.filter(doctor => doctor.hospital === hospitalName);
+  }
+  
+  const handleDoctorSelection = (doctor: Doctor) => {
+    setSelectedDoctor(doctor);
+    setIsBookingDialogOpen(true);
+  };
+  
+  const closeAllDialogs = () => {
+      setIsBookingDialogOpen(false);
+      setIsHospitalDialogOpen(false);
+      setSelectedDoctor(null);
+  }
 
   return (
     <div className="space-y-6">
@@ -90,25 +257,67 @@ export default function HospitalFinder() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredHospitals.length > 0 ? (
           filteredHospitals.map(hospital => (
-            <Card key={hospital.id} className="flex flex-col">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2"><HospitalIcon className="h-5 w-5 text-primary" /> {hospital.name}</CardTitle>
-                <CardDescription>{hospital.city}</CardDescription>
-              </CardHeader>
-              <CardContent className="flex-grow space-y-2">
-                <div className="flex items-start gap-2">
-                  <Stethoscope className="h-4 w-4 mt-1 text-muted-foreground" />
-                  <p className="text-sm"><span className="font-semibold">Specialties:</span> {hospital.specialty}</p>
-                </div>
-                <div className="flex items-start gap-2">
-                  <MapPin className="h-4 w-4 mt-1 text-muted-foreground" />
-                  <p className="text-sm"><span className="font-semibold">Address:</span> {hospital.address}</p>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button className="w-full">Book Appointment</Button>
-              </CardFooter>
-            </Card>
+            <Dialog key={hospital.id} onOpenChange={setIsHospitalDialogOpen}>
+              <Card className="flex flex-col">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2"><HospitalIcon className="h-5 w-5 text-primary" /> {hospital.name}</CardTitle>
+                  <CardDescription>{hospital.city}</CardDescription>
+                </CardHeader>
+                <CardContent className="flex-grow space-y-2">
+                  <div className="flex items-start gap-2">
+                    <Stethoscope className="h-4 w-4 mt-1 text-muted-foreground" />
+                    <p className="text-sm"><span className="font-semibold">Specialties:</span> {hospital.specialty}</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <MapPin className="h-4 w-4 mt-1 text-muted-foreground" />
+                    <p className="text-sm"><span className="font-semibold">Address:</span> {hospital.address}</p>
+                  </div>
+                </CardContent>
+                <CardFooter>
+                   <DialogTrigger asChild>
+                    <Button className="w-full">Book Appointment</Button>
+                  </DialogTrigger>
+                </CardFooter>
+              </Card>
+
+              <DialogContent className="sm:max-w-2xl rounded-2xl">
+                  <DialogHeader>
+                      <DialogTitle className="text-2xl font-bold font-headline">Doctors at {hospital.name}</DialogTitle>
+                      <DialogDescription>Select a doctor to book an appointment.</DialogDescription>
+                  </DialogHeader>
+                  <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto">
+                      {getDoctorsByHospital(hospital.name).length > 0 ? (
+                          getDoctorsByHospital(hospital.name).map(doctor => (
+                            <Dialog key={doctor.id} open={isBookingDialogOpen && selectedDoctor?.id === doctor.id} onOpenChange={(open) => { if (!open) setSelectedDoctor(null); setIsBookingDialogOpen(open);}}>
+                              <Card className="flex flex-col sm:flex-row items-start gap-4 p-4">
+                                <div className="relative h-20 w-20 rounded-full overflow-hidden flex-shrink-0">
+                                  <Image src={doctor.image} alt={doctor.name} fill={true} style={{objectFit: 'cover'}} data-ai-hint="doctor person" />
+                                </div>
+                                <div className="flex-grow">
+                                    <h4 className="font-bold">{doctor.name}</h4>
+                                    <p className="text-sm text-primary">{doctor.specialty}</p>
+                                    <p className="text-xs text-muted-foreground">{doctor.experience} years experience</p>
+                                    <p className="text-sm text-muted-foreground mt-2 flex items-center gap-1">
+                                        <IndianRupee className="h-4 w-4" /> 
+                                        <span>{doctor.fees} Consultation Fee</span>
+                                    </p>
+                                </div>
+                                <DialogTrigger asChild>
+                                  <Button onClick={() => handleDoctorSelection(doctor)}>Book Now</Button>
+                                </DialogTrigger>
+                              </Card>
+                              {selectedDoctor && <AppointmentBookingForm doctor={selectedDoctor} onBookingConfirmed={closeAllDialogs} />}
+                            </Dialog>
+                          ))
+                      ) : (
+                          <div className="text-center text-muted-foreground p-8">
+                              <User className="mx-auto h-10 w-10 mb-2" />
+                              <p>No doctors listed for this hospital yet.</p>
+                          </div>
+                      )}
+                  </div>
+              </DialogContent>
+            </Dialog>
           ))
         ) : (
           <div className="md:col-span-2 lg:col-span-3">
