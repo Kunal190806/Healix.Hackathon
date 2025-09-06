@@ -5,7 +5,6 @@ import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger, SidebarHeader, 
 import { Button } from '@/components/ui/button';
 import { Home, Pill, Droplets, Users, UtensilsCrossed, BookHeart, Activity, Dumbbell, PanelLeft, Hospital, UserPlus, Stethoscope, HeartPulse, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
-import Logo from '@/components/logo';
 import { usePathname } from 'next/navigation';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
@@ -48,8 +47,7 @@ export default function RootLayout({
         <SidebarProvider>
           <Sidebar collapsible="icon">
             <SidebarHeader>
-              <div className="flex items-center gap-2 p-2">
-                <Logo />
+              <div className="flex items-center justify-center p-2">
                 <span className="text-lg font-headline font-bold">HEALIX</span>
               </div>
             </SidebarHeader>

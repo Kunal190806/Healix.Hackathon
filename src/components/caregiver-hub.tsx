@@ -13,8 +13,10 @@ import { AlertTriangle, Bell, Calendar, Download, HeartPulse, Pill, User, Users,
 import { Badge } from "@/components/ui/badge";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import Logo from "./logo";
 import { cn } from "@/lib/utils";
+
+// We can't import the logo component directly due to SSR/client mismatch potential with SVGs in some setups.
+// So we will fetch the logo for the PDF on the client side.
 
 // Sample data to simulate a patient's profile
 const samplePatient = {
@@ -87,7 +89,8 @@ export default function CaregiverHub() {
       { date: format(today, 'EEE'), taken: 1, total: 2 }, // Today
     ].map(d => ({ ...d, adherence: (d.taken / d.total) * 100 })));
 
-    setIsLoading(false);
+    const timer = setTimeout(() => setIsLoading(false), 500); // Simulate loading
+    return () => clearTimeout(timer);
   }, []);
 
   const generatePDF = () => {
@@ -379,5 +382,3 @@ export default function CaregiverHub() {
     </div>
   );
 }
-
-    
