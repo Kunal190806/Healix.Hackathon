@@ -4,11 +4,12 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { Home, Pill, Droplets, Users, UtensilsCrossed, BookHeart, Dumbbell, PanelLeft, Hospital, UserPlus, Stethoscope, HeartPulse, ShieldCheck, CalendarDays } from 'lucide-react';
+import { Home, Pill, Droplets, Users, UtensilsCrossed, BookHeart, Dumbbell, PanelLeft, Hospital, UserPlus, Stethoscope, HeartPulse, ShieldCheck, CalendarDays, LogOut } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
+import { useEffect, useState } from 'react';
 
 // Metadata is not supported in client components, but we can keep this for static analysis
 // export const metadata: Metadata = {
@@ -22,6 +23,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [userName, setUserName] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Ensure this runs only on the client
+    const storedName = localStorage.getItem('userName');
+    setUserName(storedName);
+  }, [pathname]); // Re-check on route change
+
+  const handleLogout = () => {
+    localStorage.removeItem('userName');
+    setUserName(null);
+    router.push('/');
+  };
 
   const menuItems = [
     { href: '/', label: 'Dashboard', icon: Home },
@@ -79,12 +94,19 @@ export default function RootLayout({
                     <span className="text-lg font-logo font-bold">HEALIX</span>
                 </div>
                  <div className="flex items-center gap-2 ml-auto">
-                    <Button variant="outline" asChild>
-                      <Link href="/signup">
-                        <UserPlus className="mr-2 h-4 w-4" />
-                        Sign Up
-                      </Link>
-                    </Button>
+                    {userName ? (
+                        <Button variant="outline" onClick={handleLogout}>
+                          <LogOut className="mr-2 h-4 w-4" />
+                          Logout
+                        </Button>
+                      ) : (
+                        <Button variant="outline" asChild>
+                          <Link href="/signup">
+                            <UserPlus className="mr-2 h-4 w-4" />
+                            Sign Up
+                          </Link>
+                        </Button>
+                      )}
                     <div className="md:hidden">
                       <SidebarTrigger>
                           <PanelLeft />
