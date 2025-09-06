@@ -1,6 +1,6 @@
 'use client';
 
-import { useFormState } from 'react-dom';
+import { useActionState, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -10,7 +10,6 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Utensils, Loader2, AlertCircle } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
@@ -21,7 +20,7 @@ const formSchema = z.object({
 
 export default function MealPlannerForm() {
   const { toast } = useToast();
-  const [formState, formAction] = useFormState(getMealSuggestions, { message: '' });
+  const [formState, formAction] = useActionState(getMealSuggestions, { message: '' });
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
