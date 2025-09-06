@@ -31,26 +31,26 @@ export default function CaregiverHub() {
   const [sampleMedications, setSampleMedications] = useState<Prescription[]>([]);
   const [sampleNotifications, setSampleNotifications] = useState<any[]>([]);
   const [adherenceData, setAdherenceData] = useState<any[]>([]);
+  
+  // We can't generate the logo data URL on the server, so we do it on the client.
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
-
   useEffect(() => {
-    // Convert logo SVG to data URL for PDF embedding
-    const svgElement = document.getElementById('pdf-logo');
-    if (svgElement) {
-      const serializer = new XMLSerializer();
-      const svgString = serializer.serializeToString(svgElement);
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      const img = new Image();
-      img.onload = () => {
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx?.drawImage(img, 0, 0);
-        setLogoDataUrl(canvas.toDataURL("image/png"));
-      };
-      img.src = 'data:image/svg+xml;base64,' + btoa(svgString);
-    }
+    const convertImageToDataUrl = async () => {
+      try {
+        const response = await fetch('/healix-logo.png');
+        const blob = await response.blob();
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setLogoDataUrl(reader.result as string);
+        };
+        reader.readAsDataURL(blob);
+      } catch (error) {
+        console.error("Failed to load logo for PDF:", error);
+      }
+    };
+    convertImageToDataUrl();
   }, []);
+
 
   useEffect(() => {
     const today = new Date();
@@ -230,9 +230,6 @@ export default function CaregiverHub() {
 
   return (
     <div className="space-y-6">
-        <div style={{ display: 'none' }}>
-            <Logo id="pdf-logo"/>
-        </div>
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
                 <div>
