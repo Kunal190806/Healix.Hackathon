@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import useLocalStorage from "@/hooks/use-local-storage";
 import type { VitalLog, Prescription } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { format, subDays, addDays } from "date-fns";
-import { AlertTriangle, Bell, Calendar, Download, HeartPulse, Pill, User, Users } from "lucide-react";
+import { AlertTriangle, Bell, Calendar, Download, HeartPulse, Pill, User, Users, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -23,42 +23,48 @@ const samplePatient = {
   condition: "Hypertension & Type 2 Diabetes"
 };
 
-const sampleAppointments = [
-  { id: 'app1', doctor: "Dr. Priya Sharma", specialty: "Cardiologist", date: addDays(new Date(), 3).toISOString(), time: "11:00 AM" },
-  { id: 'app2', doctor: "Dr. Amit Joshi", specialty: "Endocrinologist", date: addDays(new Date(), 15).toISOString(), time: "02:30 PM" },
-];
-
-const sampleVitals: VitalLog[] = [
-    { id: 'v1', date: subDays(new Date(), 4).toISOString(), bloodPressure: { systolic: 145, diastolic: 92 } },
-    { id: 'v2', date: subDays(new  Date(), 3).toISOString(), bloodSugar: 160 },
-    { id: 'v3', date: subDays(new Date(), 2).toISOString(), heartRate: 88 },
-    { id: 'v4', date: subDays(new Date(), 1).toISOString(), bloodPressure: { systolic: 142, diastolic: 90 }, bloodSugar: 155 },
-];
-
-const sampleMedications: Prescription[] = [
-    { id: 'p1', name: 'Lisinopril', dosage: '10mg', frequency: 'Once a day', time: 'Morning' },
-    { id: 'p2', name: 'Metformin', dosage: '500mg', frequency: 'Twice a day', time: 'Morning, Evening' },
-];
-
-const sampleNotifications = [
-    { id: 'n1', type: 'Missed Medication', message: 'Rohan missed his evening dose of Metformin.', date: subDays(new Date(), 1).toISOString(), severity: 'high' },
-    { id: 'n2', type: 'Abnormal Vital', message: 'Blood Pressure reading was high: 145/92 mmHg.', date: subDays(new Date(), 4).toISOString(), severity: 'high' },
-    { id: 'n3', type: 'Appointment Reminder', message: 'Cardiologist appointment in 3 days.', date: new Date().toISOString(), severity: 'medium' },
-    { id: 'n4', type: 'Low Adherence', message: 'Medication adherence dropped to 75% this week.', date: new Date().toISOString(), severity: 'medium' },
-];
-
-const adherenceData = [
-  { date: format(subDays(new Date(), 6), 'EEE'), taken: 3, total: 4 },
-  { date: format(subDays(new Date(), 5), 'EEE'), taken: 4, total: 4 },
-  { date: format(subDays(new Date(), 4), 'EEE'), taken: 4, total: 4 },
-  { date: format(subDays(new Date(), 3), 'EEE'), taken: 3, total: 4 },
-  { date: format(subDays(new Date(), 2), 'EEE'), taken: 4, total: 4 },
-  { date: format(subDays(new Date(), 1), 'EEE'), taken: 3, total: 4 },
-  { date: format(new Date(), 'EEE'), taken: 1, total: 2 }, // Today
-].map(d => ({ ...d, adherence: (d.taken / d.total) * 100 }));
-
-
 export default function CaregiverHub() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [sampleAppointments, setSampleAppointments] = useState<any[]>([]);
+  const [sampleVitals, setSampleVitals] = useState<VitalLog[]>([]);
+  const [sampleMedications, setSampleMedications] = useState<Prescription[]>([]);
+  const [sampleNotifications, setSampleNotifications] = useState<any[]>([]);
+  const [adherenceData, setAdherenceData] = useState<any[]>([]);
+
+  useEffect(() => {
+    const today = new Date();
+    setSampleAppointments([
+      { id: 'app1', doctor: "Dr. Priya Sharma", specialty: "Cardiologist", date: addDays(today, 3).toISOString(), time: "11:00 AM" },
+      { id: 'app2', doctor: "Dr. Amit Joshi", specialty: "Endocrinologist", date: addDays(today, 15).toISOString(), time: "02:30 PM" },
+    ]);
+    setSampleVitals([
+        { id: 'v1', date: subDays(today, 4).toISOString(), bloodPressure: { systolic: 145, diastolic: 92 } },
+        { id: 'v2', date: subDays(today, 3).toISOString(), bloodSugar: 160 },
+        { id: 'v3', date: subDays(today, 2).toISOString(), heartRate: 88 },
+        { id: 'v4', date: subDays(today, 1).toISOString(), bloodPressure: { systolic: 142, diastolic: 90 }, bloodSugar: 155 },
+    ]);
+    setSampleMedications([
+        { id: 'p1', name: 'Lisinopril', dosage: '10mg', frequency: 'Once a day', time: 'Morning' },
+        { id: 'p2', name: 'Metformin', dosage: '500mg', frequency: 'Twice a day', time: 'Morning, Evening' },
+    ]);
+    setSampleNotifications([
+        { id: 'n1', type: 'Missed Medication', message: 'Rohan missed his evening dose of Metformin.', date: subDays(today, 1).toISOString(), severity: 'high' },
+        { id: 'n2', type: 'Abnormal Vital', message: 'Blood Pressure reading was high: 145/92 mmHg.', date: subDays(today, 4).toISOString(), severity: 'high' },
+        { id: 'n3', type: 'Appointment Reminder', message: 'Cardiologist appointment in 3 days.', date: today.toISOString(), severity: 'medium' },
+        { id: 'n4', type: 'Low Adherence', message: 'Medication adherence dropped to 75% this week.', date: today.toISOString(), severity: 'medium' },
+    ]);
+    setAdherenceData([
+      { date: format(subDays(today, 6), 'EEE'), taken: 3, total: 4 },
+      { date: format(subDays(today, 5), 'EEE'), taken: 4, total: 4 },
+      { date: format(subDays(today, 4), 'EEE'), taken: 4, total: 4 },
+      { date: format(subDays(today, 3), 'EEE'), taken: 3, total: 4 },
+      { date: format(subDays(today, 2), 'EEE'), taken: 4, total: 4 },
+      { date: format(subDays(today, 1), 'EEE'), taken: 3, total: 4 },
+      { date: format(today, 'EEE'), taken: 1, total: 2 }, // Today
+    ].map(d => ({ ...d, adherence: (d.taken / d.total) * 100 })));
+
+    setIsLoading(false);
+  }, []);
 
   const generatePDF = () => {
     const doc = new jsPDF();
@@ -121,7 +127,7 @@ export default function CaregiverHub() {
              // 5. Adherence Table
             autoTable(doc, {
                 head: [['Medication', 'Dosage', 'Frequency', 'Time']],
-                body: sampleMedications.map(m => [m.name, m.dosage, m.frequency, m.time]),
+                body: sampleMedications.map(m => [m.name, m.dosage, m.frequency, m.time || 'N/A']),
                  headStyles: { fillColor: [63, 81, 181] },
                 didDrawPage: (data) => addFooter(doc, data.pageNumber)
             });
@@ -201,6 +207,15 @@ export default function CaregiverHub() {
   const handleDownload = () => {
     generatePDF();
     generateCSV();
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-4 text-muted-foreground">Loading Caregiver Hub...</span>
+      </div>
+    );
   }
 
   return (
@@ -348,3 +363,5 @@ export default function CaregiverHub() {
     </div>
   );
 }
+
+    
