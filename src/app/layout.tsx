@@ -73,10 +73,10 @@ export default function RootLayout({
           </Sidebar>
           <SidebarInset>
             <header className="flex items-center justify-between mb-4 p-4 sm:p-6 lg:p-8 lg:pb-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 md:hidden">
                     <span className="text-lg font-headline font-bold">HEALIX</span>
                 </div>
-                 <div className="flex items-center gap-2">
+                 <div className="flex items-center gap-2 ml-auto">
                     <Button variant="outline" asChild>
                       <Link href="/signup">
                         <UserPlus className="mr-2 h-4 w-4" />
