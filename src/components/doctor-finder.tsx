@@ -143,8 +143,8 @@ export default function DoctorFinder() {
                       <div className="flex-1 pt-2">
                         <DialogTitle className="text-2xl font-bold font-headline">{doctor.name}</DialogTitle>
                         <DialogDescription>
-                            <p className="text-primary font-semibold">{doctor.specialty}</p>
-                            <p>{doctor.experience} years of experience</p>
+                            <div className="text-primary font-semibold">{doctor.specialty}</div>
+                            <div>{doctor.experience} years of experience</div>
                             <div className="flex items-center gap-1 mt-1">
                                 <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
                                 <span className="font-bold">4.8</span>
