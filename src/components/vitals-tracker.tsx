@@ -65,8 +65,8 @@ export default function VitalsTracker() {
     .filter(d => d.value !== null)
     .reverse();
 
-  const metricLabels = {
-      bloodPressure: "Blood Pressure (Systolic/Diastolic)",
+  const metricLabels: {[key: string]: string} = {
+      bloodPressure: "Blood Pressure (mmHg)",
       bloodSugar: "Blood Sugar (mg/dL)",
       heartRate: "Heart Rate (BPM)",
       weight: "Weight (kg)"
@@ -115,9 +115,11 @@ export default function VitalsTracker() {
       <div className="lg:col-span-3 space-y-6">
         <Card>
             <CardHeader>
-                <CardTitle>Vitals History Chart</CardTitle>
-                 <div className="flex items-center justify-between">
-                    <CardDescription>Visualize your health trends over time.</CardDescription>
+                <div className="flex items-start justify-between">
+                    <div>
+                        <CardTitle>Vitals History Chart</CardTitle>
+                        <CardDescription>Visualize your health trends over time.</CardDescription>
+                    </div>
                      <Select value={chartMetric} onValueChange={(v) => setChartMetric(v as any)}>
                         <SelectTrigger className="w-[200px]">
                             <SelectValue placeholder="Select a metric" />
@@ -187,13 +189,29 @@ export default function VitalsTracker() {
                     if (log.heartRate) entries.push({metric: 'Heart Rate', value: `${log.heartRate} BPM`});
                     if (log.weight) entries.push({metric: 'Weight', value: `${log.weight} kg`});
                     
+                    if (entries.length === 0 && log.notes) {
+                        // Handle case where there's only a note
+                        return [(
+                             <TableRow key={`${log.id}-note`}>
+                                <TableCell>{format(new Date(log.date), 'PPP')}</TableCell>
+                                <TableCell colSpan={2}>General Note</TableCell>
+                                <TableCell className="max-w-[150px] truncate">{log.notes}</TableCell>
+                                <TableCell className="text-right align-top">
+                                    <Button variant="ghost" size="icon" onClick={() => handleDeleteLog(log.id)}>
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                </TableCell>
+                             </TableRow>
+                        )]
+                    }
+                    
                     return entries.map((entry, index) => (
                         <TableRow key={`${log.id}-${entry.metric}`}>
                             {index === 0 ? (
-                                <TableCell rowSpan={entries.length} className="align-top">{format(new Date(log.date), 'PPP')}</TableCell>
+                                <TableCell rowSpan={entries.length} className="align-top font-medium">{format(new Date(log.date), 'PPp')}</TableCell>
                             ) : null}
                             <TableCell>{entry.metric}</TableCell>
-                            <TableCell>{entry.value}</TableCell>
+                            <TableCell className="font-mono">{entry.value}</TableCell>
                             {index === 0 ? (
                                  <TableCell rowSpan={entries.length} className="align-top max-w-[150px] truncate">{log.notes}</TableCell>
                             ): null}
@@ -206,7 +224,7 @@ export default function VitalsTracker() {
                             ) : null}
                         </TableRow>
                     ));
-                  })
+                  }).flat()
                 ) : (
                   <TableRow>
                     <TableCell colSpan={5} className="h-24 text-center">
