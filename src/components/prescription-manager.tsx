@@ -127,7 +127,7 @@ export default function PrescriptionManager() {
         description: "Prescription details have been filled in. Please review and save.",
       });
     }
-  }, [scanResult]);
+  }, [scanResult, toast]);
 
   const resetScan = () => {
     setCapturedImage(null);
