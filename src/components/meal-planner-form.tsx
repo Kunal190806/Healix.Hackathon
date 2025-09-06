@@ -8,8 +8,8 @@ import { getMealSuggestions } from '@/app/meal-planner/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Utensils, Loader2, AlertCircle } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Utensils, Loader2, AlertCircle, Flame } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
@@ -38,7 +38,7 @@ export default function MealPlannerForm() {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Failed to generate meal ideas. Please check your input and try again.',
+        description: typeof formState.error === 'string' ? formState.error : 'Failed to generate meal ideas. Please check your input and try again.',
       });
     }
   }, [formState, toast]);
@@ -61,7 +61,7 @@ export default function MealPlannerForm() {
             name="dietaryRestrictions"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Dietary Restrictions</FormLabel>
+                <FormLabel>Dietary Restrictions & Allergies</FormLabel>
                 <FormControl>
                   <Input placeholder="e.g., vegetarian, gluten-free, no nuts" {...field} />
                 </FormControl>
@@ -123,13 +123,25 @@ export default function MealPlannerForm() {
       {formState?.mealIdeas && formState.mealIdeas.length > 0 && (
         <div>
           <h2 className="text-2xl font-headline font-semibold mb-4">Your Meal Ideas</h2>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {formState.mealIdeas.map((idea, index) => (
-              <Card key={index} className="flex flex-col">
-                <CardHeader className="flex-row items-center gap-4">
-                  <Utensils className="h-8 w-8 text-accent" />
-                  <CardTitle>{idea}</CardTitle>
+              <Card key={index} className="flex flex-col justify-between">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Utensils className="h-6 w-6 text-accent" />
+                    <span>{idea.name}</span>
+                  </CardTitle>
+                  <CardDescription>{idea.description}</CardDescription>
                 </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                    <div className="flex items-center gap-2 font-semibold text-foreground">
+                        <Flame className="h-5 w-5 text-orange-500" />
+                        Calories
+                    </div>
+                    <span className="font-mono text-lg font-bold text-primary">{idea.calories}</span>
+                  </div>
+                </CardContent>
               </Card>
             ))}
           </div>

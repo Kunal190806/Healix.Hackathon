@@ -1,6 +1,6 @@
 'use server';
 
-import { suggestMealIdeas, SuggestMealIdeasInput, SuggestMealIdeasOutput } from '@/ai/flows/suggest-meal-ideas';
+import { suggestMealIdeas, SuggestMealIdeasInput, SuggestMealIdeasOutput, MealIdea } from '@/ai/flows/suggest-meal-ideas';
 import { z } from 'zod';
 
 const SuggestMealIdeasSchema = z.object({
@@ -12,7 +12,7 @@ const SuggestMealIdeasSchema = z.object({
 export async function getMealSuggestions(
   prevState: any,
   formData: FormData
-): Promise<{ message: string; mealIdeas?: string[]; error?: string }> {
+): Promise<{ message: string; mealIdeas?: MealIdea[]; error?: any }> {
   const validatedFields = SuggestMealIdeasSchema.safeParse({
     dietaryRestrictions: formData.get('dietaryRestrictions'),
     cuisinePreferences: formData.get('cuisinePreferences'),
