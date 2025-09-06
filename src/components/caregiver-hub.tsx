@@ -38,6 +38,9 @@ export default function CaregiverHub() {
     const convertImageToDataUrl = async () => {
       try {
         const response = await fetch('/healix-logo.png');
+        if (!response.ok) {
+          throw new Error('Logo not found');
+        }
         const blob = await response.blob();
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -239,7 +242,13 @@ export default function CaregiverHub() {
                     </CardTitle>
                     <CardDescription>{samplePatient.age} years old - {samplePatient.condition}</CardDescription>
                 </div>
-                <Button onClick={handleDownload}><Download className="mr-2 h-4 w-4" /> Download Summary</Button>
+                <Button onClick={handleDownload} disabled={!logoDataUrl}>
+                  {!logoDataUrl ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Preparing Download...</>
+                  ) : (
+                    <><Download className="mr-2 h-4 w-4" /> Download Summary</>
+                  )}
+                </Button>
             </CardHeader>
         </Card>
 
@@ -370,3 +379,5 @@ export default function CaregiverHub() {
     </div>
   );
 }
+
+    
