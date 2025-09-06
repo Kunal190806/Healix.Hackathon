@@ -21,7 +21,7 @@ const formSchema = z.object({
 
 export default function MealPlannerForm() {
   const { toast } = useToast();
-  const [formState, formAction] = useActionState(getMealSuggestions, { message: '' });
+  const [formState, formAction, isPending] = useActionState(getMealSuggestions, { message: '' });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -32,8 +32,6 @@ export default function MealPlannerForm() {
       calorieGoals: '',
     },
   });
-
-  const { formState: { isSubmitting } } = form;
 
   useEffect(() => {
     if (formState.error) {
@@ -50,14 +48,6 @@ export default function MealPlannerForm() {
       <Form {...form}>
         <form
           action={formAction}
-          onSubmit={form.handleSubmit(() => {
-            const formData = new FormData();
-            const data = form.getValues();
-            Object.entries(data).forEach(([key, value]) => {
-                formData.append(key, value || '');
-            });
-            formAction(formData);
-          })}
           className="space-y-6"
         >
           <FormField
@@ -116,8 +106,8 @@ export default function MealPlannerForm() {
               </FormItem>
             )}
           />
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? (
+          <Button type="submit" disabled={isPending}>
+            {isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Generating...
@@ -129,7 +119,7 @@ export default function MealPlannerForm() {
         </form>
       </Form>
 
-      {isSubmitting && (
+      {isPending && (
         <div className="flex items-center justify-center rounded-lg border border-dashed p-12">
             <div className="text-center">
                 <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
@@ -138,7 +128,7 @@ export default function MealPlannerForm() {
         </div>
       )}
 
-      {formState?.mealIdeas && formState.mealIdeas.length > 0 && !isSubmitting && (
+      {formState?.mealIdeas && formState.mealIdeas.length > 0 && !isPending && (
         <div>
           <h2 className="text-2xl font-headline font-semibold mb-4">Your Meal Ideas</h2>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -166,7 +156,7 @@ export default function MealPlannerForm() {
         </div>
       )}
 
-      {formState?.error && !isSubmitting && (
+      {formState?.error && !isPending && (
         <div className="flex items-center justify-center rounded-lg border border-destructive/50 bg-destructive/10 p-12">
             <div className="text-center text-destructive">
                 <AlertCircle className="mx-auto h-12 w-12" />
