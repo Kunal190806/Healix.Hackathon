@@ -41,15 +41,15 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&family=Exo+2:wght@700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
         <SidebarProvider>
           <Sidebar collapsible="icon">
             <SidebarHeader>
               <div className="flex items-center justify-center p-2 h-14 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:p-0 transition-all duration-200">
-                <span className="text-lg font-headline font-bold group-data-[collapsible=icon]:hidden">HEALIX</span>
-                <span className="text-2xl font-headline font-bold hidden group-data-[collapsible=icon]:block">H</span>
+                <span className="text-lg font-logo font-bold group-data-[collapsible=icon]:hidden">HEALIX</span>
+                <span className="text-2xl font-logo font-bold hidden group-data-[collapsible=icon]:block">H</span>
               </div>
             </SidebarHeader>
             <SidebarContent>
@@ -74,7 +74,7 @@ export default function RootLayout({
           <SidebarInset>
             <header className="flex items-center justify-between mb-4 p-4 sm:p-6 lg:p-8 lg:pb-0">
                 <div className="flex items-center gap-2 md:hidden">
-                    <span className="text-lg font-headline font-bold">HEALIX</span>
+                    <span className="text-lg font-logo font-bold">HEALIX</span>
                 </div>
                  <div className="flex items-center gap-2 ml-auto">
                     <Button variant="outline" asChild>
