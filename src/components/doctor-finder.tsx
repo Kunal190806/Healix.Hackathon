@@ -38,7 +38,7 @@ const sampleDoctors: Doctor[] = [
   { id: 'd21', name: 'Dr. Karthik Sundaram', specialty: 'Oncology', experience: 16, city: 'Chennai', fees: 1900, bio: 'Surgical oncologist at Adyar Cancer Institute.', image: 'https://picsum.photos/400/400?random=21' },
   { id: 'd22', name: 'Dr. Priya Murthy', specialty: 'Rheumatology', experience: 9, city: 'Chennai', fees: 1150, bio: 'Treats autoimmune and rheumatic diseases at Gleneagles Global Health City.', image: 'https://picsum.photos/400/400?random=22' },
   { id: 'd23', name: 'Dr. Anand Selvan', specialty: 'Nephrology', experience: 14, city: 'Chennai', fees: 1550, bio: 'Specialist in kidney disease and dialysis at SIMS Hospital.', image: 'https://picsum.photos/400/400?random=23' },
-  // Pune
+    // Pune
   { id: 'd6', name: 'Dr. Vikram Singh', specialty: 'Gastroenterology', experience: 10, city: 'Pune', fees: 1300, bio: 'Specialist in digestive diseases and endoscopic procedures at Ruby Hall Clinic.', image: 'https://picsum.photos/400/400?random=6' },
   { id: 'd10', name: 'Dr. Sameer Patil', specialty: 'Dentist', experience: 12, city: 'Pune', fees: 650, bio: 'Specialist in orthodontics and pediatric dentistry.', image: 'https://picsum.photos/400/400?random=10' },
   { id: 'd24', name: 'Dr. Aditi Deshpande', specialty: 'Gynecology', experience: 13, city: 'Pune', fees: 1200, bio: 'Consultant gynecologist at Jehangir Hospital.', image: 'https://picsum.photos/400/400?random=24' },
@@ -50,6 +50,12 @@ const sampleDoctors: Doctor[] = [
   { id: 'd28', name: 'Dr. Fatima Khan', specialty: 'Neurology', experience: 11, city: 'Hyderabad', fees: 1600, bio: 'Expert in movement disorders at Continental Hospitals.', image: 'https://picsum.photos/400/400?random=28' },
   { id: 'd29', name: 'Dr. Arjun Kumar', specialty: 'Orthopedics', experience: 15, city: 'Hyderabad', fees: 1400, bio: 'Specializes in sports injuries and arthroscopic surgery at Yashoda Hospitals.', image: 'https://picsum.photos/400/400?random=29' },
   { id: 'd30', name: 'Dr. Kavya Rao', specialty: 'Dermatology', experience: 7, city: 'Hyderabad', fees: 950, bio: 'Aesthetic dermatologist specializing in anti-aging treatments.', image: 'https://picsum.photos/400/400?random=30' },
+  // Kolkata
+  { id: 'd31', name: 'Dr. A. K. Banerjee', specialty: 'Neurology', experience: 25, city: 'Kolkata', fees: 2200, bio: 'Senior Neurologist at Apollo Gleneagles Hospitals, Kolkata.', image: 'https://picsum.photos/400/400?random=31' },
+  { id: 'd32', name: 'Dr. Mita Sen', specialty: 'Gynecology', experience: 18, city: 'Kolkata', fees: 1300, bio: 'Specializes in high-risk pregnancies at Fortis Hospital, Kolkata.', image: 'https://picsum.photos/400/400?random=32' },
+  { id: 'd33', name: 'Dr. Subrata Das', specialty: 'Cardiology', experience: 20, city: 'Kolkata', fees: 1800, bio: 'Interventional cardiologist at Medica Superspecialty Hospital.', image: 'https://picsum.photos/400/400?random=33' },
+  { id: 'd34', name: 'Dr. Prosenjit Ghosh', specialty: 'Orthopedics', experience: 15, city: 'Kolkata', fees: 1100, bio: 'Joint replacement specialist at AMRI Hospitals.', image: 'https://picsum.photos/400/400?random=34' },
+  { id: 'd35', name: 'Dr. Ishani Roy', specialty: 'Dermatology', experience: 10, city: 'Kolkata', fees: 900, bio: 'Cosmetic dermatologist with a clinic in Salt Lake.', image: 'https://picsum.photos/400/400?random=35' },
 ];
 
 const specialties = [...new Set(sampleDoctors.map(d => d.specialty))].sort();
@@ -102,7 +108,7 @@ export default function DoctorFinder() {
         {filteredDoctors.length > 0 ? (
           filteredDoctors.map(doctor => (
             <Dialog key={doctor.id}>
-              <Card className="flex flex-col">
+              <Card className="flex flex-col rounded-2xl">
                 <CardHeader>
                    <div className="flex items-start gap-4">
                       <div className="relative h-20 w-20 rounded-full overflow-hidden">
@@ -134,7 +140,7 @@ export default function DoctorFinder() {
                 </CardFooter>
               </Card>
 
-              <DialogContent className="sm:max-w-md">
+              <DialogContent className="sm:max-w-md rounded-2xl">
                 <DialogHeader>
                     <div className="flex items-start gap-4">
                       <div className="relative h-24 w-24 rounded-full overflow-hidden">
@@ -186,7 +192,7 @@ export default function DoctorFinder() {
           ))
         ) : (
           <div className="md:col-span-2 lg:col-span-3">
-            <Card className="h-48 flex flex-col items-center justify-center">
+            <Card className="h-48 flex flex-col items-center justify-center rounded-2xl">
               <div className="text-center text-muted-foreground">
                 <User className="mx-auto h-12 w-12" />
                 <p className="mt-4 font-semibold">No doctors found.</p>
