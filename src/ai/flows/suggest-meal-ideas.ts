@@ -15,8 +15,11 @@ const SuggestMealIdeasInputSchema = z.object({
   dietaryRestrictions: z
     .string()
     .describe(
-      'A comma-separated list of dietary restrictions and allergies, e.g., gluten-free, dairy-free, vegetarian, no peanuts.'
+      'A comma-separated list of dietary restrictions, e.g., vegetarian, dairy-free.'
     ),
+  allergies: z
+    .string()
+    .describe('A comma-separated list of allergies to avoid, e.g., peanuts, shellfish.'),
   cuisinePreferences: z
     .string()
     .describe('Preferred cuisines, e.g., Italian, Mexican, Indian.'),
@@ -49,9 +52,10 @@ const prompt = ai.definePrompt({
   name: 'suggestMealIdeasPrompt',
   input: {schema: SuggestMealIdeasInputSchema},
   output: {schema: SuggestMealIdeasOutputSchema},
-  prompt: `You are an expert nutritionist and chef. Suggest 5 meal ideas based on the following dietary restrictions, cuisine preferences, and calorie goals.
+  prompt: `You are an expert nutritionist and chef. Suggest 5 meal ideas based on the following dietary restrictions, allergies, cuisine preferences, and calorie goals.
 
 Dietary Restrictions: {{{dietaryRestrictions}}}
+Allergies to strictly avoid: {{{allergies}}}
 Cuisine Preferences: {{{cuisinePreferences}}}
 Calorie Goals: {{{calorieGoals}}}
 
@@ -60,7 +64,7 @@ For each meal idea, provide:
 2.  A short (1-2 sentence) description.
 3.  An estimated calorie count per serving that fits within the user's goals.
 
-Ensure that each meal idea strictly adheres to all specified dietary needs and restrictions. For example, if the user specifies "no nuts," none of the meal suggestions should contain nuts.
+Ensure that each meal idea strictly adheres to all specified dietary needs and especially the allergies. For example, if the user specifies "peanuts" as an allergy, none of the meal suggestions should contain peanuts or peanut products.
 
 Return the response in a valid JSON format.`,
 });

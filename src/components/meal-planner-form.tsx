@@ -13,7 +13,8 @@ import { Utensils, Loader2, AlertCircle, Flame } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
-  dietaryRestrictions: z.string().min(2, { message: 'Please enter your dietary restrictions (e.g., vegetarian, gluten-free).' }),
+  dietaryRestrictions: z.string().min(2, { message: 'Please enter your dietary restrictions (e.g., vegetarian, low-carb).' }),
+  allergies: z.string().optional(),
   cuisinePreferences: z.string().min(2, { message: 'Please enter your cuisine preferences (e.g., Italian, Mexican).' }),
   calorieGoals: z.string().min(2, { message: 'Please enter your calorie goals (e.g., 500-700 calories).' }),
 });
@@ -27,6 +28,7 @@ export default function MealPlannerForm() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       dietaryRestrictions: '',
+      allergies: '',
       cuisinePreferences: '',
       calorieGoals: '',
     },
@@ -47,7 +49,7 @@ export default function MealPlannerForm() {
     setIsLoading(true);
     const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
-      formData.append(key, value);
+      formData.append(key, value || '');
     });
     formAction(formData);
   };
@@ -61,11 +63,25 @@ export default function MealPlannerForm() {
             name="dietaryRestrictions"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Dietary Restrictions & Allergies</FormLabel>
+                <FormLabel>Dietary Restrictions</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g., vegetarian, gluten-free, no nuts" {...field} />
+                  <Input placeholder="e.g., vegetarian, gluten-free, low-fodmap" {...field} />
                 </FormControl>
-                <FormDescription>List any allergies or dietary needs, separated by commas.</FormDescription>
+                <FormDescription>List any general dietary needs, separated by commas.</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+           <FormField
+            control={form.control}
+            name="allergies"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Allergies</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g., peanuts, shellfish, dairy" {...field} />
+                </FormControl>
+                <FormDescription>List any allergies to strictly avoid, separated by commas.</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
