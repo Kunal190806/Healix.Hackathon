@@ -14,13 +14,17 @@ import Image from "next/image";
 
 const sampleDoctors: Doctor[] = [
   { id: 'd1', name: 'Dr. Priya Sharma', specialty: 'Cardiology', experience: 15, city: 'Delhi', fees: 1500, bio: 'Chief Cardiologist at Max Healthcare with extensive experience in interventional cardiology.', image: 'https://picsum.photos/400/400?random=1' },
-  { id: 'd2', name: 'Dr. Sameer Khan', specialty: 'Neurology', experience: 12, city: 'Mumbai', fees: 1800, bio: 'Specializes in treating stroke and epilepsy. Affiliated with Kokilaben Ambani Hospital.', image: 'https://picsum.photos/400/400?random=2' },
+  { id: 'd2', name: 'Dr. Amit Joshi', specialty: 'Neurology', experience: 12, city: 'Mumbai', fees: 1800, bio: 'Specializes in treating stroke and epilepsy. Affiliated with Kokilaben Ambani Hospital.', image: 'https://picsum.photos/400/400?random=2' },
   { id: 'd3', name: 'Dr. Anjali Desai', specialty: 'Dermatology', experience: 8, city: 'Bangalore', fees: 1000, bio: 'Expert in cosmetic dermatology and skin allergies. Runs a private clinic in Koramangala.', image: 'https://picsum.photos/400/400?random=3' },
   { id: 'd4', name: 'Dr. Rohan Mehra', specialty: 'Orthopedics', experience: 20, city: 'Chennai', fees: 1200, bio: 'Leading orthopedic surgeon specializing in knee and hip replacements at Apollo Hospitals.', image: 'https://picsum.photos/400/400?random=4' },
   { id: 'd5', name: 'Dr. Sunita Reddy', specialty: 'Pediatrics', experience: 18, city: 'Hyderabad', fees: 800, bio: 'Compassionate pediatrician focused on child development and vaccination.', image: 'https://picsum.photos/400/400?random=5' },
   { id: 'd6', name: 'Dr. Vikram Singh', specialty: 'Gastroenterology', experience: 10, city: 'Pune', fees: 1300, bio: 'Specialist in digestive diseases and endoscopic procedures at Ruby Hall Clinic.', image: 'https://picsum.photos/400/400?random=6' },
   { id: 'd7', name: 'Dr. Aisha Gupta', specialty: 'Gynecology', experience: 14, city: 'Delhi', fees: 1400, bio: 'Dedicated to women\'s health, from adolescence to post-menopause. Practices at Fortis La Femme.', image: 'https://picsum.photos/400/400?random=7' },
-  { id: 'd8', name: 'Dr. Arjun Patel', specialty: 'Cardiology', experience: 10, city: 'Mumbai', fees: 1600, bio: 'Consultant cardiologist focusing on preventative heart care and cardiac rehabilitation.', image: 'https://picsum.photos/400/400?random=8' },
+  { id: 'd8', name: 'Dr. Arjun Shetty', specialty: 'Cardiology', experience: 10, city: 'Mumbai', fees: 1600, bio: 'Consultant cardiologist focusing on preventative heart care and cardiac rehabilitation.', image: 'https://picsum.photos/400/400?random=8' },
+  { id: 'd9', name: 'Dr. Kavita Iyer', specialty: 'Dentist', experience: 9, city: 'Bangalore', fees: 700, bio: 'Focuses on cosmetic dentistry and root canal treatments.', image: 'https://picsum.photos/400/400?random=9' },
+  { id: 'd10', name: 'Dr. Sameer Patil', specialty: 'Dentist', experience: 12, city: 'Pune', fees: 650, bio: 'Specialist in orthodontics and pediatric dentistry.', image: 'https://picsum.photos/400/400?random=10' },
+  { id: 'd11', name: 'Dr. Neha Sharma', specialty: 'ENT', experience: 7, city: 'Delhi', fees: 900, bio: 'Expert in treating ear, nose, and throat disorders, including sinus issues.', image: 'https://picsum.photos/400/400?random=11' },
+  { id: 'd12', name: 'Dr. Rajesh Khanna', specialty: 'Psychiatry', experience: 16, city: 'Mumbai', fees: 2000, bio: 'Provides counseling and treatment for various mental health conditions.', image: 'https://picsum.photos/400/400?random=12' },
 ];
 
 const specialties = [...new Set(sampleDoctors.map(d => d.specialty))];
@@ -76,7 +80,7 @@ export default function DoctorFinder() {
               <CardHeader>
                  <div className="flex items-start gap-4">
                     <div className="relative h-20 w-20 rounded-full overflow-hidden">
-                       <Image src={doctor.image} alt={doctor.name} layout="fill" objectFit="cover" data-ai-hint="doctor person" />
+                       <Image src={doctor.image} alt={doctor.name} fill={true} objectFit="cover" data-ai-hint="doctor person" />
                     </div>
                     <div className="flex-1">
                         <CardTitle className="text-xl font-headline">{doctor.name}</CardTitle>
