@@ -1,14 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import useLocalStorage from "@/hooks/use-local-storage";
 import type { Prescription } from "@/lib/types";
+import { extractPrescriptionDetails, ExtractPrescriptionDetailsOutput } from "@/ai/flows/extract-prescription-details";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash2, Pill } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { useToast } from "@/hooks/use-toast";
+import { Trash2, Pill, Camera, Upload, Loader2, Wand2, X } from "lucide-react";
+
+type ScannedData = ExtractPrescriptionDetailsOutput;
 
 export default function PrescriptionManager() {
   const [prescriptions, setPrescriptions] = useLocalStorage<Prescription[]>("prescriptions", []);
@@ -16,6 +22,130 @@ export default function PrescriptionManager() {
   const [dosage, setDosage] = useState("");
   const [frequency, setFrequency] = useState("");
   const [time, setTime] = useState("");
+
+  const { toast } = useToast();
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanResult, setScanResult] = useState<ScannedData | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  // Camera state
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const [isCameraOn, setIsCameraOn] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isCameraOn) {
+      startCamera();
+    } else {
+      stopCamera();
+    }
+  }, [isCameraOn]);
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      setHasCameraPermission(true);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      setHasCameraPermission(false);
+      toast({
+        variant: 'destructive',
+        title: 'Camera Access Denied',
+        description: 'Please enable camera permissions in your browser settings.',
+      });
+      setIsCameraOn(false);
+    }
+  };
+
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+  };
+
+  const handleCapture = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const context = canvas.getContext('2d');
+      if(context) {
+        context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+        const dataUri = canvas.toDataURL('image/jpeg');
+        setCapturedImage(dataUri);
+        setIsCameraOn(false); // Turn off camera after capture
+      }
+    }
+  };
+  
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setCapturedImage(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleScan = async () => {
+    if (!capturedImage) return;
+    setIsScanning(true);
+    setScanResult(null);
+    try {
+      const result = await extractPrescriptionDetails({ imageDataUri: capturedImage });
+      setScanResult(result);
+    } catch (error) {
+      console.error("Scanning failed:", error);
+      toast({
+        variant: "destructive",
+        title: "Scan Failed",
+        description: "Could not extract details from the image. Please try again with a clearer picture.",
+      });
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  useEffect(() => {
+    if(scanResult) {
+      setName(scanResult.name);
+      setDosage(scanResult.dosage);
+      setFrequency(scanResult.frequency);
+      setIsDialogOpen(false); // Close dialog on success
+      toast({
+        title: "Scan Complete",
+        description: "Prescription details have been filled in. Please review and save.",
+      });
+    }
+  }, [scanResult]);
+
+  const resetScan = () => {
+    setCapturedImage(null);
+    setScanResult(null);
+    setIsScanning(false);
+  };
+  
+  const handleDialogStateChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      // Reset state when closing dialog
+      stopCamera();
+      setIsCameraOn(false);
+      setCapturedImage(null);
+      setScanResult(null);
+      setIsScanning(false);
+    }
+  }
 
   const handleAddPrescription = (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,9 +174,73 @@ export default function PrescriptionManager() {
         <Card>
           <CardHeader>
             <CardTitle>Add New Prescription</CardTitle>
-            <CardDescription>Enter the details of your medication below.</CardDescription>
+            <CardDescription>Enter the details of your medication below or scan your prescription.</CardDescription>
           </CardHeader>
           <CardContent>
+             <Dialog open={isDialogOpen} onOpenChange={handleDialogStateChange}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="w-full mb-4">
+                    <Camera className="mr-2" />
+                    Scan Prescription with AI
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[625px]">
+                  <DialogHeader>
+                    <DialogTitle>Scan Your Prescription</DialogTitle>
+                    <DialogDescription>
+                      Upload or take a photo of your prescription. The AI will attempt to extract the details.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    {!capturedImage ? (
+                      <div>
+                        {isCameraOn ? (
+                          <div className="space-y-4">
+                            <video ref={videoRef} className="w-full aspect-video rounded-md bg-muted" autoPlay muted />
+                            {hasCameraPermission === false && (
+                              <Alert variant="destructive">
+                                <AlertTitle>Camera Access Required</AlertTitle>
+                                <AlertDescription>Please allow camera access to use this feature.</AlertDescription>
+                              </Alert>
+                            )}
+                             <div className="flex justify-between items-center">
+                              <Button onClick={handleCapture} disabled={hasCameraPermission === false}>Capture Photo</Button>
+                              <Button variant="ghost" onClick={() => setIsCameraOn(false)}>Cancel</Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex gap-4">
+                            <Button className="flex-1" onClick={() => setIsCameraOn(true)}><Camera className="mr-2"/>Use Camera</Button>
+                            <Button className="flex-1" asChild>
+                              <label htmlFor="file-upload">
+                                <Upload className="mr-2"/> Upload File
+                                <input id="file-upload" type="file" accept="image/*,.pdf" className="sr-only" onChange={handleFileUpload}/>
+                              </label>
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="relative">
+                          <img src={capturedImage} alt="Prescription" className="rounded-md max-h-64 w-auto mx-auto"/>
+                          <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={resetScan}>
+                            <X className="h-4 w-4"/>
+                          </Button>
+                        </div>
+                        <Button onClick={handleScan} disabled={isScanning} className="w-full">
+                          {isScanning ? (
+                            <><Loader2 className="mr-2 animate-spin"/>Scanning...</>
+                          ) : (
+                            <><Wand2 className="mr-2"/>Extract Details</>
+                          )}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                  <canvas ref={canvasRef} className="hidden" />
+                </DialogContent>
+              </Dialog>
             <form onSubmit={handleAddPrescription} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="med-name">Medication Name</Label>
