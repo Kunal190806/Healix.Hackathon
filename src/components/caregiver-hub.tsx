@@ -15,9 +15,6 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { cn } from "@/lib/utils";
 
-// We can't import the logo component directly due to SSR/client mismatch potential with SVGs in some setups.
-// So we will fetch the logo for the PDF on the client side.
-
 // Sample data to simulate a patient's profile
 const samplePatient = {
   id: "P001",
@@ -33,29 +30,6 @@ export default function CaregiverHub() {
   const [sampleMedications, setSampleMedications] = useState<Prescription[]>([]);
   const [sampleNotifications, setSampleNotifications] = useState<any[]>([]);
   const [adherenceData, setAdherenceData] = useState<any[]>([]);
-  
-  // We can't generate the logo data URL on the server, so we do it on the client.
-  const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
-  useEffect(() => {
-    const convertImageToDataUrl = async () => {
-      try {
-        const response = await fetch('/healix-logo.png');
-        if (!response.ok) {
-          throw new Error('Logo not found');
-        }
-        const blob = await response.blob();
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setLogoDataUrl(reader.result as string);
-        };
-        reader.readAsDataURL(blob);
-      } catch (error) {
-        console.error("Failed to load logo for PDF:", error);
-      }
-    };
-    convertImageToDataUrl();
-  }, []);
-
 
   useEffect(() => {
     const today = new Date();
@@ -94,15 +68,10 @@ export default function CaregiverHub() {
   }, []);
 
   const generatePDF = () => {
-    if (!logoDataUrl) {
-      alert("Logo is still loading, please try again in a moment.");
-      return;
-    }
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
 
     // 1. Header
-    doc.addImage(logoDataUrl, 'PNG', 15, 12, 20, 20);
     doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
     doc.text("HEALIX Health Summary", pageWidth / 2, 25, { align: "center" });
@@ -245,12 +214,8 @@ export default function CaregiverHub() {
                     </CardTitle>
                     <CardDescription>{samplePatient.age} years old - {samplePatient.condition}</CardDescription>
                 </div>
-                <Button onClick={handleDownload} disabled={!logoDataUrl}>
-                  {!logoDataUrl ? (
-                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Preparing Download...</>
-                  ) : (
-                    <><Download className="mr-2 h-4 w-4" /> Download Summary</>
-                  )}
+                <Button onClick={handleDownload}>
+                  <Download className="mr-2 h-4 w-4" /> Download Summary
                 </Button>
             </CardHeader>
         </Card>
