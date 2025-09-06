@@ -156,7 +156,7 @@ export default function SignUpForm() {
                 <Input id="doctor-documents" type="file" />
                 <p className="text-xs text-muted-foreground">Upload your medical license or registration proof.</p>
               </div>
-              <Button type="submit" className="w-full">Register as a Doctor</Button>
+              <Button type="submit" className="w-full" onClick={(e) => { e.preventDefault(); toast({ title: 'Coming Soon!', description: 'Doctor registration is not yet available.' }); }}>Register as a Doctor</Button>
             </form>
           </CardContent>
         </Card>
@@ -200,7 +200,7 @@ export default function SignUpForm() {
                     <Input id="donor-city" placeholder="e.g., Bangalore" required />
                   </div>
               </div>
-              <Button type="submit" className="w-full">Register as a Donor</Button>
+              <Button type="submit" className="w-full" onClick={(e) => { e.preventDefault(); toast({ title: 'Coming Soon!', description: 'Donor registration is not yet available.' }); }}>Register as a Donor</Button>
             </form>
           </CardContent>
         </Card>
@@ -239,7 +239,7 @@ export default function SignUpForm() {
                     <Input id="trainer-city" placeholder="e.g., Pune" required />
                   </div>
               </div>
-              <Button type="submit" className="w-full">Register as a Trainer</Button>
+              <Button type="submit" className="w-full" onClick={(e) => { e.preventDefault(); toast({ title: 'Coming Soon!', description: 'Trainer registration is not yet available.' }); }}>Register as a Trainer</Button>
             </form>
           </CardContent>
         </Card>
@@ -281,7 +281,7 @@ export default function SignUpForm() {
                 <Input id="hospital-documents" type="file" />
                 <p className="text-xs text-muted-foreground">Upload hospital registration proof.</p>
               </div>
-              <Button type="submit" className="w-full">Register Your Hospital</Button>
+              <Button type="submit" className="w-full" onClick={(e) => { e.preventDefault(); toast({ title: 'Coming Soon!', description: 'Hospital registration is not yet available.' }); }}>Register Your Hospital</Button>
             </form>
           </CardContent>
         </Card>
