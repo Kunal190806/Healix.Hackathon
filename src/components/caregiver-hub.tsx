@@ -11,9 +11,13 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, L
 import { format, subDays, addDays } from "date-fns";
 import { AlertTriangle, Bell, Calendar, Download, HeartPulse, Pill, User, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import Logo from "./logo";
 
 // Sample data to simulate a patient's profile
 const samplePatient = {
+  id: "P001",
   name: "Rohan Verma",
   age: 68,
   condition: "Hypertension & Type 2 Diabetes"
@@ -56,8 +60,154 @@ const adherenceData = [
 
 export default function CaregiverHub() {
 
+  const generatePDF = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    // 1. Header
+    const svgElement = document.getElementById('pdf-logo');
+    if (svgElement) {
+        const svgString = new XMLSerializer().serializeToString(svgElement);
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        const img = new Image();
+        img.onload = () => {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx?.drawImage(img, 0, 0);
+            const dataUrl = canvas.toDataURL("image/png");
+            
+            doc.addImage(dataUrl, 'PNG', 15, 12, 20, 20);
+            doc.setFontSize(22);
+            doc.setFont("helvetica", "bold");
+            doc.text("HEALIX Health Summary", pageWidth / 2, 25, { align: "center" });
+
+            // 2. Patient Information
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "normal");
+            doc.text(`Patient Name: ${samplePatient.name}`, 15, 45);
+            doc.text(`Patient ID: ${samplePatient.id}`, 15, 51);
+            doc.text(`Export Date: ${format(new Date(), 'PPpp')}`, pageWidth - 15, 45, {align: 'right'});
+
+
+            // 3. Appointments Table
+            autoTable(doc, {
+                startY: 60,
+                head: [['Date & Time', 'Doctor', 'Specialty']],
+                body: sampleAppointments.map(a => [
+                    `${format(new Date(a.date), "PP")} at ${a.time}`,
+                    a.doctor,
+                    a.specialty
+                ]),
+                headStyles: { fillColor: [63, 81, 181] },
+                didDrawPage: (data) => addFooter(doc, data.pageNumber)
+            });
+
+            // 4. Vitals Table
+            autoTable(doc, {
+                head: [['Date', 'Metric', 'Value']],
+                body: sampleVitals.flatMap(v => {
+                    const entries: [string, string, string][] = [];
+                    const d = format(new Date(v.date), 'PP');
+                    if (v.bloodPressure) entries.push([d, 'Blood Pressure', `${v.bloodPressure.systolic}/${v.bloodPressure.diastolic} mmHg`]);
+                    if (v.bloodSugar) entries.push([d, 'Blood Sugar', `${v.bloodSugar} mg/dL`]);
+                    if (v.heartRate) entries.push([d, 'Heart Rate', `${v.heartRate} BPM`]);
+                    return entries;
+                }),
+                headStyles: { fillColor: [63, 81, 181] },
+                didDrawPage: (data) => addFooter(doc, data.pageNumber)
+            });
+            
+             // 5. Adherence Table
+            autoTable(doc, {
+                head: [['Medication', 'Dosage', 'Frequency', 'Time']],
+                body: sampleMedications.map(m => [m.name, m.dosage, m.frequency, m.time]),
+                 headStyles: { fillColor: [63, 81, 181] },
+                didDrawPage: (data) => addFooter(doc, data.pageNumber)
+            });
+
+            doc.save(`HEALIX_Summary_${samplePatient.name}_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+        };
+        img.src = 'data:image/svg+xml;base64,' + btoa(svgString);
+    }
+  };
+  
+  const addFooter = (doc: jsPDF, pageNumber: number) => {
+    const pageCount = doc.getNumberOfPages();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text(`© ${new Date().getFullYear()} HEALIX. All rights reserved. | support@healix.io`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+    doc.text(`Page ${pageNumber} of ${pageCount}`, pageWidth - 15, pageHeight - 10, { align: 'right' });
+  };
+
+  const generateCSV = () => {
+    const headers = [
+        `HEALIX Health Summary`,
+        `Patient ID: ${samplePatient.id}`,
+        `Patient Name: ${samplePatient.name}`,
+        `Export Date: ${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}`
+    ];
+
+    const sections: {title: string, columns: string[], data: string[][]}[] = [
+        {
+            title: "Upcoming Appointments",
+            columns: ["Date", "Time", "Doctor", "Specialty"],
+            data: sampleAppointments.map(a => [format(new Date(a.date), 'yyyy-MM-dd'), a.time, a.doctor, a.specialty])
+        },
+        {
+            title: "Vital Signs Log",
+            columns: ["Date", "Blood Pressure (Systolic)", "Blood Pressure (Diastolic)", "Blood Sugar (mg/dL)", "Heart Rate (BPM)"],
+            data: sampleVitals.map(v => [
+                format(new Date(v.date), 'yyyy-MM-dd HH:mm'),
+                v.bloodPressure?.systolic.toString() ?? '',
+                v.bloodPressure?.diastolic.toString() ?? '',
+                v.bloodSugar?.toString() ?? '',
+                v.heartRate?.toString() ?? ''
+            ])
+        },
+        {
+            title: "Medication Adherence",
+            columns: ["Date", "Adherence (%)"],
+            data: adherenceData.map(d => [d.date, d.adherence.toFixed(2)])
+        }
+    ];
+
+    let csvContent = headers.join("\n") + "\n\n";
+
+    sections.forEach(section => {
+        csvContent += section.title + "\n";
+        csvContent += section.columns.join(",") + "\n";
+        section.data.forEach(row => {
+            csvContent += row.join(",") + "\n";
+        });
+        csvContent += "\n";
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `HEALIX_Summary_${samplePatient.name}_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+  };
+
+  const handleDownload = () => {
+    generatePDF();
+    generateCSV();
+  }
+
   return (
     <div className="space-y-6">
+        <div style={{ display: 'none' }}>
+            <Logo id="pdf-logo" className="w-10 h-10 text-primary" />
+        </div>
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
                 <div>
@@ -67,7 +217,7 @@ export default function CaregiverHub() {
                     </CardTitle>
                     <CardDescription>{samplePatient.age} years old - {samplePatient.condition}</CardDescription>
                 </div>
-                <Button><Download className="mr-2 h-4 w-4" /> Download Summary</Button>
+                <Button onClick={handleDownload}><Download className="mr-2 h-4 w-4" /> Download Summary</Button>
             </CardHeader>
         </Card>
 
