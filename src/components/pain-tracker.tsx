@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -10,7 +11,16 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
-import { Activity, Download, Trash2 } from "lucide-react";
+import { Activity, Download, Trash2, FileText, FileSpreadsheet } from "lucide-react";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import Logo from "./logo";
+
+// Extend jsPDF with autoTable
+interface jsPDFWithAutoTable extends jsPDF {
+  autoTable: (options: any) => jsPDF;
+}
+
 
 export default function PainTracker() {
   const [logs, setLogs] = useLocalStorage<PainLog[]>("painLogs", []);
@@ -36,8 +46,22 @@ export default function PainTracker() {
   };
   
   const handleDownloadCsv = () => {
+    const appName = "MediSync Health Platform";
+    const exportTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss');
+    const description = "Pain Log History";
+
     const headers = ["Date", "Time", "Pain Level (1-10)", "Symptoms"];
+    
+    // Branded header
+    const brandedHeader = [
+        `${appName}`,
+        `Export Date: ${exportTime}`,
+        `${description}`,
+        "" // Empty line for spacing
+    ].join('\n');
+
     const csvContent = [
+      brandedHeader,
       headers.join(','),
       ...logs.map(log => [
         format(new Date(log.date), 'yyyy-MM-dd'),
@@ -58,6 +82,59 @@ export default function PainTracker() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleDownloadPdf = () => {
+    const doc = new jsPDF() as jsPDFWithAutoTable;
+    const appName = "MediSync";
+    const reportTitle = "Pain Log History";
+    const exportTime = format(new Date(), "PPP 'at' p");
+    const copyright = `© ${new Date().getFullYear()} MediSync. All rights reserved.`;
+    const contact = "Support: support@medisync.app";
+
+    // Logo
+    const svgElement = document.createElement("div");
+    svgElement.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="M12 18v4"/><path d="m4.93 4.93 2.83 2.83"/><path d="m16.24 16.24 2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="m4.93 19.07 2.83-2.83"/><path d="m16.24 7.76 2.83-2.83"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>`;
+    const svgText = svgElement.innerHTML;
+    const logoDataUrl = `data:image/svg+xml;base64,${btoa(svgText)}`;
+    doc.addImage(logoDataUrl, 'SVG', 14, 12, 10, 10);
+    
+    // Header
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text(appName, 26, 20);
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(reportTitle, 14, 30);
+    doc.setFontSize(10);
+    doc.text(`Exported on: ${exportTime}`, 14, 35);
+    
+    // Table
+    doc.autoTable({
+      startY: 45,
+      head: [["Date", "Time", "Pain Level (1-10)", "Symptoms"]],
+      body: logs.map(log => [
+        format(new Date(log.date), 'PPP'),
+        format(new Date(log.date), 'p'),
+        log.level,
+        log.symptoms
+      ]),
+      headStyles: { fillColor: [37, 99, 235] }, // primary color
+      styles: { cellPadding: 3, fontSize: 10 },
+      margin: { top: 40 }
+    });
+
+    // Footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.text(copyright, 14, doc.internal.pageSize.height - 10);
+        doc.text(contact, doc.internal.pageSize.width - 14, doc.internal.pageSize.height - 10, { align: 'right' });
+        doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+    }
+
+    doc.save(`pain-logs-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   };
 
   return (
@@ -89,15 +166,21 @@ export default function PainTracker() {
       </div>
       <div className="lg:col-span-3">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-start justify-between gap-4">
             <div>
                 <CardTitle>Your Pain Log History</CardTitle>
                 <CardDescription>A record of your pain episodes.</CardDescription>
             </div>
-            <Button variant="outline" size="sm" onClick={handleDownloadCsv} disabled={logs.length === 0}>
-                <Download className="mr-2 h-4 w-4" />
-                Download CSV
-            </Button>
+            <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={handleDownloadPdf} disabled={logs.length === 0}>
+                    <FileText className="mr-2 h-4 w-4" />
+                    PDF
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleDownloadCsv} disabled={logs.length === 0}>
+                    <FileSpreadsheet className="mr-2 h-4 w-4" />
+                    CSV
+                </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <Table>
