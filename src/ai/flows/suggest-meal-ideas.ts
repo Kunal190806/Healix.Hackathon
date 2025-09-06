@@ -5,7 +5,7 @@
  *
  * - suggestMealIdeas - A function that suggests meal ideas based on dietary needs and allergies.
  * - SuggestMealIdeasInput - The input type for the suggestMealIdeas function, including dietary restrictions and preferences.
- * - SuggestMealIdeasOutput - The return type for the suggestMealIdeas function, providing a list of meal ideas.
+ * - SuggestMealIdeasOutput - The return type for the suggestMealideas function, providing a list of meal ideas.
  */
 
 import {ai} from '@/ai/genkit';
@@ -52,7 +52,7 @@ const prompt = ai.definePrompt({
   name: 'suggestMealIdeasPrompt',
   input: {schema: SuggestMealIdeasInputSchema},
   output: {schema: SuggestMealIdeasOutputSchema},
-  prompt: `You are an expert nutritionist and chef. Suggest 5 meal ideas based on the following dietary restrictions, allergies, cuisine preferences, and calorie goals.
+  prompt: `You are an expert nutritionist and chef specializing in world cuisines, especially Indian food. Suggest 5 meal ideas based on the following dietary restrictions, allergies, cuisine preferences, and calorie goals.
 
 Dietary Restrictions: {{{dietaryRestrictions}}}
 Allergies to strictly avoid: {{{allergies}}}
@@ -60,7 +60,7 @@ Cuisine Preferences: {{{cuisinePreferences}}}
 Calorie Goals: {{{calorieGoals}}}
 
 For each meal idea, provide:
-1.  A creative and appealing name for the meal.
+1.  A creative and appealing name for the meal. If the user requests a specific cuisine like Indian, try to use authentic or regional names (e.g., "Pithla Bhakri" if Marathi cuisine is relevant).
 2.  A short (1-2 sentence) description.
 3.  An estimated calorie count per serving that fits within the user's goals.
 
