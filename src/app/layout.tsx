@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { Home, Pill, Droplets, Users, UtensilsCrossed, BookHeart, Activity, Dumbbell, PanelLeft, Hospital } from 'lucide-react';
+import { Home, Pill, Droplets, Users, UtensilsCrossed, BookHeart, Activity, Dumbbell, PanelLeft, Hospital, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 import Logo from '@/components/logo';
 import { usePathname } from 'next/navigation';
@@ -70,16 +70,28 @@ export default function RootLayout({
             </SidebarContent>
           </Sidebar>
           <SidebarInset>
-            <main className="min-h-screen p-4 sm:p-6 lg:p-8">
-              <div className="md:hidden flex items-center justify-between mb-4">
+            <header className="flex items-center justify-between mb-4 p-4 sm:p-6 lg:p-8 lg:pb-0">
+                <div className="flex items-center gap-2">
+                    <div className="md:hidden">
+                        <Logo className="w-8 h-8 text-primary" />
+                    </div>
+                    <span className="text-lg font-headline font-bold md:hidden">MediSync</span>
+                </div>
                  <div className="flex items-center gap-2">
-                    <Logo className="w-8 h-8 text-primary" />
-                    <span className="text-lg font-headline font-bold">MediSync</span>
+                    <Button variant="outline" asChild>
+                      <Link href="/signup">
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Sign Up
+                      </Link>
+                    </Button>
+                    <div className="md:hidden">
+                      <SidebarTrigger>
+                          <PanelLeft />
+                      </SidebarTrigger>
+                    </div>
                  </div>
-                 <SidebarTrigger>
-                    <PanelLeft />
-                 </SidebarTrigger>
-              </div>
+            </header>
+            <main className="min-h-screen p-4 sm:p-6 lg:p-8 pt-0 lg:pt-8">
               {children}
             </main>
           </SidebarInset>
