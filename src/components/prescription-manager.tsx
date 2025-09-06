@@ -191,7 +191,7 @@ export default function PrescriptionManager() {
                       Upload or take a photo of your prescription. The AI will attempt to extract the details.
                     </DialogDescription>
                   </DialogHeader>
-                  <div className="space-y-4">
+                  <div className="space-y-4 pt-4">
                     {!capturedImage ? (
                       <div>
                         {isCameraOn ? (
