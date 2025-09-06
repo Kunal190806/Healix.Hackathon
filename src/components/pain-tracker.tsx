@@ -93,7 +93,37 @@ export default function PainTracker() {
     const contact = "Support: support@medisync.app";
 
     // Logo - SVG content
-    const svgText = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="M12 18v4"/><path d="m4.93 4.93 2.83 2.83"/><path d="m16.24 16.24 2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="m4.93 19.07 2.83-2.83"/><path d="m16.24 7.76 2.83-2.83"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>`;
+    const svgText = `<svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 200 200"
+      width="200"
+      height="200"
+    >
+      <defs>
+        <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#4ade80" />
+          <stop offset="100%" stop-color="#22c55e" />
+        </linearGradient>
+        <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#60a5fa" />
+          <stop offset="100%" stop-color="#3b82f6" />
+        </linearGradient>
+      </defs>
+      <g transform="translate(100,100)">
+        <g transform="rotate(-15)">
+          <path d="M-30,-70 C-30,-90 30,-90 30,-70 S-30,-50 30,-50" stroke="#a3e635" stroke-width="6" fill="none" />
+          <path d="M-30,70 C-30,90 30,90 30,70 S-30,50 30,50" stroke="#a3e635" stroke-width="6" fill="none" />
+          <line x1="-30" y1="0" x2="30" y2="0" stroke="#a3e635" stroke-width="6" />
+          <path d="M-30, -70 L-30, 70" stroke="#a3e635" stroke-width="6" fill="none" />
+          <path d="M30, -70 L30, 70" stroke="#a3e635" stroke-width="6" fill="none" />
+          <g transform="translate(0, 0) scale(1.2)">
+            <path d="M-35,35 C-60,10 -50,-40 -20,-50 C10,-60 40,-45 45,-20 C50,5 25,30 0,35 C-25,40 -30,35 -35,35 Z" fill="url(#grad2)" transform="translate(15, -55) rotate(-20) scale(0.9)" />
+            <path d="M35,-35 C60,-10 50,40 20,50 C-10,60 -40,45 -45,20 C-50,-5 -25,-30 0,-35 C25,-40 30,-35 35,-35 Z" fill="url(#grad1)" transform="translate(-15, 55) rotate(160) scale(0.9)" />
+            <path d="M0,0 C-20,-15 -10,-35 15,-40 C40,-45 50,-25 40,-5 C30,15 15,25 0,20 C-15,15 -10,5 0,0 Z" fill="#3b82f6" opacity="0.8" transform="translate(0,0) rotate(20)" />
+          </g>
+        </g>
+      </g>
+    </svg>`;
     const logoDataUrl = `data:image/svg+xml;base64,${btoa(svgText)}`;
     
     // Header
@@ -112,8 +142,8 @@ export default function PainTracker() {
     img.onload = () => {
         const canvas = document.createElement('canvas');
         const canvasContext = canvas.getContext('2d');
-        canvas.width = img.width;
-        canvas.height = img.height;
+        canvas.width = 200;
+        canvas.height = 200;
         if (canvasContext) {
             canvasContext.drawImage(img, 0, 0);
             const pngDataUrl = canvas.toDataURL('image/png');
