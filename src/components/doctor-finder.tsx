@@ -9,7 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Stethoscope, MapPin, IndianRupee, User, BookOpen } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Stethoscope, MapPin, IndianRupee, User, BookOpen, Star, CalendarDays } from "lucide-react";
 import Image from "next/image";
 
 const sampleDoctors: Doctor[] = [
@@ -100,35 +101,88 @@ export default function DoctorFinder() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredDoctors.length > 0 ? (
           filteredDoctors.map(doctor => (
-            <Card key={doctor.id} className="flex flex-col">
-              <CardHeader>
-                 <div className="flex items-start gap-4">
-                    <div className="relative h-20 w-20 rounded-full overflow-hidden">
-                       <Image src={doctor.image} alt={doctor.name} fill={true} style={{objectFit: 'cover'}} data-ai-hint="doctor person" />
+            <Dialog key={doctor.id}>
+              <Card className="flex flex-col">
+                <CardHeader>
+                   <div className="flex items-start gap-4">
+                      <div className="relative h-20 w-20 rounded-full overflow-hidden">
+                         <Image src={doctor.image} alt={doctor.name} fill={true} style={{objectFit: 'cover'}} data-ai-hint="doctor person" />
+                      </div>
+                      <div className="flex-1">
+                          <CardTitle className="text-xl font-headline">{doctor.name}</CardTitle>
+                          <p className="text-sm text-primary">{doctor.specialty}</p>
+                          <p className="text-xs text-muted-foreground">{doctor.experience} years experience</p>
+                      </div>
+                   </div>
+                </CardHeader>
+                <CardContent className="flex-grow space-y-3">
+                   <p className="text-sm text-muted-foreground italic leading-relaxed">"{doctor.bio}"</p>
+                  <div className="flex items-center gap-2 text-sm">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <span>{doctor.city}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <IndianRupee className="h-4 w-4 text-muted-foreground" />
+                    <span>{doctor.fees} Consultation Fee</span>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex gap-2">
+                  <Button className="flex-1">Book Now</Button>
+                  <DialogTrigger asChild>
+                    <Button variant="outline">View Profile</Button>
+                  </DialogTrigger>
+                </CardFooter>
+              </Card>
+
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <div className="flex items-start gap-4">
+                      <div className="relative h-24 w-24 rounded-full overflow-hidden">
+                         <Image src={doctor.image} alt={doctor.name} fill={true} style={{objectFit: 'cover'}} data-ai-hint="doctor person" />
+                      </div>
+                      <div className="flex-1 pt-2">
+                        <DialogTitle className="text-2xl font-bold font-headline">{doctor.name}</DialogTitle>
+                        <DialogDescription>
+                            <p className="text-primary font-semibold">{doctor.specialty}</p>
+                            <p>{doctor.experience} years of experience</p>
+                            <div className="flex items-center gap-1 mt-1">
+                                <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                                <span className="font-bold">4.8</span>
+                                <span className="text-xs text-muted-foreground">(245 reviews)</span>
+                            </div>
+                        </DialogDescription>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                        <CardTitle className="text-xl font-headline">{doctor.name}</CardTitle>
-                        <p className="text-sm text-primary">{doctor.specialty}</p>
-                        <p className="text-xs text-muted-foreground">{doctor.experience} years experience</p>
+                </DialogHeader>
+
+                <div className="py-4 space-y-4">
+                    <div className="space-y-1">
+                        <h3 className="font-semibold text-sm">About</h3>
+                        <p className="text-sm text-muted-foreground">{doctor.bio}</p>
                     </div>
-                 </div>
-              </CardHeader>
-              <CardContent className="flex-grow space-y-3">
-                 <p className="text-sm text-muted-foreground italic leading-relaxed">"{doctor.bio}"</p>
-                <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <span>{doctor.city}</span>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <h3 className="font-semibold">Consultation Fee</h3>
+                            <p className="text-muted-foreground">₹ {doctor.fees}</p>
+                        </div>
+                        <div>
+                            <h3 className="font-semibold">Location</h3>
+                            <p className="text-muted-foreground">{doctor.city}</p>
+                        </div>
+                         <div>
+                            <h3 className="font-semibold">Availability</h3>
+                            <p className="text-muted-foreground flex items-center gap-2">
+                               <CalendarDays className="h-4 w-4" /> Next available: Tomorrow
+                            </p>
+                        </div>
+                    </div>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <IndianRupee className="h-4 w-4 text-muted-foreground" />
-                  <span>{doctor.fees} Consultation Fee</span>
-                </div>
-              </CardContent>
-              <CardFooter className="flex gap-2">
-                <Button className="flex-1">Book Appointment</Button>
-                <Button variant="outline">View Profile</Button>
-              </CardFooter>
-            </Card>
+
+                <DialogFooter>
+                    <Button className="w-full">Book Appointment</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           ))
         ) : (
           <div className="md:col-span-2 lg:col-span-3">
@@ -145,5 +199,3 @@ export default function DoctorFinder() {
     </div>
   );
 }
-
-    
