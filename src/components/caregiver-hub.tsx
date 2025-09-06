@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import Logo from "./logo";
+import { cn } from "@/lib/utils";
 
 // Sample data to simulate a patient's profile
 const samplePatient = {
@@ -30,6 +31,26 @@ export default function CaregiverHub() {
   const [sampleMedications, setSampleMedications] = useState<Prescription[]>([]);
   const [sampleNotifications, setSampleNotifications] = useState<any[]>([]);
   const [adherenceData, setAdherenceData] = useState<any[]>([]);
+  const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Convert logo SVG to data URL for PDF embedding
+    const svgElement = document.getElementById('pdf-logo');
+    if (svgElement) {
+      const serializer = new XMLSerializer();
+      const svgString = serializer.serializeToString(svgElement);
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      const img = new Image();
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx?.drawImage(img, 0, 0);
+        setLogoDataUrl(canvas.toDataURL("image/png"));
+      };
+      img.src = 'data:image/svg+xml;base64,' + btoa(svgString);
+    }
+  }, []);
 
   useEffect(() => {
     const today = new Date();
@@ -67,75 +88,64 @@ export default function CaregiverHub() {
   }, []);
 
   const generatePDF = () => {
+    if (!logoDataUrl) {
+      alert("Logo is still loading, please try again in a moment.");
+      return;
+    }
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
 
     // 1. Header
-    const svgElement = document.getElementById('pdf-logo');
-    if (svgElement) {
-        const svgString = new XMLSerializer().serializeToString(svgElement);
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-        const img = new Image();
-        img.onload = () => {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx?.drawImage(img, 0, 0);
-            const dataUrl = canvas.toDataURL("image/png");
-            
-            doc.addImage(dataUrl, 'PNG', 15, 12, 20, 20);
-            doc.setFontSize(22);
-            doc.setFont("helvetica", "bold");
-            doc.text("HEALIX Health Summary", pageWidth / 2, 25, { align: "center" });
+    doc.addImage(logoDataUrl, 'PNG', 15, 12, 20, 20);
+    doc.setFontSize(22);
+    doc.setFont("helvetica", "bold");
+    doc.text("HEALIX Health Summary", pageWidth / 2, 25, { align: "center" });
 
-            // 2. Patient Information
-            doc.setFontSize(12);
-            doc.setFont("helvetica", "normal");
-            doc.text(`Patient Name: ${samplePatient.name}`, 15, 45);
-            doc.text(`Patient ID: ${samplePatient.id}`, 15, 51);
-            doc.text(`Export Date: ${format(new Date(), 'PPpp')}`, pageWidth - 15, 45, {align: 'right'});
+    // 2. Patient Information
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Patient Name: ${samplePatient.name}`, 15, 45);
+    doc.text(`Patient ID: ${samplePatient.id}`, 15, 51);
+    doc.text(`Export Date: ${format(new Date(), 'PPpp')}`, pageWidth - 15, 45, {align: 'right'});
 
 
-            // 3. Appointments Table
-            autoTable(doc, {
-                startY: 60,
-                head: [['Date & Time', 'Doctor', 'Specialty']],
-                body: sampleAppointments.map(a => [
-                    `${format(new Date(a.date), "PP")} at ${a.time}`,
-                    a.doctor,
-                    a.specialty
-                ]),
-                headStyles: { fillColor: [63, 81, 181] },
-                didDrawPage: (data) => addFooter(doc, data.pageNumber)
-            });
+    // 3. Appointments Table
+    autoTable(doc, {
+        startY: 60,
+        head: [['Date & Time', 'Doctor', 'Specialty']],
+        body: sampleAppointments.map(a => [
+            `${format(new Date(a.date), "PP")} at ${a.time}`,
+            a.doctor,
+            a.specialty
+        ]),
+        headStyles: { fillColor: [63, 81, 181] },
+        didDrawPage: (data) => addFooter(doc, data.pageNumber)
+    });
 
-            // 4. Vitals Table
-            autoTable(doc, {
-                head: [['Date', 'Metric', 'Value']],
-                body: sampleVitals.flatMap(v => {
-                    const entries: [string, string, string][] = [];
-                    const d = format(new Date(v.date), 'PP');
-                    if (v.bloodPressure) entries.push([d, 'Blood Pressure', `${v.bloodPressure.systolic}/${v.bloodPressure.diastolic} mmHg`]);
-                    if (v.bloodSugar) entries.push([d, 'Blood Sugar', `${v.bloodSugar} mg/dL`]);
-                    if (v.heartRate) entries.push([d, 'Heart Rate', `${v.heartRate} BPM`]);
-                    return entries;
-                }),
-                headStyles: { fillColor: [63, 81, 181] },
-                didDrawPage: (data) => addFooter(doc, data.pageNumber)
-            });
-            
-             // 5. Adherence Table
-            autoTable(doc, {
-                head: [['Medication', 'Dosage', 'Frequency', 'Time']],
-                body: sampleMedications.map(m => [m.name, m.dosage, m.frequency, m.time || 'N/A']),
-                 headStyles: { fillColor: [63, 81, 181] },
-                didDrawPage: (data) => addFooter(doc, data.pageNumber)
-            });
+    // 4. Vitals Table
+    autoTable(doc, {
+        head: [['Date', 'Metric', 'Value']],
+        body: sampleVitals.flatMap(v => {
+            const entries: [string, string, string][] = [];
+            const d = format(new Date(v.date), 'PP');
+            if (v.bloodPressure) entries.push([d, 'Blood Pressure', `${v.bloodPressure.systolic}/${v.bloodPressure.diastolic} mmHg`]);
+            if (v.bloodSugar) entries.push([d, 'Blood Sugar', `${v.bloodSugar} mg/dL`]);
+            if (v.heartRate) entries.push([d, 'Heart Rate', `${v.heartRate} BPM`]);
+            return entries;
+        }),
+        headStyles: { fillColor: [63, 81, 181] },
+        didDrawPage: (data) => addFooter(doc, data.pageNumber)
+    });
+    
+     // 5. Adherence Table
+    autoTable(doc, {
+        head: [['Medication', 'Dosage', 'Frequency', 'Time']],
+        body: sampleMedications.map(m => [m.name, m.dosage, m.frequency, m.time || 'N/A']),
+         headStyles: { fillColor: [63, 81, 181] },
+        didDrawPage: (data) => addFooter(doc, data.pageNumber)
+    });
 
-            doc.save(`HEALIX_Summary_${samplePatient.name}_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
-        };
-        img.src = 'data:image/svg+xml;base64,' + btoa(svgString);
-    }
+    doc.save(`HEALIX_Summary_${samplePatient.name}_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   };
   
   const addFooter = (doc: jsPDF, pageNumber: number) => {
@@ -221,7 +231,7 @@ export default function CaregiverHub() {
   return (
     <div className="space-y-6">
         <div style={{ display: 'none' }}>
-            <Logo id="pdf-logo" className="w-10 h-10 text-primary" />
+            <Logo id="pdf-logo"/>
         </div>
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
@@ -363,5 +373,3 @@ export default function CaregiverHub() {
     </div>
   );
 }
-
-    

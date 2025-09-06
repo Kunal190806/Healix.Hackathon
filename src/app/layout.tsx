@@ -8,6 +8,7 @@ import Link from 'next/link';
 import Logo from '@/components/logo';
 import { usePathname } from 'next/navigation';
 import { Toaster } from '@/components/ui/toaster';
+import { cn } from '@/lib/utils';
 
 // Metadata is not supported in client components, but we can keep this for static analysis
 // export const metadata: Metadata = {
@@ -48,7 +49,7 @@ export default function RootLayout({
           <Sidebar collapsible="icon">
             <SidebarHeader>
               <div className="flex items-center gap-2 p-2">
-                <Logo className="w-10 h-10 text-primary" />
+                <Logo />
                 <span className="text-lg font-headline font-bold">HEALIX</span>
               </div>
             </SidebarHeader>
@@ -75,7 +76,7 @@ export default function RootLayout({
             <header className="flex items-center justify-between mb-4 p-4 sm:p-6 lg:p-8 lg:pb-0">
                 <div className="flex items-center gap-2">
                     <div className="md:hidden">
-                        <Logo className="w-10 h-10 text-primary" />
+                        <Logo />
                     </div>
                     <span className="text-lg font-headline font-bold md:hidden">HEALIX</span>
                 </div>
