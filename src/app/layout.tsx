@@ -11,7 +11,7 @@ import { Toaster } from '@/components/ui/toaster';
 
 // Metadata is not supported in client components, but we can keep this for static analysis
 // export const metadata: Metadata = {
-//   title: 'HEALIX MVP',
+//   title: 'HEALIX',
 //   description: 'A comprehensive healthcare and wellness web application.',
 // };
 
