@@ -19,7 +19,7 @@ const sampleDonors: BloodDonor[] = [
   { id: 'bd1', name: 'Priya Sharma', bloodType: 'O+', location: 'Mumbai' },
   { id: 'bd2', name: 'Arjun Reddy', bloodType: 'A+', location: 'Bangalore' },
   { id: 'bd3', name: 'Sneha Gupta', bloodType: 'B-', location: 'Delhi' },
-  { id: 'bd4', name: 'Rohan Desai', bloodType: 'AB+', location: 'Pune' },
+  { id: 'bd4', name: 'Aarya Joshi', bloodType: 'AB+', location: 'Pune' },
   { id: 'bd5', name: 'Anjali Mehta', bloodType: 'O-', location: 'Chennai' },
   { id: 'bd6', name: 'Vikram Singh', bloodType: 'A-', location: 'Kolkata' },
 ];

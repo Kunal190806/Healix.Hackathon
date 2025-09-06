@@ -40,3 +40,11 @@ export type FitnessTrainer = {
   availability: string;
   location: string;
 };
+
+export type Hospital = {
+  id: string;
+  name: string;
+  city: string;
+  specialty: string;
+  address: string;
+};
