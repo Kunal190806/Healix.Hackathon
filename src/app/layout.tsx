@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { Home, Pill, Droplets, Users, UtensilsCrossed, BookHeart, Activity, Dumbbell, PanelLeft, Hospital, UserPlus, Stethoscope, HeartPulse, ShieldCheck } from 'lucide-react';
+import { Home, Pill, Droplets, Users, UtensilsCrossed, BookHeart, Dumbbell, PanelLeft, Hospital, UserPlus, Stethoscope, HeartPulse, ShieldCheck, CalendarDays } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Toaster } from '@/components/ui/toaster';
@@ -27,6 +27,7 @@ export default function RootLayout({
     { href: '/', label: 'Dashboard', icon: Home },
     { href: '/hospitals', label: 'Find a Hospital', icon: Hospital },
     { href: '/doctors', label: 'Find a Doctor', icon: Stethoscope },
+    { href: '/appointments', label: 'My Appointments', icon: CalendarDays },
     { href: '/meal-planner', label: 'AI Meal Planner', icon: UtensilsCrossed },
     { href: '/prescriptions', label: 'Prescriptions', icon: Pill },
     { href: '/vitals-tracker', label: 'Vitals Tracker', icon: HeartPulse },

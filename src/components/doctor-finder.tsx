@@ -3,15 +3,19 @@
 
 import { useState } from "react";
 import useLocalStorage from "@/hooks/use-local-storage";
-import type { Doctor } from "@/lib/types";
+import type { Doctor, Appointment } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Stethoscope, MapPin, IndianRupee, User, BookOpen, Star, CalendarDays } from "lucide-react";
+import { Stethoscope, MapPin, IndianRupee, User, Star, CalendarDays, Clock, CheckCircle } from "lucide-react";
 import Image from "next/image";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 const sampleDoctors: Doctor[] = [
   // Delhi
@@ -59,6 +63,94 @@ const sampleDoctors: Doctor[] = [
 ];
 
 const specialties = [...new Set(sampleDoctors.map(d => d.specialty))].sort();
+
+const timeSlots = ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
+
+function AppointmentBookingForm({ doctor }: { doctor: Doctor }) {
+  const [appointments, setAppointments] = useLocalStorage<Appointment[]>("appointments", []);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [isConfirmed, setIsConfirmed] = useState(false);
+  const { toast } = useToast();
+
+  const handleBookAppointment = () => {
+    if (!selectedDate || !selectedTime) {
+      toast({
+        variant: "destructive",
+        title: "Incomplete Selection",
+        description: "Please select both a date and a time slot.",
+      });
+      return;
+    }
+
+    const newAppointment: Appointment = {
+      id: crypto.randomUUID(),
+      doctorId: doctor.id,
+      doctorName: doctor.name,
+      specialty: doctor.specialty,
+      date: selectedDate.toISOString(),
+      time: selectedTime,
+      status: "Confirmed",
+    };
+
+    setAppointments([...appointments, newAppointment]);
+    setIsConfirmed(true);
+    
+    toast({
+      title: "Appointment Booked!",
+      description: `Your appointment with ${doctor.name} on ${format(selectedDate, "PPP")} at ${selectedTime} is confirmed.`,
+    });
+  };
+
+  if (isConfirmed) {
+    return (
+      <div className="flex flex-col items-center justify-center text-center p-8">
+        <CheckCircle className="h-16 w-16 text-green-500 mb-4" />
+        <h2 className="text-xl font-bold font-headline mb-2">Appointment Confirmed!</h2>
+        <p className="text-muted-foreground">
+          You have successfully booked an appointment with {doctor.name}.
+        </p>
+        <p className="text-muted-foreground text-sm">
+          on {selectedDate && format(selectedDate, "EEEE, MMMM d, yyyy")} at {selectedTime}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-2">
+      <div className="flex flex-col items-center">
+        <h3 className="font-semibold mb-4">Select a Date</h3>
+        <Calendar
+          mode="single"
+          selected={selectedDate}
+          onSelect={setSelectedDate}
+          disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() - 1))}
+          className="rounded-md border"
+        />
+      </div>
+      <div>
+        <h3 className="font-semibold mb-4">Select a Time Slot</h3>
+        <div className="grid grid-cols-2 gap-2">
+          {timeSlots.map(slot => (
+            <Button
+              key={slot}
+              variant={selectedTime === slot ? "default" : "outline"}
+              onClick={() => setSelectedTime(slot)}
+            >
+              <Clock className="mr-2 h-4 w-4" />
+              {slot}
+            </Button>
+          ))}
+        </div>
+        <Button onClick={handleBookAppointment} className="w-full mt-6" disabled={!selectedDate || !selectedTime}>
+          Confirm Booking
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 
 export default function DoctorFinder() {
   const [doctors, setDoctors] = useLocalStorage<Doctor[]>("doctors", sampleDoctors);
@@ -133,60 +225,40 @@ export default function DoctorFinder() {
                   </div>
                 </CardContent>
                 <CardFooter className="flex gap-2">
-                  <Button className="flex-1">Book Now</Button>
+                   <DialogTrigger asChild>
+                    <Button className="flex-1">Book Now</Button>
+                  </DialogTrigger>
                   <DialogTrigger asChild>
                     <Button variant="outline">View Profile</Button>
                   </DialogTrigger>
                 </CardFooter>
               </Card>
 
-              <DialogContent className="sm:max-w-md rounded-2xl">
+              <DialogContent className="sm:max-w-4xl rounded-2xl">
                 <DialogHeader>
-                    <div className="flex items-start gap-4">
-                      <div className="relative h-24 w-24 rounded-full overflow-hidden">
+                    <div className="flex flex-col md:flex-row items-start gap-6">
+                      <div className="relative h-32 w-32 rounded-full overflow-hidden flex-shrink-0">
                          <Image src={doctor.image} alt={doctor.name} fill={true} style={{objectFit: 'cover'}} data-ai-hint="doctor person" />
                       </div>
                       <div className="flex-1 pt-2">
-                        <DialogTitle className="text-2xl font-bold font-headline">{doctor.name}</DialogTitle>
-                        <DialogDescription>
-                            <div className="text-primary font-semibold">{doctor.specialty}</div>
+                        <DialogTitle className="text-3xl font-bold font-headline">{doctor.name}</DialogTitle>
+                        <DialogDescription className="mt-1">
+                            <div className="text-lg text-primary font-semibold">{doctor.specialty}</div>
                             <div>{doctor.experience} years of experience</div>
-                            <div className="flex items-center gap-1 mt-1">
-                                <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-                                <span className="font-bold">4.8</span>
-                                <span className="text-xs text-muted-foreground">(245 reviews)</span>
+                            <div className="flex items-center gap-1 mt-2">
+                                <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
+                                <span className="font-bold text-base">4.8</span>
+                                <span className="text-sm text-muted-foreground">(245 reviews)</span>
                             </div>
+                            <p className="text-base text-muted-foreground mt-4">{doctor.bio}</p>
                         </DialogDescription>
                       </div>
                     </div>
                 </DialogHeader>
 
-                <div className="py-4 space-y-4">
-                    <div className="space-y-1">
-                        <h3 className="font-semibold text-sm">About</h3>
-                        <p className="text-sm text-muted-foreground">{doctor.bio}</p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                            <h3 className="font-semibold">Consultation Fee</h3>
-                            <p className="text-muted-foreground">₹ {doctor.fees}</p>
-                        </div>
-                        <div>
-                            <h3 className="font-semibold">Location</h3>
-                            <p className="text-muted-foreground">{doctor.city}</p>
-                        </div>
-                         <div>
-                            <h3 className="font-semibold">Availability</h3>
-                            <p className="text-muted-foreground flex items-center gap-2">
-                               <CalendarDays className="h-4 w-4" /> Next available: Tomorrow
-                            </p>
-                        </div>
-                    </div>
+                <div className="py-4">
+                  <AppointmentBookingForm doctor={doctor} />
                 </div>
-
-                <DialogFooter>
-                    <Button className="w-full">Book Appointment</Button>
-                </DialogFooter>
               </DialogContent>
             </Dialog>
           ))
