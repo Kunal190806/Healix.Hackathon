@@ -53,7 +53,7 @@ const extractPrescriptionDetailsFlow = ai.defineFlow(
     outputSchema: ExtractPrescriptionDetailsOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const {output} = await prompt(input, {model: 'googleai/gemini-1.5-flash-latest'});
     return output!;
   }
 );
