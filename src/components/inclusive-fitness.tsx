@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -11,8 +12,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dumbbell, UserPlus, Search } from "lucide-react";
 
+const sampleTrainers: FitnessTrainer[] = [
+  { id: 'ft1', name: 'Aditya Rao', skills: 'Wheelchair Zumba, Geriatric Fitness', availability: 'Mon-Fri, 10am-6pm', location: 'Mumbai' },
+  { id: 'ft2', name: 'Deepika Verma', skills: 'Prenatal Yoga, Postnatal Fitness', availability: 'Weekends, 9am-1pm', location: 'Delhi' },
+  { id: 'ft3', name: 'Rajesh Kumar', skills: 'Adaptive CrossFit, Prosthetic User Training', availability: 'Tue/Thu/Sat, 7am-11am', location: 'Bangalore' },
+  { id: 'ft4', name: 'Meera Krishnan', skills: 'Aqua Aerobics for Seniors, Arthritis-friendly exercises', availability: 'Mon/Wed/Fri, 8am-12pm', location: 'Chennai' },
+  { id: 'ft5', name: 'Sameer Khan', skills: 'Fitness for Visually Impaired, Balance Training', availability: 'By Appointment', location: 'Hyderabad' },
+  { id: 'ft6', name: 'Pooja Patel', skills: 'Yoga for Autism, Sensory-friendly workouts', availability: 'Sat-Sun, 4pm-6pm', location: 'Ahmedabad' },
+];
+
 export default function InclusiveFitness() {
-  const [trainers, setTrainers] = useLocalStorage<FitnessTrainer[]>("fitnessTrainers", []);
+  const [trainers, setTrainers] = useLocalStorage<FitnessTrainer[]>("fitnessTrainers", sampleTrainers);
 
   // State for registration form
   const [regName, setRegName] = useState("");
@@ -68,7 +78,7 @@ export default function InclusiveFitness() {
               </div>
               <div className="flex-1 space-y-2">
                 <Label htmlFor="search-location">Location</Label>
-                <Input id="search-location" value={searchLocation} onChange={e => setSearchLocation(e.target.value)} placeholder="e.g., San Francisco" />
+                <Input id="search-location" value={searchLocation} onChange={e => setSearchLocation(e.target.value)} placeholder="e.g., Bangalore" />
               </div>
             </div>
             <Table>

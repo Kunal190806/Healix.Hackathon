@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -14,8 +15,17 @@ import { Droplets, UserPlus, Search } from "lucide-react";
 
 const bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
+const sampleDonors: BloodDonor[] = [
+  { id: 'bd1', name: 'Priya Sharma', bloodType: 'O+', location: 'Mumbai' },
+  { id: 'bd2', name: 'Arjun Reddy', bloodType: 'A+', location: 'Bangalore' },
+  { id: 'bd3', name: 'Sneha Gupta', bloodType: 'B-', location: 'Delhi' },
+  { id: 'bd4', name: 'Rohan Desai', bloodType: 'AB+', location: 'Pune' },
+  { id: 'bd5', name: 'Anjali Mehta', bloodType: 'O-', location: 'Chennai' },
+  { id: 'bd6', name: 'Vikram Singh', bloodType: 'A-', location: 'Kolkata' },
+];
+
 export default function BloodDonorConnector() {
-  const [donors, setDonors] = useLocalStorage<BloodDonor[]>("bloodDonors", []);
+  const [donors, setDonors] = useLocalStorage<BloodDonor[]>("bloodDonors", sampleDonors);
   
   // State for registration form
   const [regName, setRegName] = useState("");
@@ -42,7 +52,7 @@ export default function BloodDonorConnector() {
   };
 
   const filteredDonors = donors.filter(donor => {
-    const bloodTypeMatch = searchBloodType && searchBloodType !== 'all' ? donor.bloodType === searchBloodType : true;
+    const bloodTypeMatch = searchBloodType ? donor.bloodType === searchBloodType : true;
     const locationMatch = searchLocation ? donor.location.toLowerCase().includes(searchLocation.toLowerCase()) : true;
     return bloodTypeMatch && locationMatch;
   });
@@ -64,19 +74,19 @@ export default function BloodDonorConnector() {
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1 space-y-2">
                 <Label htmlFor="search-blood-type">Blood Type</Label>
-                <Select value={searchBloodType} onValueChange={(value) => setSearchBloodType(value === 'all' ? '' : value)}>
+                <Select value={searchBloodType} onValueChange={(value) => setSearchBloodType(value === 'any' ? '' : value)}>
                   <SelectTrigger id="search-blood-type">
                     <SelectValue placeholder="Any Blood Type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Any</SelectItem>
+                    <SelectItem value="any">Any</SelectItem>
                     {bloodTypes.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="flex-1 space-y-2">
                 <Label htmlFor="search-location">Location</Label>
-                <Input id="search-location" value={searchLocation} onChange={e => setSearchLocation(e.target.value)} placeholder="e.g., New York" />
+                <Input id="search-location" value={searchLocation} onChange={e => setSearchLocation(e.target.value)} placeholder="e.g., Delhi" />
               </div>
             </div>
             <Table>
