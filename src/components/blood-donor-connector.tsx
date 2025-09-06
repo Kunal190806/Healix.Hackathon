@@ -42,7 +42,7 @@ export default function BloodDonorConnector() {
   };
 
   const filteredDonors = donors.filter(donor => {
-    const bloodTypeMatch = searchBloodType ? donor.bloodType === searchBloodType : true;
+    const bloodTypeMatch = searchBloodType && searchBloodType !== 'all' ? donor.bloodType === searchBloodType : true;
     const locationMatch = searchLocation ? donor.location.toLowerCase().includes(searchLocation.toLowerCase()) : true;
     return bloodTypeMatch && locationMatch;
   });
@@ -64,12 +64,12 @@ export default function BloodDonorConnector() {
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1 space-y-2">
                 <Label htmlFor="search-blood-type">Blood Type</Label>
-                <Select value={searchBloodType} onValueChange={setSearchBloodType}>
+                <Select value={searchBloodType} onValueChange={(value) => setSearchBloodType(value === 'all' ? '' : value)}>
                   <SelectTrigger id="search-blood-type">
                     <SelectValue placeholder="Any Blood Type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Any</SelectItem>
+                    <SelectItem value="all">Any</SelectItem>
                     {bloodTypes.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
                   </SelectContent>
                 </Select>
