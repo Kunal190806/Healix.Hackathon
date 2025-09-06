@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useEffect, useState } from 'react';
+import { useActionState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -22,7 +22,6 @@ const formSchema = z.object({
 export default function MealPlannerForm() {
   const { toast } = useToast();
   const [formState, formAction] = useActionState(getMealSuggestions, { message: '' });
-  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -34,8 +33,9 @@ export default function MealPlannerForm() {
     },
   });
 
+  const { formState: { isSubmitting } } = form;
+
   useEffect(() => {
-    setIsLoading(false);
     if (formState.error) {
       toast({
         variant: 'destructive',
@@ -45,19 +45,21 @@ export default function MealPlannerForm() {
     }
   }, [formState, toast]);
 
-  const onSubmit = (data: z.infer<typeof formSchema>) => {
-    setIsLoading(true);
-    const formData = new FormData();
-    Object.entries(data).forEach(([key, value]) => {
-      formData.append(key, value || '');
-    });
-    formAction(formData);
-  };
-
   return (
     <div className="space-y-8">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form
+          action={formAction}
+          onSubmit={form.handleSubmit(() => {
+            const formData = new FormData();
+            const data = form.getValues();
+            Object.entries(data).forEach(([key, value]) => {
+                formData.append(key, value || '');
+            });
+            formAction(formData);
+          })}
+          className="space-y-6"
+        >
           <FormField
             control={form.control}
             name="dietaryRestrictions"
@@ -114,8 +116,8 @@ export default function MealPlannerForm() {
               </FormItem>
             )}
           />
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? (
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Generating...
@@ -127,7 +129,7 @@ export default function MealPlannerForm() {
         </form>
       </Form>
 
-      {isLoading && (
+      {isSubmitting && (
         <div className="flex items-center justify-center rounded-lg border border-dashed p-12">
             <div className="text-center">
                 <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
@@ -136,7 +138,7 @@ export default function MealPlannerForm() {
         </div>
       )}
 
-      {formState?.mealIdeas && formState.mealIdeas.length > 0 && (
+      {formState?.mealIdeas && formState.mealIdeas.length > 0 && !isSubmitting && (
         <div>
           <h2 className="text-2xl font-headline font-semibold mb-4">Your Meal Ideas</h2>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -164,7 +166,7 @@ export default function MealPlannerForm() {
         </div>
       )}
 
-      {formState?.error && !isLoading && (
+      {formState?.error && !isSubmitting && (
         <div className="flex items-center justify-center rounded-lg border border-destructive/50 bg-destructive/10 p-12">
             <div className="text-center text-destructive">
                 <AlertCircle className="mx-auto h-12 w-12" />
