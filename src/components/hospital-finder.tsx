@@ -17,6 +17,12 @@ const sampleHospitals: Hospital[] = [
   { id: 'h4', name: 'Max Healthcare', city: 'Delhi', specialty: 'Multi-specialty', address: 'Press Enclave Road, Saket, New Delhi' },
   { id: 'h5', name: 'Medanta - The Medicity', city: 'Gurgaon', specialty: 'Liver Transplant, Cardiology', address: 'CH Baktawar Singh Road, Gurgaon' },
   { id: 'h6', name: 'Manipal Hospitals', city: 'Bangalore', specialty: 'Multi-specialty', address: '98, HAL Old Airport Rd, Bangalore' },
+  { id: 'h7', name: 'All India Institute of Medical Sciences (AIIMS)', city: 'Delhi', specialty: 'Multi-specialty, Research', address: 'Ansari Nagar, New Delhi' },
+  { id: 'h8', name: 'Christian Medical College (CMC)', city: 'Vellore', specialty: 'Multi-specialty, Medical College', address: 'Ida Scudder Road, Vellore, Tamil Nadu' },
+  { id: 'h9', name: 'PGIMER', city: 'Chandigarh', specialty: 'Medical Research, Multi-specialty', address: 'Sector 12, Chandigarh' },
+  { id: 'h10', name: 'Lilavati Hospital & Research Centre', city: 'Mumbai', specialty: 'Multi-specialty', address: 'Bandra West, Mumbai' },
+  { id: 'h11', name: 'Amrita Hospital', city: 'Kochi', specialty: 'Multi-specialty, Advanced Surgery', address: 'Ponekkara, Kochi, Kerala' },
+  { id: 'h12', name: 'Sir Ganga Ram Hospital', city: 'Delhi', specialty: 'Multi-specialty', address: 'Rajinder Nagar, New Delhi' },
 ];
 
 
