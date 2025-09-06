@@ -11,7 +11,7 @@ import { Toaster } from '@/components/ui/toaster';
 
 // Metadata is not supported in client components, but we can keep this for static analysis
 // export const metadata: Metadata = {
-//   title: 'MediSync MVP',
+//   title: 'HEALIX MVP',
 //   description: 'A comprehensive healthcare and wellness web application.',
 // };
 
@@ -48,7 +48,7 @@ export default function RootLayout({
             <SidebarHeader>
               <div className="flex items-center gap-2 p-2">
                 <Logo className="w-10 h-10 text-primary" />
-                <span className="text-lg font-headline font-bold">MediSync</span>
+                <span className="text-lg font-headline font-bold">HEALIX</span>
               </div>
             </SidebarHeader>
             <SidebarContent>
@@ -76,7 +76,7 @@ export default function RootLayout({
                     <div className="md:hidden">
                         <Logo className="w-10 h-10 text-primary" />
                     </div>
-                    <span className="text-lg font-headline font-bold md:hidden">MediSync</span>
+                    <span className="text-lg font-headline font-bold md:hidden">HEALIX</span>
                 </div>
                  <div className="flex items-center gap-2">
                     <Button variant="outline" asChild>

@@ -46,7 +46,7 @@ export default function PainTracker() {
   };
   
   const handleDownloadCsv = () => {
-    const appName = "MediSync Health Platform";
+    const appName = "HEALIX Health Platform";
     const exportTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss');
     const description = "Pain Log History";
 
@@ -86,11 +86,11 @@ export default function PainTracker() {
 
   const handleDownloadPdf = () => {
     const doc = new jsPDF() as jsPDFWithAutoTable;
-    const appName = "MediSync";
+    const appName = "HEALIX";
     const reportTitle = "Pain Log History";
     const exportTime = format(new Date(), "PPP 'at' p");
-    const copyright = `© ${new Date().getFullYear()} MediSync. All rights reserved.`;
-    const contact = "Support: support@medisync.app";
+    const copyright = `© ${new Date().getFullYear()} HEALIX. All rights reserved.`;
+    const contact = "Support: support@healix.app";
 
     // Logo - SVG content
     const svgText = `<svg

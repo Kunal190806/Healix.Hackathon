@@ -1,9 +1,9 @@
-# Project Plan: MediSync - An Indian Healthcare Super App
+# Project Plan: HEALIX - An Indian Healthcare Super App
 
 ## 1. Overview & Problem Statement
 
 ### Overview
-MediSync is a comprehensive, patient-centric healthcare and telemedicine super app designed specifically for the Indian market. It aims to overcome the limitations of existing platforms by integrating advanced technology with a focus on accessibility, affordability, and personalized care. MediSync will provide a seamless, end-to-end healthcare experience, bridging the gap between virtual consultations and in-person medical services, creating a holistic ecosystem for users across India.
+HEALIX is a comprehensive, patient-centric healthcare and telemedicine super app designed specifically for the Indian market. It aims to overcome the limitations of existing platforms by integrating advanced technology with a focus on accessibility, affordability, and personalized care. HEALIX will provide a seamless, end-to-end healthcare experience, bridging the gap between virtual consultations and in-person medical services, creating a holistic ecosystem for users across India.
 
 ### Problem Statement & Objectives
 The Indian healthcare landscape is fragmented, with challenges in accessibility, specialist availability, and continuity of care. Patients often struggle to find the right specialist, get timely appointments, access their own medical data, and receive consistent follow-up care. 
