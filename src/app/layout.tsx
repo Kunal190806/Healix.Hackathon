@@ -75,9 +75,6 @@ export default function RootLayout({
           <SidebarInset>
             <header className="flex items-center justify-between mb-4 p-4 sm:p-6 lg:p-8 lg:pb-0">
                 <div className="flex items-center gap-2">
-                    <div className="md:hidden">
-                        <Logo />
-                    </div>
                     <span className="text-lg font-headline font-bold md:hidden">HEALIX</span>
                 </div>
                  <div className="flex items-center gap-2">
