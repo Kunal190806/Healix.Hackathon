@@ -11,18 +11,36 @@ import { Label } from "@/components/ui/label";
 import { Hospital as HospitalIcon, Search, Stethoscope, MapPin } from "lucide-react";
 
 const sampleHospitals: Hospital[] = [
-  { id: 'h1', name: 'Fortis Hospital', city: 'Mumbai', specialty: 'Cardiology, Neurology', address: 'Mulund Goregaon Link Rd, Mumbai' },
-  { id: 'h2', name: 'Apollo Hospitals', city: 'Chennai', specialty: 'Oncology, Orthopedics', address: 'Greams Lane, Off Greams Road, Chennai' },
-  { id: 'h3', name: 'Narayana Institute of Cardiac Sciences', city: 'Bangalore', specialty: 'Cardiology', address: '258/A, Bommasandra Industrial Area, Bangalore' },
-  { id: 'h4', name: 'Max Healthcare', city: 'Delhi', specialty: 'Multi-specialty', address: 'Press Enclave Road, Saket, New Delhi' },
-  { id: 'h5', name: 'Medanta - The Medicity', city: 'Gurgaon', specialty: 'Liver Transplant, Cardiology', address: 'CH Baktawar Singh Road, Gurgaon' },
-  { id: 'h6', name: 'Manipal Hospitals', city: 'Bangalore', specialty: 'Multi-specialty', address: '98, HAL Old Airport Rd, Bangalore' },
+  // Mumbai
+  { id: 'h1', name: 'Fortis Hospital, Mulund', city: 'Mumbai', specialty: 'Cardiology, Neurology, Oncology', address: 'Mulund Goregaon Link Rd, Mumbai' },
+  { id: 'h10', name: 'Lilavati Hospital & Research Centre', city: 'Mumbai', specialty: 'Multi-specialty, Gastroenterology', address: 'Bandra West, Mumbai' },
+  { id: 'h13', name: 'Kokilaben Dhirubhai Ambani Hospital', city: 'Mumbai', specialty: 'Robotic Surgery, Multi-specialty', address: 'Andheri West, Mumbai' },
+  { id: 'h14', name: 'Tata Memorial Hospital', city: 'Mumbai', specialty: 'Cancer Treatment, Research', address: 'Parel, Mumbai' },
+  { id: 'h15', name: 'Breach Candy Hospital', city: 'Mumbai', specialty: 'Urology, Orthopedics', address: 'Breach Candy, Mumbai' },
+  // Delhi
+  { id: 'h4', name: 'Max Healthcare, Saket', city: 'Delhi', specialty: 'Multi-specialty, Cardiac Surgery', address: 'Press Enclave Road, Saket, New Delhi' },
   { id: 'h7', name: 'All India Institute of Medical Sciences (AIIMS)', city: 'Delhi', specialty: 'Multi-specialty, Research', address: 'Ansari Nagar, New Delhi' },
-  { id: 'h8', name: 'Christian Medical College (CMC)', city: 'Vellore', specialty: 'Multi-specialty, Medical College', address: 'Ida Scudder Road, Vellore, Tamil Nadu' },
-  { id: 'h9', name: 'PGIMER', city: 'Chandigarh', specialty: 'Medical Research, Multi-specialty', address: 'Sector 12, Chandigarh' },
-  { id: 'h10', name: 'Lilavati Hospital & Research Centre', city: 'Mumbai', specialty: 'Multi-specialty', address: 'Bandra West, Mumbai' },
-  { id: 'h11', name: 'Amrita Hospital', city: 'Kochi', specialty: 'Multi-specialty, Advanced Surgery', address: 'Ponekkara, Kochi, Kerala' },
-  { id: 'h12', name: 'Sir Ganga Ram Hospital', city: 'Delhi', specialty: 'Multi-specialty', address: 'Rajinder Nagar, New Delhi' },
+  { id: 'h12', name: 'Sir Ganga Ram Hospital', city: 'Delhi', specialty: 'Multi-specialty, Nephrology', address: 'Rajinder Nagar, New Delhi' },
+  { id: 'h16', name: 'Indraprastha Apollo Hospitals', city: 'Delhi', specialty: 'Transplants, Pediatrics', address: 'Sarita Vihar, New Delhi' },
+  { id: 'h17', name: 'BLK-MAX Super Speciality Hospital', city: 'Delhi', specialty: 'Bariatric Surgery, Oncology', address: 'Pusa Road, New Delhi' },
+  // Bangalore
+  { id: 'h3', name: 'Narayana Institute of Cardiac Sciences', city: 'Bangalore', specialty: 'Cardiology, Heart Transplants', address: '258/A, Bommasandra Industrial Area, Bangalore' },
+  { id: 'h6', name: 'Manipal Hospitals, Old Airport Road', city: 'Bangalore', specialty: 'Multi-specialty, Emergency Care', address: '98, HAL Old Airport Rd, Bangalore' },
+  { id: 'h18', name: 'Sakra World Hospital', city: 'Bangalore', specialty: 'Neurosciences, Orthopedics', address: 'Marathahalli - Sarjapur Outer Ring Rd, Bangalore' },
+  { id: 'h19', name: 'Fortis Hospital, Bannerghatta Road', city: 'Bangalore', specialty: 'Oncology, Gastroenterology', address: 'Bannerghatta Road, Bangalore' },
+  { id: 'h20', name: 'St. John\'s Medical College Hospital', city: 'Bangalore', specialty: 'Multi-specialty, Medical College', address: 'Sarjapur Road, Bangalore' },
+  // Chennai
+  { id: 'h2', name: 'Apollo Hospitals, Greams Road', city: 'Chennai', specialty: 'Oncology, Orthopedics', address: 'Greams Lane, Off Greams Road, Chennai' },
+  { id: 'h21', name: 'MIOT International', city: 'Chennai', specialty: 'Trauma Care, Organ Transplants', address: 'Mount Poonamallee Road, Manapakkam, Chennai' },
+  { id: 'h22', name: 'Fortis Malar Hospital', city: 'Chennai', specialty: 'Cardiology, Neurology', address: 'Adyar, Chennai' },
+  { id: 'h23', name: 'Gleneagles Global Health City', city: 'Chennai', specialty: 'Multi-Organ Transplants', address: 'Perumbakkam, Chennai' },
+  { id: 'h24', name: 'SIMS Hospital', city: 'Chennai', specialty: 'Multi-specialty, Advanced Surgery', address: 'Vadapalani, Chennai' },
+  // Gurgaon
+  { id: 'h5', name: 'Medanta - The Medicity', city: 'Gurgaon', specialty: 'Liver Transplant, Cardiology', address: 'CH Baktawar Singh Road, Gurgaon' },
+  { id: 'h25', name: 'Artemis Hospital', city: 'Gurgaon', specialty: 'Cardiovascular, Oncology', address: 'Sector 51, Gurgaon' },
+  { id: 'h26', name: 'Fortis Memorial Research Institute', city: 'Gurgaon', specialty: 'Neurosciences, Bone Marrow Transplant', address: 'Sector 44, Gurgaon' },
+  { id: 'h27', name: 'CK Birla Hospital', city: 'Gurgaon', specialty: 'Mother & Child, Orthopedics', address: 'Sector 51, Gurgaon' },
+  { id: 'h28', name: 'Paras Hospitals', city: 'Gurgaon', specialty: 'Neurology, Spine Services', address: 'Sector 43, Gurgaon' },
 ];
 
 
