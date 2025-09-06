@@ -48,3 +48,14 @@ export type Hospital = {
   specialty: string;
   address: string;
 };
+
+export type Doctor = {
+  id: string;
+  name: string;
+  specialty: string;
+  experience: number;
+  city: string;
+  fees: number;
+  bio: string;
+  image: string;
+};

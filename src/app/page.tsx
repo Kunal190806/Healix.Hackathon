@@ -1,7 +1,7 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { UtensilsCrossed, Pill, Activity, BookHeart, Users, Droplets, Dumbbell, ArrowRight, Hospital } from 'lucide-react';
+import { UtensilsCrossed, Pill, Activity, BookHeart, Users, Droplets, Dumbbell, ArrowRight, Hospital, Stethoscope } from 'lucide-react';
 
 const modules = [
   {
@@ -10,6 +10,13 @@ const modules = [
     icon: Hospital,
     href: "/hospitals",
     color: "text-cyan-500",
+  },
+  {
+    title: "Find a Doctor",
+    description: "Search for doctors by specialization, location, and more.",
+    icon: Stethoscope,
+    href: "/doctors",
+    color: "text-indigo-500",
   },
   {
     title: "AI Meal Planner",
