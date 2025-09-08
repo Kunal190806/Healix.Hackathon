@@ -15,8 +15,6 @@ import { useToast } from "@/hooks/use-toast";
 import { auth } from "@/lib/firebase";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 
-const bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
-
 export default function SignUpForm() {
   const router = useRouter();
   const { toast } = useToast();
@@ -43,9 +41,6 @@ export default function SignUpForm() {
 
       // Update the user's profile with their name
       await updateProfile(user, { displayName: patientName });
-      
-      // We no longer need to use localStorage for the name
-      // localStorage.setItem('userName', patientName);
 
       toast({
         title: "Account Created!",
@@ -67,6 +62,9 @@ export default function SignUpForm() {
         case 'auth/weak-password':
           description = "The password is too weak. It must be at least 6 characters long.";
           break;
+        case 'auth/configuration-not-found':
+            description = "Firebase configuration is incorrect. Please contact support.";
+            break;
       }
       toast({
         variant: "destructive",
@@ -201,7 +199,7 @@ export default function SignUpForm() {
           <CardHeader>
             <CardTitle>Fitness Trainer Registration</CardTitle>
             <CardDescription>Offer your expertise on our inclusive fitness platform.</CardDescription>
-          </CardHeader>
+          </Header>
            <CardContent>
             <p className="text-center text-muted-foreground">This feature is coming soon.</p>
           </CardContent>
