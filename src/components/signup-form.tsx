@@ -199,7 +199,7 @@ export default function SignUpForm() {
           <CardHeader>
             <CardTitle>Fitness Trainer Registration</CardTitle>
             <CardDescription>Offer your expertise on our inclusive fitness platform.</CardDescription>
-          </Header>
+          </CardHeader>
            <CardContent>
             <p className="text-center text-muted-foreground">This feature is coming soon.</p>
           </CardContent>
