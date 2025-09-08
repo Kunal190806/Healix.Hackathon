@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import { Stethoscope, MapPin, IndianRupee, User, Star, CalendarDays, Clock, CheckCircle } from "lucide-react";
 import Image from "next/image";
 import { Calendar } from "@/components/ui/calendar";
@@ -113,6 +113,11 @@ function AppointmentBookingForm({ doctor }: { doctor: Doctor }) {
         <p className="text-muted-foreground text-sm">
           on {selectedDate && format(selectedDate, "EEEE, MMMM d, yyyy")} at {selectedTime}
         </p>
+        <DialogFooter className="mt-4">
+          <DialogClose asChild>
+            <Button>Close</Button>
+          </DialogClose>
+        </DialogFooter>
       </div>
     );
   }
@@ -200,10 +205,10 @@ export default function DoctorFinder() {
         {filteredDoctors.length > 0 ? (
           filteredDoctors.map(doctor => (
             <Dialog key={doctor.id}>
-              <Card className="flex flex-col rounded-2xl">
+              <Card className="flex flex-col">
                 <CardHeader>
                    <div className="flex items-start gap-4">
-                      <div className="relative h-20 w-20 rounded-full overflow-hidden">
+                      <div className="relative h-20 w-20 rounded-full overflow-hidden flex-shrink-0">
                          <Image src={doctor.image} alt={doctor.name} fill={true} style={{objectFit: 'cover'}} data-ai-hint="doctor person" />
                       </div>
                       <div className="flex-1">
@@ -214,7 +219,7 @@ export default function DoctorFinder() {
                    </div>
                 </CardHeader>
                 <CardContent className="flex-grow space-y-3">
-                   <p className="text-sm text-muted-foreground italic leading-relaxed">"{doctor.bio}"</p>
+                   <p className="text-sm text-muted-foreground italic leading-relaxed line-clamp-3">"{doctor.bio}"</p>
                   <div className="flex items-center gap-2 text-sm">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
                     <span>{doctor.hospital}, {doctor.city}</span>
@@ -224,17 +229,14 @@ export default function DoctorFinder() {
                     <span>{doctor.fees} Consultation Fee</span>
                   </div>
                 </CardContent>
-                <CardFooter className="flex gap-2">
+                <CardFooter>
                    <DialogTrigger asChild>
-                    <Button className="flex-1">Book Now</Button>
-                  </DialogTrigger>
-                  <DialogTrigger asChild>
-                    <Button variant="outline">View Profile</Button>
+                    <Button className="w-full">Book Appointment</Button>
                   </DialogTrigger>
                 </CardFooter>
               </Card>
 
-              <DialogContent className="sm:max-w-4xl rounded-2xl">
+              <DialogContent className="sm:max-w-4xl">
                 <DialogHeader>
                     <div className="flex flex-col md:flex-row items-start gap-6">
                       <div className="relative h-32 w-32 rounded-full overflow-hidden flex-shrink-0">
@@ -255,7 +257,6 @@ export default function DoctorFinder() {
                       </div>
                     </div>
                 </DialogHeader>
-
                 <div className="py-4">
                   <AppointmentBookingForm doctor={doctor} />
                 </div>
@@ -264,11 +265,11 @@ export default function DoctorFinder() {
           ))
         ) : (
           <div className="md:col-span-2 lg:col-span-3">
-            <Card className="h-48 flex flex-col items-center justify-center rounded-2xl">
+            <Card className="h-48 flex flex-col items-center justify-center">
               <div className="text-center text-muted-foreground">
                 <User className="mx-auto h-12 w-12" />
                 <p className="mt-4 font-semibold">No doctors found.</p>
-                <p className="mt-1 text-sm">Try adjusting your search terms.</p>
+                <p className="mt-1 text-sm">Try adjusting your search filters.</p>
               </div>
             </Card>
           </div>

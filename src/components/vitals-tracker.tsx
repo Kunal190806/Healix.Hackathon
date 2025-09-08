@@ -71,6 +71,20 @@ export default function VitalsTracker() {
       heartRate: "Heart Rate (BPM)",
       weight: "Weight (kg)"
   }
+  
+  const getLogEntries = (log: VitalLog) => {
+    const entries = [];
+    if (log.bloodPressure) entries.push({metric: 'BP', value: `${log.bloodPressure.systolic}/${log.bloodPressure.diastolic}`});
+    if (log.bloodSugar) entries.push({metric: 'Sugar', value: `${log.bloodSugar} mg/dL`});
+    if (log.heartRate) entries.push({metric: 'Heart Rate', value: `${log.heartRate} BPM`});
+    if (log.weight) entries.push({metric: 'Weight', value: `${log.weight} kg`});
+    
+    // Handle case where there's only a note
+    if (entries.length === 0 && log.notes) {
+        entries.push({metric: 'Note', value: log.notes});
+    }
+    return entries;
+  }
 
   return (
     <div className="grid gap-6 lg:grid-cols-5">
@@ -182,29 +196,8 @@ export default function VitalsTracker() {
               </TableHeader>
               <TableBody>
                 {logs.length > 0 ? (
-                  logs.flatMap(log => {
-                    const entries = [];
-                    if (log.bloodPressure) entries.push({metric: 'BP', value: `${log.bloodPressure.systolic}/${log.bloodPressure.diastolic}`});
-                    if (log.bloodSugar) entries.push({metric: 'Sugar', value: `${log.bloodSugar} mg/dL`});
-                    if (log.heartRate) entries.push({metric: 'Heart Rate', value: `${log.heartRate} BPM`});
-                    if (log.weight) entries.push({metric: 'Weight', value: `${log.weight} kg`});
-                    
-                    if (entries.length === 0 && log.notes) {
-                        // Handle case where there's only a note
-                        return [(
-                             <TableRow key={`${log.id}-note`}>
-                                <TableCell>{format(new Date(log.date), 'PPP')}</TableCell>
-                                <TableCell colSpan={2}>General Note</TableCell>
-                                <TableCell className="max-w-[150px] truncate">{log.notes}</TableCell>
-                                <TableCell className="text-right align-top">
-                                    <Button variant="ghost" size="icon" onClick={() => handleDeleteLog(log.id)}>
-                                        <Trash2 className="h-4 w-4 text-destructive" />
-                                    </Button>
-                                </TableCell>
-                             </TableRow>
-                        )]
-                    }
-                    
+                  logs.map(log => {
+                    const entries = getLogEntries(log);
                     return entries.map((entry, index) => (
                         <TableRow key={`${log.id}-${entry.metric}`}>
                             {index === 0 ? (
@@ -212,9 +205,9 @@ export default function VitalsTracker() {
                             ) : null}
                             <TableCell>{entry.metric}</TableCell>
                             <TableCell className="font-mono">{entry.value}</TableCell>
-                            {index === 0 ? (
+                            {index === 0 && log.notes ? (
                                  <TableCell rowSpan={entries.length} className="align-top max-w-[150px] truncate">{log.notes}</TableCell>
-                            ): null}
+                            ): index === 0 ? <TableCell rowSpan={entries.length}></TableCell> : null }
                             {index === 0 ? (
                                 <TableCell rowSpan={entries.length} className="text-right align-top">
                                     <Button variant="ghost" size="icon" onClick={() => handleDeleteLog(log.id)}>

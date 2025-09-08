@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import { Hospital as HospitalIcon, Search, Stethoscope, MapPin, IndianRupee, User, Star, CalendarDays, Clock, CheckCircle } from "lucide-react";
 import Image from "next/image";
 import { Calendar } from "@/components/ui/calendar";
@@ -117,25 +117,11 @@ function AppointmentBookingForm({ doctor, onBookingConfirmed }: { doctor: Doctor
   };
 
   if (isConfirmed) {
-    return (
-      <div className="flex flex-col items-center justify-center text-center p-8">
-        <CheckCircle className="h-16 w-16 text-green-500 mb-4" />
-        <h2 className="text-xl font-bold font-headline mb-2">Appointment Confirmed!</h2>
-        <p className="text-muted-foreground">
-          You have successfully booked an appointment with {doctor.name}.
-        </p>
-        <p className="text-muted-foreground text-sm">
-          on {selectedDate && format(selectedDate, "EEEE, MMMM d, yyyy")} at {selectedTime}
-        </p>
-         <DialogFooter className="mt-4">
-            <Button onClick={onBookingConfirmed}>Close</Button>
-        </DialogFooter>
-      </div>
-    );
+     return null;
   }
 
   return (
-    <DialogContent className="sm:max-w-4xl rounded-2xl">
+    <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
             <div className="flex flex-col md:flex-row items-start gap-6">
               <div className="relative h-32 w-32 rounded-full overflow-hidden flex-shrink-0">
@@ -260,16 +246,19 @@ export default function HospitalFinder() {
             <Dialog key={hospital.id} onOpenChange={setIsHospitalDialogOpen}>
               <Card className="flex flex-col">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><HospitalIcon className="h-5 w-5 text-primary" /> {hospital.name}</CardTitle>
+                  <CardTitle className="flex items-start gap-3">
+                    <HospitalIcon className="h-6 w-6 text-primary mt-1 flex-shrink-0" /> 
+                    <span>{hospital.name}</span>
+                  </CardTitle>
                   <CardDescription>{hospital.city}</CardDescription>
                 </CardHeader>
                 <CardContent className="flex-grow space-y-2">
                   <div className="flex items-start gap-2">
-                    <Stethoscope className="h-4 w-4 mt-1 text-muted-foreground" />
+                    <Stethoscope className="h-4 w-4 mt-1 text-muted-foreground flex-shrink-0" />
                     <p className="text-sm"><span className="font-semibold">Specialties:</span> {hospital.specialty}</p>
                   </div>
                   <div className="flex items-start gap-2">
-                    <MapPin className="h-4 w-4 mt-1 text-muted-foreground" />
+                    <MapPin className="h-4 w-4 mt-1 text-muted-foreground flex-shrink-0" />
                     <p className="text-sm"><span className="font-semibold">Address:</span> {hospital.address}</p>
                   </div>
                 </CardContent>
@@ -280,7 +269,7 @@ export default function HospitalFinder() {
                 </CardFooter>
               </Card>
 
-              <DialogContent className="sm:max-w-2xl rounded-2xl">
+              <DialogContent className="sm:max-w-2xl">
                   <DialogHeader>
                       <DialogTitle className="text-2xl font-bold font-headline">Doctors at {hospital.name}</DialogTitle>
                       <DialogDescription>Select a doctor to book an appointment.</DialogDescription>
@@ -306,7 +295,12 @@ export default function HospitalFinder() {
                                   <Button onClick={() => handleDoctorSelection(doctor)}>Book Now</Button>
                                 </DialogTrigger>
                               </Card>
-                              {selectedDoctor && <AppointmentBookingForm doctor={selectedDoctor} onBookingConfirmed={closeAllDialogs} />}
+                              {selectedDoctor && selectedDoctor.id === doctor.id && (
+                                <AppointmentBookingForm 
+                                  doctor={selectedDoctor} 
+                                  onBookingConfirmed={closeAllDialogs} 
+                                />
+                              )}
                             </Dialog>
                           ))
                       ) : (
