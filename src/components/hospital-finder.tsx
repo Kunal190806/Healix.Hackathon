@@ -8,13 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import { Hospital as HospitalIcon, Search, Stethoscope, MapPin, IndianRupee, User, Star, CalendarDays, Clock, CheckCircle } from "lucide-react";
 import Image from "next/image";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import dynamic from "next/dynamic";
 
 const sampleHospitals: Hospital[] = [
   // Mumbai
@@ -78,11 +79,10 @@ const sampleDoctors: Doctor[] = [
 
 const timeSlots = ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
 
-function AppointmentBookingForm({ doctor, onBookingConfirmed }: { doctor: Doctor, onBookingConfirmed: () => void }) {
+const AppointmentBookingForm = dynamic(() => Promise.resolve(function AppointmentBookingForm({ doctor, onBookingConfirmed }: { doctor: Doctor; onBookingConfirmed: () => void; }) {
   const [appointments, setAppointments] = useLocalStorage<Appointment[]>("appointments", []);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [isConfirmed, setIsConfirmed] = useState(false);
   const { toast } = useToast();
 
   const handleBookAppointment = () => {
@@ -106,7 +106,6 @@ function AppointmentBookingForm({ doctor, onBookingConfirmed }: { doctor: Doctor
     };
 
     setAppointments([...appointments, newAppointment]);
-    setIsConfirmed(true);
     
     toast({
       title: "Appointment Booked!",
@@ -115,10 +114,6 @@ function AppointmentBookingForm({ doctor, onBookingConfirmed }: { doctor: Doctor
     
     onBookingConfirmed();
   };
-
-  if (isConfirmed) {
-     return null;
-  }
 
   return (
     <DialogContent className="sm:max-w-4xl">
@@ -175,12 +170,12 @@ function AppointmentBookingForm({ doctor, onBookingConfirmed }: { doctor: Doctor
         </div>
     </DialogContent>
   );
-}
+}), { ssr: false, loading: () => <div className="h-64 flex justify-center items-center">Loading booking form...</div> });
 
 
 export default function HospitalFinder() {
-  const [hospitals, setHospitals] = useLocalStorage<Hospital[]>("hospitals", sampleHospitals);
-  const [doctors, setDoctors] = useLocalStorage<Doctor[]>("doctors", sampleDoctors);
+  const [hospitals] = useLocalStorage<Hospital[]>("hospitals", sampleHospitals);
+  const [doctors] = useLocalStorage<Doctor[]>("doctors", sampleDoctors);
   
   const [searchQuery, setSearchQuery] = useState("");
   const [searchLocation, setSearchLocation] = useState("");
@@ -244,7 +239,7 @@ export default function HospitalFinder() {
         {filteredHospitals.length > 0 ? (
           filteredHospitals.map(hospital => (
             <Dialog key={hospital.id} onOpenChange={setIsHospitalDialogOpen}>
-              <Card className="flex flex-col">
+              <Card className="flex flex-col rounded-2xl overflow-hidden">
                 <CardHeader>
                   <CardTitle className="flex items-start gap-3">
                     <HospitalIcon className="h-6 w-6 text-primary mt-1 flex-shrink-0" /> 
@@ -264,7 +259,7 @@ export default function HospitalFinder() {
                 </CardContent>
                 <CardFooter>
                    <DialogTrigger asChild>
-                    <Button className="w-full">Book Appointment</Button>
+                    <Button className="w-full">View Doctors & Book</Button>
                   </DialogTrigger>
                 </CardFooter>
               </Card>

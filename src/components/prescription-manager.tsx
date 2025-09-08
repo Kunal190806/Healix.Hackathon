@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -9,10 +10,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Trash2, Pill, Camera, Upload, Loader2, Wand2, X } from "lucide-react";
+import dynamic from "next/dynamic";
+
+const DialogContent = dynamic(() => import('@/components/ui/dialog').then(mod => mod.DialogContent), {
+  ssr: false,
+  loading: () => <div className="fixed inset-0 bg-black/50 z-50 flex justify-center items-center"><Loader2 className="h-8 w-8 animate-spin text-white" /></div>
+});
+
 
 type ScannedData = ExtractPrescriptionDetailsOutput;
 
@@ -41,10 +49,14 @@ export default function PrescriptionManager() {
     } else {
       stopCamera();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isCameraOn]);
 
   const startCamera = async () => {
     try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+         throw new Error("Camera not supported on this browser");
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       setHasCameraPermission(true);
       if (videoRef.current) {
@@ -196,7 +208,7 @@ export default function PrescriptionManager() {
                       <div>
                         {isCameraOn ? (
                           <div className="space-y-4">
-                            <video ref={videoRef} className="w-full aspect-video rounded-md bg-muted" autoPlay muted />
+                            <video ref={videoRef} className="w-full aspect-video rounded-md bg-muted" autoPlay playsInline muted />
                             {hasCameraPermission === false && (
                               <Alert variant="destructive">
                                 <AlertTitle>Camera Access Required</AlertTitle>

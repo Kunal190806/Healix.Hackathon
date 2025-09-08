@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import { Stethoscope, MapPin, IndianRupee, User, Star, CalendarDays, Clock, CheckCircle } from "lucide-react";
 import Image from "next/image";
@@ -16,6 +15,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import dynamic from "next/dynamic";
 
 const sampleDoctors: Doctor[] = [
   // Delhi
@@ -66,7 +66,7 @@ const specialties = [...new Set(sampleDoctors.map(d => d.specialty))].sort();
 
 const timeSlots = ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
 
-function AppointmentBookingForm({ doctor }: { doctor: Doctor }) {
+const AppointmentBookingForm = dynamic(() => Promise.resolve(function AppointmentBookingForm({ doctor }: { doctor: Doctor }) {
   const [appointments, setAppointments] = useLocalStorage<Appointment[]>("appointments", []);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -154,11 +154,11 @@ function AppointmentBookingForm({ doctor }: { doctor: Doctor }) {
       </div>
     </div>
   );
-}
+}), { ssr: false, loading: () => <div className="h-64 flex justify-center items-center">Loading booking form...</div> });
 
 
 export default function DoctorFinder() {
-  const [doctors, setDoctors] = useLocalStorage<Doctor[]>("doctors", sampleDoctors);
+  const [doctors] = useLocalStorage<Doctor[]>("doctors", sampleDoctors);
   
   const [searchSpecialty, setSearchSpecialty] = useState("");
   const [searchLocation, setSearchLocation] = useState("");
@@ -205,7 +205,7 @@ export default function DoctorFinder() {
         {filteredDoctors.length > 0 ? (
           filteredDoctors.map(doctor => (
             <Dialog key={doctor.id}>
-              <Card className="flex flex-col">
+              <Card className="flex flex-col rounded-2xl overflow-hidden">
                 <CardHeader>
                    <div className="flex items-start gap-4">
                       <div className="relative h-20 w-20 rounded-full overflow-hidden flex-shrink-0">
