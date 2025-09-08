@@ -12,12 +12,18 @@ import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
+import { Inter, Exo_2 } from 'next/font/google';
 
-// Metadata is not supported in client components, but we can keep this for static analysis
-// export const metadata: Metadata = {
-//   title: 'HEALIX',
-//   description: 'A comprehensive healthcare and wellness web application.',
-// };
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-body',
+});
+
+const exo2 = Exo_2({
+  subsets: ['latin'],
+  weight: '700',
+  variable: '--font-logo',
+});
 
 export default function RootLayout({
   children,
@@ -35,7 +41,6 @@ export default function RootLayout({
       setIsLoading(false);
     });
 
-    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
 
@@ -65,12 +70,7 @@ export default function RootLayout({
 
   return (
     <html lang="en" className="dark">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&family=Exo+2:wght@700&display=swap" rel="stylesheet" />
-      </head>
-      <body className="font-body antialiased">
+      <body className={cn(inter.variable, exo2.variable, "font-body antialiased")}>
         <SidebarProvider>
           <Sidebar collapsible="icon">
             <SidebarHeader>
