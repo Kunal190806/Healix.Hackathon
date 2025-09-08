@@ -6,6 +6,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { UtensilsCrossed, Pill, BookHeart, Users, Droplets, Dumbbell, ArrowRight, Hospital, Stethoscope, HeartPulse, ShieldCheck, CalendarDays } from 'lucide-react';
+import { auth } from '@/lib/firebase';
+import type { User } from 'firebase/auth';
 
 const modules = [
   {
@@ -88,19 +90,23 @@ const modules = [
 ];
 
 export default function Home() {
-  const [userName, setUserName] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // Ensure this runs only on the client
-    const storedName = localStorage.getItem('userName');
-    setUserName(storedName);
+    // Listen for authentication state changes
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
   }, []);
 
   return (
     <div className="flex flex-col gap-8">
       <div>
         <h1 className="text-3xl font-bold font-headline tracking-tight text-primary">
-          {userName ? `Welcome, ${userName}` : 'Welcome to HEALIX'}
+          {user ? `Welcome, ${user.displayName || 'User'}` : 'Welcome to HEALIX'}
         </h1>
         <p className="text-muted-foreground mt-2">Your all-in-one platform for a healthier, more connected life.</p>
       </div>

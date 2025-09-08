@@ -10,6 +10,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
 
 // Metadata is not supported in client components, but we can keep this for static analysis
 // export const metadata: Metadata = {
@@ -24,18 +26,26 @@ export default function RootLayout({
 }>) {
   const pathname = usePathname();
   const router = useRouter();
-  const [userName, setUserName] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Ensure this runs only on the client
-    const storedName = localStorage.getItem('userName');
-    setUserName(storedName);
-  }, [pathname]); // Re-check on route change
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setIsLoading(false);
+    });
 
-  const handleLogout = () => {
-    localStorage.removeItem('userName');
-    setUserName(null);
-    router.push('/');
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.push('/');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   const menuItems = [
@@ -94,7 +104,8 @@ export default function RootLayout({
                     <span className="text-lg font-logo font-bold">HEALIX</span>
                 </div>
                  <div className="flex items-center gap-2 ml-auto">
-                    {userName ? (
+                    {!isLoading && (
+                      user ? (
                         <Button variant="outline" onClick={handleLogout}>
                           <LogOut className="mr-2 h-4 w-4" />
                           Logout
@@ -106,7 +117,8 @@ export default function RootLayout({
                             Sign Up
                           </Link>
                         </Button>
-                      )}
+                      )
+                    )}
                     <div className="md:hidden">
                       <SidebarTrigger>
                           <PanelLeft />
