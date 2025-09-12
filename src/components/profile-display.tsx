@@ -67,18 +67,6 @@ export default function ProfileDisplay() {
       </Card>
     );
   }
-
-  const getRoleIcon = (role?: string) => {
-    if (!role) return <UserCircle className="h-5 w-5 mr-2" />;
-    switch (role.toLowerCase()) {
-      case 'patient':
-        return <UserCircle className="h-5 w-5 mr-2" />;
-      case 'caregiver':
-        return <ShieldCheck className="h-5 w-5 mr-2" />;
-      default:
-        return <UserCircle className="h-5 w-5 mr-2" />;
-    }
-  };
   
   const isCodeExpired = userProfile?.accessCodeExpires ? new Date() > new Date(userProfile.accessCodeExpires) : true;
 
