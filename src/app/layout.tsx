@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { Home, Pill, Droplets, Users, UtensilsCrossed, BookHeart, Dumbbell, PanelLeft, Hospital, UserPlus, Stethoscope, HeartPulse, ShieldCheck, CalendarDays, LogOut, Ear, Eye } from 'lucide-react';
+import { Home, Pill, Droplets, Users, UtensilsCrossed, BookHeart, Dumbbell, PanelLeft, Hospital, UserPlus, Stethoscope, HeartPulse, ShieldCheck, CalendarDays, LogOut, Ear, Eye, Timer } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Toaster } from '@/components/ui/toaster';
@@ -63,6 +63,7 @@ export default function RootLayout({
     { href: '/vitals-tracker', label: 'Vitals Tracker', icon: HeartPulse },
     { href: '/hearing-test', label: 'Hearing Test', icon: Ear },
     { href: '/eye-test', label: 'Eye Test', icon: Eye },
+    { href: '/response-time', label: 'Response Time Test', icon: Timer },
     { href: '/journal', label: 'Mental Health Journal', icon: BookHeart },
     { href: '/support-groups', label: 'Support Groups', icon: Users },
     { href: '/blood-donors', label: 'Blood Donors', icon: Droplets },

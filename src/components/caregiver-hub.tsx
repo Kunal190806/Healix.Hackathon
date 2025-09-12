@@ -3,13 +3,13 @@
 
 import { useState, useEffect } from "react";
 import useLocalStorage from "@/hooks/use-local-storage";
-import type { VitalLog, Prescription, HearingResult, HearingTestRecord, EyeTestResult } from "@/lib/types";
+import type { VitalLog, Prescription, HearingResult, HearingTestRecord, EyeTestResult, ResponseTimeResult } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, Legend, ReferenceLine } from 'recharts';
 import { format, subDays, addDays } from "date-fns";
-import { AlertTriangle, Bell, Calendar, Download, HeartPulse, Pill, User, Loader2, Ear, Eye, Info } from "lucide-react";
+import { AlertTriangle, Bell, Calendar, Download, HeartPulse, Pill, User, Loader2, Ear, Eye, Info, Timer } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -30,6 +30,7 @@ export default function CaregiverHub() {
   const [sampleMedications] = useLocalStorage<Prescription[]>('prescriptions', []);
   const [hearingTestHistory] = useLocalStorage<HearingTestRecord[]>('hearingTestHistory', []);
   const [eyeTestHistory] = useLocalStorage<EyeTestResult[]>('eyeTestHistory', []);
+  const [responseTimeHistory] = useLocalStorage<ResponseTimeResult[]>('responseTimeHistory', []);
   
   const [sampleNotifications, setSampleNotifications] = useState<any[]>([]);
   const [adherenceData, setAdherenceData] = useState<any[]>([]);
@@ -59,6 +60,7 @@ export default function CaregiverHub() {
 
   const latestHearingTest = hearingTestHistory?.[0];
   const latestEyeTest = eyeTestHistory?.[0];
+  const latestResponseTimeTest = responseTimeHistory?.[0];
 
   const generatePDF = () => {
     const doc = new jsPDF();
@@ -91,6 +93,15 @@ export default function CaregiverHub() {
         autoTable(doc, {
             head: [['Vision Test Date', 'Score', 'Interpretation']],
             body: [[format(new Date(latestEyeTest.date), 'PP'), latestEyeTest.score, latestEyeTest.interpretation]],
+            headStyles: { fillColor: [63, 81, 181] },
+            didDrawPage: (data) => { finalY = data.cursor?.y ?? 0; }
+        });
+    }
+
+    if (latestResponseTimeTest) {
+        autoTable(doc, {
+            head: [['Response Test Date', 'Average', 'Scores']],
+            body: [[format(new Date(latestResponseTimeTest.date), 'PP'), `${Math.round(latestResponseTimeTest.average)} ms`, latestResponseTimeTest.scores.join(', ')+' ms']],
             headStyles: { fillColor: [63, 81, 181] },
             didDrawPage: (data) => { finalY = data.cursor?.y ?? 0; }
         });
@@ -176,6 +187,14 @@ export default function CaregiverHub() {
             title: "Vision Test Results",
             columns: ["Date", "Score", "Interpretation"],
             data: [[format(new Date(latestEyeTest.date), 'yyyy-MM-dd'), latestEyeTest.score, `"${latestEyeTest.interpretation.replace(/"/g, '""')}"`]]
+        });
+    }
+
+    if (latestResponseTimeTest) {
+        sections.push({
+            title: "Response Time Test Results",
+            columns: ["Date", "Average (ms)", "Scores (ms)"],
+            data: [[format(new Date(latestResponseTimeTest.date), 'yyyy-MM-dd'), Math.round(latestResponseTimeTest.average).toString(), `"${latestResponseTimeTest.scores.join(', ')}"`]]
         });
     }
     
@@ -314,6 +333,21 @@ export default function CaregiverHub() {
                             <p className="text-5xl font-bold text-primary">{latestEyeTest.score}</p>
                         </div>
                         <p className="text-sm max-w-prose">{latestEyeTest.interpretation}</p>
+                    </CardContent>
+                </Card>
+            )}
+             {latestResponseTimeTest && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><Timer className="h-5 w-5" /> Latest Cognitive Response Test</CardTitle>
+                        <CardDescription>Taken on {format(new Date(latestResponseTimeTest.date), 'PP')}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-col items-center gap-4 text-center">
+                        <div className="p-6 rounded-lg bg-muted/50 w-full">
+                            <p className="text-sm text-muted-foreground">Average Response Time</p>
+                            <p className="text-5xl font-bold font-mono text-primary">{Math.round(latestResponseTimeTest.average)}<span className="text-2xl ml-2">ms</span></p>
+                        </div>
+                        <p className="text-sm max-w-prose">A lower score is better. Average response time for most people is 200-300ms.</p>
                     </CardContent>
                 </Card>
             )}

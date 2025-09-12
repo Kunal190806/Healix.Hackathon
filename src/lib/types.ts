@@ -99,3 +99,9 @@ export type EyeTestResult = {
     interpretation: string;
     date: string;
 };
+
+export type ResponseTimeResult = {
+    average: number;
+    scores: number[];
+    date: string;
+};

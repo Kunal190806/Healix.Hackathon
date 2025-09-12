@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { UtensilsCrossed, Pill, BookHeart, Users, Droplets, Dumbbell, ArrowRight, Hospital, Stethoscope, HeartPulse, ShieldCheck, CalendarDays, Ear, Eye } from 'lucide-react';
+import { UtensilsCrossed, Pill, BookHeart, Users, Droplets, Dumbbell, ArrowRight, Hospital, Stethoscope, HeartPulse, ShieldCheck, CalendarDays, Ear, Eye, Timer } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import type { User } from 'firebase/auth';
 
@@ -65,6 +65,13 @@ const modules = [
     icon: Eye,
     href: "/eye-test",
     color: "text-emerald-500",
+  },
+  {
+    title: "Response Time Test",
+    description: "Measure your reaction time with this simple cognitive test.",
+    icon: Timer,
+    href: "/response-time",
+    color: "text-amber-500",
   },
   {
     title: "Mental Health Journal",
