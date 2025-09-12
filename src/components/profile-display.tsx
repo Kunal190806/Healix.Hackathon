@@ -7,7 +7,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/hooks/use-auth.tsx";
 import { useProfile } from "@/hooks/use-profile.tsx";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Loader2, UserCircle, ShieldCheck, Share2, KeyRound } from "lucide-react";
+import { Loader2, UserCircle, Share2, KeyRound } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -86,16 +86,6 @@ export default function ProfileDisplay() {
             <span className="text-sm font-medium text-muted-foreground">Email Address</span>
             <span className="text-lg font-semibold">{user.email}</span>
           </div>
-          <div className="flex flex-col space-y-1">
-            <span className="text-sm font-medium text-muted-foreground">Registered as</span>
-            <span className="text-lg font-semibold">
-                <Badge variant="secondary" className="capitalize">
-                    {userProfile.role === 'patient' && <UserCircle className="mr-2 h-4 w-4" />}
-                    {userProfile.role === 'caregiver' && <ShieldCheck className="mr-2 h-4 w-4" />}
-                    {userProfile.role}
-                </Badge>
-            </span>
-          </div>
         </CardContent>
       </Card>
       
@@ -105,7 +95,7 @@ export default function ProfileDisplay() {
             <Share2 className="h-5 w-5 text-primary" />
             Profile Access Code
           </CardTitle>
-          <CardDescription>Generate a one-time code to securely share your profile with another user.</CardDescription>
+          <CardDescription>Generate a one-time code to securely share your profile with a caregiver or other user.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {userProfile.accessCode && !isCodeExpired ? (
