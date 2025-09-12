@@ -1,4 +1,3 @@
-
 // lib/firebase.ts
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
@@ -6,12 +5,12 @@ import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAwaZ_8AZwLrglCkuRleZjZCJqMp0vJS3I",
-  authDomain: "healix-8rutd.firebaseapp.com",
-  projectId: "healix-8rutd",
-  storageBucket: "healix-8rutd.appspot.com",
-  messagingSenderId: "1032994992983",
-  appId: "1:1032994992983:web:0b4b29d5b7826359a34b28",
+  apiKey: "AIzaSyCKuykOGu445JC9dXF7TkDiD_02C-sq3Xg",
+  authDomain: "healix-2-55914771-322a9.firebaseapp.com",
+  projectId: "healix-2-55914771-322a9",
+  storageBucket: "healix-2-55914771-322a9.appspot.com",
+  messagingSenderId: "638476279907",
+  appId: "1:638476279907:web:8032775591632731c3605c",
 };
 
 
