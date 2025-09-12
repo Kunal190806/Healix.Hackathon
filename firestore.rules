@@ -3,17 +3,49 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users can read and update their own profile, but cannot delete it.
-    // New users can create their own profile document.
+    // Users can read and update their own user profile document.
     match /users/{userId} {
       allow read, update: if request.auth.uid == userId;
       allow create: if request.auth.uid != null;
     }
 
-    // Generic rule for user-specific collections (appointments, vitals, etc.)
-    // Allows a user to do anything with a document if their UID matches the document's `userId` field.
-    match /{collection}/{docId} {
-      allow read, write: if request.auth.uid == request.resource.data.userId || request.auth.uid == resource.data.userId;
+    // Appointments can be managed by the user who owns them.
+    match /appointments/{appointmentId} {
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+    
+    // Vitals can be managed by the user who owns them.
+    match /vitals/{vitalId} {
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+    
+    // Prescriptions can be managed by the user who owns them.
+    match /prescriptions/{prescriptionId} {
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+
+    // Journal Entries can be managed by the user who owns them.
+    match /journalEntries/{entryId} {
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+    
+    // Hearing Test History can be managed by the user who owns it.
+    match /hearingTestHistory/{testId} {
+        allow read, write: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+    
+    // Eye Test History can be managed by the user who owns it.
+    match /eyeTestHistory/{testId} {
+        allow read, write: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+    
+    // Response Time History can be managed by the user who owns it.
+    match /responseTimeHistory/{testId} {
+        allow read, write: if request.auth != null && request.resource.data.userId == request.auth.uid;
     }
   }
 }
