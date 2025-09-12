@@ -1,3 +1,4 @@
+
 import HearingTest from "@/components/hearing-test";
 
 export default function HearingTestPage() {
