@@ -2,13 +2,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { VitalLog, Prescription } from "@/lib/types";
+import useLocalStorage from "@/hooks/use-local-storage";
+import type { VitalLog, Prescription, HearingResult, HearingTestRecord, EyeTestResult } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, Legend, ReferenceLine } from 'recharts';
 import { format, subDays, addDays } from "date-fns";
-import { AlertTriangle, Bell, Calendar, Download, HeartPulse, Pill, User, Loader2 } from "lucide-react";
+import { AlertTriangle, Bell, Calendar, Download, HeartPulse, Pill, User, Loader2, Ear, Eye, Info } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -20,30 +21,22 @@ const samplePatient = {
   condition: "Hypertension & Type 2 Diabetes"
 };
 
+const normalHearingThreshold = 25;
+
 export default function CaregiverHub() {
   const [isLoading, setIsLoading] = useState(true);
-  const [sampleAppointments, setSampleAppointments] = useState<any[]>([]);
-  const [sampleVitals, setSampleVitals] = useState<VitalLog[]>([]);
-  const [sampleMedications, setSampleMedications] = useState<Prescription[]>([]);
+  const [sampleAppointments] = useLocalStorage<any[]>('appointments', []);
+  const [sampleVitals] = useLocalStorage<VitalLog[]>('vitalLogs', []);
+  const [sampleMedications] = useLocalStorage<Prescription[]>('prescriptions', []);
+  const [hearingTestHistory] = useLocalStorage<HearingTestRecord[]>('hearingTestHistory', []);
+  const [eyeTestHistory] = useLocalStorage<EyeTestResult[]>('eyeTestHistory', []);
+  
   const [sampleNotifications, setSampleNotifications] = useState<any[]>([]);
   const [adherenceData, setAdherenceData] = useState<any[]>([]);
 
   useEffect(() => {
     const today = new Date();
-    setSampleAppointments([
-      { id: 'app1', doctor: "Dr. Priya Sharma", specialty: "Cardiologist", date: addDays(today, 3).toISOString(), time: "11:00 AM" },
-      { id: 'app2', doctor: "Dr. Amit Joshi", specialty: "Endocrinologist", date: addDays(today, 15).toISOString(), time: "02:30 PM" },
-    ]);
-    setSampleVitals([
-        { id: 'v1', date: subDays(today, 4).toISOString(), bloodPressure: { systolic: 145, diastolic: 92 } },
-        { id: 'v2', date: subDays(today, 3).toISOString(), bloodSugar: 160 },
-        { id: 'v3', date: subDays(today, 2).toISOString(), heartRate: 88 },
-        { id: 'v4', date: subDays(today, 1).toISOString(), bloodPressure: { systolic: 142, diastolic: 90 }, bloodSugar: 155 },
-    ]);
-    setSampleMedications([
-        { id: 'p1', name: 'Lisinopril', dosage: '10mg', frequency: 'Once a day', time: 'Morning' },
-        { id: 'p2', name: 'Metformin', dosage: '500mg', frequency: 'Twice a day', time: 'Morning, Evening' },
-    ]);
+    // These are now driven by localStorage, but we can keep notifications and adherence as sample data.
     setSampleNotifications([
         { id: 'n1', type: 'Missed Medication', message: 'Rohan missed his evening dose of Metformin.', date: subDays(today, 1).toISOString(), severity: 'high' },
         { id: 'n2', type: 'Abnormal Vital', message: 'Blood Pressure reading was high: 145/92 mmHg.', date: subDays(today, 4).toISOString(), severity: 'high' },
@@ -64,9 +57,13 @@ export default function CaregiverHub() {
     return () => clearTimeout(timer);
   }, []);
 
+  const latestHearingTest = hearingTestHistory?.[0];
+  const latestEyeTest = eyeTestHistory?.[0];
+
   const generatePDF = () => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
+    let finalY = 0;
 
     doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
@@ -83,11 +80,40 @@ export default function CaregiverHub() {
         head: [['Date & Time', 'Doctor', 'Specialty']],
         body: sampleAppointments.map(a => [
             `${format(new Date(a.date), "PP")} at ${a.time}`,
-            a.doctor,
+            a.doctorName,
             a.specialty
         ]),
         headStyles: { fillColor: [63, 81, 181] },
+        didDrawPage: (data) => { finalY = data.cursor?.y ?? 0; }
     });
+    
+    if (latestEyeTest) {
+        autoTable(doc, {
+            head: [['Vision Test Date', 'Score', 'Interpretation']],
+            body: [[format(new Date(latestEyeTest.date), 'PP'), latestEyeTest.score, latestEyeTest.interpretation]],
+            headStyles: { fillColor: [63, 81, 181] },
+            didDrawPage: (data) => { finalY = data.cursor?.y ?? 0; }
+        });
+    }
+    
+    if (latestHearingTest) {
+        const testFrequencies = [250, 500, 1000, 2000, 4000, 8000];
+        const formatResults = (ear: 'left' | 'right') => 
+          testFrequencies.map(freq => {
+            const result = latestHearingTest.results.find(r => r.ear === ear && r.frequency === freq);
+            return [freq + " Hz", result?.decibel !== null && result?.decibel !== undefined ? `${result?.decibel} dBHL` : '> 120 dBHL'];
+          });
+        autoTable(doc, {
+            head: [[`Hearing Test (${format(new Date(latestHearingTest.date), 'PP')})`, 'Right Ear', 'Left Ear']],
+            body: testFrequencies.map((freq, index) => {
+                const right = formatResults('right')[index][1];
+                const left = formatResults('left')[index][1];
+                return [`${freq} Hz`, right, left];
+            }),
+            headStyles: { fillColor: [63, 81, 181] },
+            didDrawPage: (data) => { finalY = data.cursor?.y ?? 0; }
+        });
+    }
 
     autoTable(doc, {
         head: [['Date', 'Metric', 'Value']],
@@ -100,12 +126,14 @@ export default function CaregiverHub() {
             return entries;
         }),
         headStyles: { fillColor: [63, 81, 181] },
+        didDrawPage: (data) => { finalY = data.cursor?.y ?? 0; }
     });
     
     autoTable(doc, {
         head: [['Medication', 'Dosage', 'Frequency', 'Time']],
         body: sampleMedications.map(m => [m.name, m.dosage, m.frequency, m.time || 'N/A']),
         headStyles: { fillColor: [63, 81, 181] },
+        didDrawPage: (data) => { finalY = data.cursor?.y ?? 0; }
     });
 
     doc.save(`HEALIX_Summary_${samplePatient.name}_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
@@ -123,7 +151,7 @@ export default function CaregiverHub() {
         {
             title: "Upcoming Appointments",
             columns: ["Date", "Time", "Doctor", "Specialty"],
-            data: sampleAppointments.map(a => [format(new Date(a.date), 'yyyy-MM-dd'), a.time, a.doctor, a.specialty])
+            data: sampleAppointments.map(a => [format(new Date(a.date), 'yyyy-MM-dd'), a.time, a.doctorName, a.specialty])
         },
         {
             title: "Vital Signs Log",
@@ -142,6 +170,27 @@ export default function CaregiverHub() {
             data: adherenceData.map(d => [d.date, d.adherence.toFixed(2)])
         }
     ];
+
+    if (latestEyeTest) {
+        sections.push({
+            title: "Vision Test Results",
+            columns: ["Date", "Score", "Interpretation"],
+            data: [[format(new Date(latestEyeTest.date), 'yyyy-MM-dd'), latestEyeTest.score, `"${latestEyeTest.interpretation.replace(/"/g, '""')}"`]]
+        });
+    }
+    
+    if (latestHearingTest) {
+        sections.push({
+            title: "Hearing Test Results",
+            columns: ["Date", "Ear", "Frequency (Hz)", "Threshold (dBHL)"],
+            data: latestHearingTest.results.map(r => [
+                format(new Date(latestHearingTest.date), 'yyyy-MM-dd'),
+                r.ear,
+                r.frequency.toString(),
+                r.decibel?.toString() ?? '>120'
+            ])
+        });
+    }
 
     let csvContent = headers.join("\n") + "\n\n";
     sections.forEach(section => {
@@ -168,6 +217,17 @@ export default function CaregiverHub() {
     generatePDF();
     generateCSV();
   }
+  
+  const hearingChartData = [250, 500, 1000, 2000, 4000, 8000].map(freq => {
+    const leftResult = latestHearingTest?.results.find(r => r.ear === 'left' && r.frequency === freq);
+    const rightResult = latestHearingTest?.results.find(r => r.ear === 'right' && r.frequency === freq);
+    return {
+      frequency: freq,
+      left: leftResult?.decibel,
+      right: rightResult?.decibel,
+    };
+  });
+
 
   if (isLoading) {
     return (
@@ -227,7 +287,7 @@ export default function CaregiverHub() {
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="date" fontSize={12} />
                             <YAxis domain={[0, 100]} unit="%" fontSize={12} />
-                            <Tooltip
+                            <RechartsTooltip
                                 contentStyle={{
                                     backgroundColor: 'hsl(var(--background))',
                                     border: '1px solid hsl(var(--border))'
@@ -239,6 +299,52 @@ export default function CaregiverHub() {
                     </ResponsiveContainer>
                 </CardContent>
             </Card>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+            {latestEyeTest && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><Eye className="h-5 w-5" /> Latest Vision Test</CardTitle>
+                        <CardDescription>Taken on {format(new Date(latestEyeTest.date), 'PP')}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-col items-center gap-4 text-center">
+                        <div className="p-6 rounded-lg bg-muted/50 w-full">
+                            <p className="text-sm text-muted-foreground">Estimated Score</p>
+                            <p className="text-5xl font-bold text-primary">{latestEyeTest.score}</p>
+                        </div>
+                        <p className="text-sm max-w-prose">{latestEyeTest.interpretation}</p>
+                    </CardContent>
+                </Card>
+            )}
+            {latestHearingTest && (
+                 <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><Ear className="h-5 w-5" /> Latest Hearing Test</CardTitle>
+                         <CardDescription>Taken on {format(new Date(latestHearingTest.date), 'PP')}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ResponsiveContainer width="100%" height={250}>
+                            <LineChart data={hearingChartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="frequency" type="category" allowDuplicatedCategory={false} />
+                                <YAxis reversed domain={[-10, 120]} />
+                                <RechartsTooltip 
+                                  formatter={(value: number | null) => value === null ? '>120 dBHL' : `${value} dBHL`}
+                                  contentStyle={{
+                                    backgroundColor: 'hsl(var(--background))',
+                                    border: '1px solid hsl(var(--border))'
+                                  }}
+                                />
+                                <Legend />
+                                <ReferenceLine y={normalHearingThreshold} label={{value: "Normal", position: "insideTopLeft", fill: 'hsl(var(--muted-foreground))', fontSize: 10}} stroke="hsl(var(--primary))" strokeDasharray="3 3" />
+                                <Line type="monotone" dataKey="right" name="Right" stroke="hsl(var(--destructive))" strokeWidth={2} connectNulls />
+                                <Line type="monotone" dataKey="left" name="Left" stroke="hsl(var(--ring))" strokeWidth={2} connectNulls/>
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+            )}
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
@@ -256,13 +362,19 @@ export default function CaregiverHub() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {sampleAppointments.map(a => (
+                            {sampleAppointments && sampleAppointments.filter(a => new Date(a.date) >= new Date() && a.status === 'Confirmed').length > 0 ? (
+                                sampleAppointments.filter(a => new Date(a.date) >= new Date() && a.status === 'Confirmed').map(a => (
                                 <TableRow key={a.id}>
                                     <TableCell>{format(new Date(a.date), "EEE, MMM d")} at {a.time}</TableCell>
-                                    <TableCell>{a.doctor}</TableCell>
+                                    <TableCell>{a.doctorName}</TableCell>
                                     <TableCell>{a.specialty}</TableCell>
                                 </TableRow>
-                            ))}
+                            ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">No upcoming appointments.</TableCell>
+                                </TableRow>
+                            )}
                         </TableBody>
                     </Table>
                 </CardContent>
@@ -281,39 +393,26 @@ export default function CaregiverHub() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                           {sampleVitals.map(v => (
-                            Object.entries(v).map(([key, value]) => {
-                                if (key === 'id' || key === 'date' || !value) return null;
-                                let displayValue: string;
-                                let metricName: string;
+                           {sampleVitals && sampleVitals.length > 0 ? (
+                            sampleVitals.slice(0, 5).flatMap(v => {
+                                const entries: {metric: string; value: string}[] = [];
+                                if (v.bloodPressure) entries.push({metric: 'Blood Pressure', value: `${v.bloodPressure.systolic}/${v.bloodPressure.diastolic} mmHg`});
+                                if (v.bloodSugar) entries.push({metric: 'Blood Sugar', value: `${v.bloodSugar} mg/dL`});
+                                if (v.heartRate) entries.push({metric: 'Heart Rate', value: `${v.heartRate} BPM`});
                                 
-                                switch(key) {
-                                    case 'bloodPressure':
-                                        displayValue = `${value.systolic}/${value.diastolic} mmHg`;
-                                        metricName = 'Blood Pressure';
-                                        break;
-                                    case 'bloodSugar':
-                                        displayValue = `${value} mg/dL`;
-                                        metricName = 'Blood Sugar';
-                                        break;
-                                    case 'heartRate':
-                                        displayValue = `${value} BPM`;
-                                        metricName = 'Heart Rate';
-                                        break;
-                                    default:
-                                        displayValue = String(value);
-                                        metricName = key;
-                                }
-
-                                return (
-                                <TableRow key={`${v.id}-${key}`}>
-                                    <TableCell>{metricName}</TableCell>
-                                    <TableCell className="font-mono">{displayValue}</TableCell>
-                                    <TableCell>{format(new Date(v.date), 'PP')}</TableCell>
-                                </TableRow>
-                                );
-                            })
-                           )).flat().filter(Boolean)}
+                                return entries.map(entry => (
+                                     <TableRow key={`${v.id}-${entry.metric}`}>
+                                        <TableCell>{entry.metric}</TableCell>
+                                        <TableCell className="font-mono">{entry.value}</TableCell>
+                                        <TableCell>{format(new Date(v.date), 'PP')}</TableCell>
+                                    </TableRow>
+                                ));
+                           })
+                           ) : (
+                               <TableRow>
+                                   <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">No vitals logged yet.</TableCell>
+                               </TableRow>
+                           )}
                         </TableBody>
                     </Table>
                 </CardContent>

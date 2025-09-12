@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import useLocalStorage from "@/hooks/use-local-storage";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -34,6 +35,11 @@ const generateRandomLetters = (count: number) => {
 };
 
 type TestState = 'idle' | 'testing' | 'finished';
+type EyeTestResult = {
+    score: string;
+    interpretation: string;
+    date: string;
+};
 
 export default function EyeTest() {
   const [testState, setTestState] = useState<TestState>('idle');
@@ -41,6 +47,7 @@ export default function EyeTest() {
   const [userInput, setUserInput] = useState('');
   const [lastCorrectLine, setLastCorrectLine] = useState<number | null>(null);
   const [currentLetters, setCurrentLetters] = useState('');
+  const [testHistory, setTestHistory] = useLocalStorage<EyeTestResult[]>("eyeTestHistory", []);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -58,32 +65,10 @@ export default function EyeTest() {
     setUserInput('');
     setLastCorrectLine(null);
   };
-
-  const handleNextLine = useCallback(() => {
-    const isCorrect = userInput.toUpperCase() === currentLetters;
-    
-    if (isCorrect) {
-      setLastCorrectLine(currentLineIndex);
-      if (currentLineIndex < chartLines.length - 1) {
-        setCurrentLineIndex(prev => prev + 1);
-        setUserInput('');
-      } else {
-        // Finished all lines correctly
-        setTestState('finished');
-      }
-    } else {
-      // Incorrect, end the test
-      setTestState('finished');
-    }
-  }, [userInput, currentLetters, currentLineIndex]);
   
-  const handleRestart = () => {
-    setTestState('idle');
-  };
-  
-  const finalScore = lastCorrectLine !== null ? chartLines[lastCorrectLine].score : 'Below 20/200';
+  const finalScore = useMemo(() => lastCorrectLine !== null ? chartLines[lastCorrectLine].score : 'Below 20/200', [lastCorrectLine]);
 
-  const getInterpretation = () => {
+  const getInterpretation = useCallback(() => {
     if (lastCorrectLine === null) {
       return "Your vision appears to be significantly impaired. It's highly recommended to see an eye care professional.";
     }
@@ -95,6 +80,38 @@ export default function EyeTest() {
       return `Your estimated visual acuity is ${score}. You may experience some difficulty with distance vision. It is advisable to consult an optometrist.`;
     }
     return `Your estimated visual acuity is ${score}. You likely have difficulty seeing distant objects clearly. A professional eye examination is strongly recommended.`;
+  }, [lastCorrectLine]);
+
+  const finishTest = useCallback(() => {
+    const newResult: EyeTestResult = {
+        score: finalScore,
+        interpretation: getInterpretation(),
+        date: new Date().toISOString()
+    };
+    setTestHistory([newResult, ...testHistory]);
+    setTestState('finished');
+  }, [finalScore, getInterpretation, testHistory, setTestHistory]);
+
+  const handleNextLine = useCallback(() => {
+    const isCorrect = userInput.toUpperCase() === currentLetters;
+    
+    if (isCorrect) {
+      setLastCorrectLine(currentLineIndex);
+      if (currentLineIndex < chartLines.length - 1) {
+        setCurrentLineIndex(prev => prev + 1);
+        setUserInput('');
+      } else {
+        // Finished all lines correctly
+        finishTest();
+      }
+    } else {
+      // Incorrect, end the test
+      finishTest();
+    }
+  }, [userInput, currentLetters, currentLineIndex, finishTest]);
+  
+  const handleRestart = () => {
+    setTestState('idle');
   };
   
   const disclaimerText = "This test is a screening tool and is NOT a substitute for a professional eye exam by a qualified optometrist or ophthalmologist. Results can be affected by screen size, resolution, and distance from the screen. This tool is for informational purposes only.";
@@ -256,5 +273,3 @@ export default function EyeTest() {
     </div>
   );
 }
-
-    

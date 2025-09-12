@@ -1,4 +1,5 @@
 
+
 export type Prescription = {
   id: string;
   name: string;
@@ -86,4 +87,15 @@ export type HearingResult = {
   frequency: number;
   decibel: number | null;
   ear: 'left' | 'right';
+};
+
+export type HearingTestRecord = {
+    results: HearingResult[];
+    date: string;
+};
+
+export type EyeTestResult = {
+    score: string;
+    interpretation: string;
+    date: string;
 };

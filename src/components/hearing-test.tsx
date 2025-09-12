@@ -4,12 +4,13 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Ear, Play, Download, Volume2, AlertCircle, CheckCircle, Info, XCircle } from 'lucide-react';
+import { Ear, Play, Download, Volume2, AlertCircle, CheckCircle, Info, XCircle, RefreshCw } from 'lucide-react';
 import type { HearingResult } from '@/lib/types';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine } from 'recharts';
+import useLocalStorage from '@/hooks/use-local-storage';
 
 const testFrequencies = [250, 500, 1000, 2000, 4000, 8000]; // in Hz
 const testDecibels = [-10, 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]; // in dBHL
@@ -17,6 +18,10 @@ const normalHearingThreshold = 25; // dBHL
 const maxDecibelIndex = testDecibels.length - 1;
 
 type TestState = 'idle' | 'testing' | 'finished';
+type HearingTestRecord = {
+    results: HearingResult[];
+    date: string;
+};
 
 export default function HearingTest() {
   const [testState, setTestState] = useState<TestState>('idle');
@@ -24,6 +29,7 @@ export default function HearingTest() {
   const [currentFrequencyIndex, setCurrentFrequencyIndex] = useState(0);
   const [currentDecibelIndex, setCurrentDecibelIndex] = useState(2); // Start at 10 dBHL
   const [currentEar, setCurrentEar] = useState<'left' | 'right'>('right');
+  const [testHistory, setTestHistory] = useLocalStorage<HearingTestRecord[]>("hearingTestHistory", []);
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const oscillatorRef = useRef<OscillatorNode | null>(null);
@@ -36,6 +42,15 @@ export default function HearingTest() {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
+
+  const finishTest = useCallback(() => {
+    const newRecord: HearingTestRecord = {
+        results: results,
+        date: new Date().toISOString()
+    };
+    setTestHistory([newRecord, ...testHistory]);
+    setTestState('finished');
+  }, [results, testHistory, setTestHistory]);
   
   const playTone = useCallback((frequency: number, decibel: number) => {
     if (!audioContextRef.current) {
@@ -58,6 +73,7 @@ export default function HearingTest() {
     oscillator.type = 'sine';
     oscillator.frequency.setValueAtTime(frequency, context.currentTime);
 
+    // Simple approximation of dBHL to gain
     const gainValue = Math.pow(10, (decibel - 100) / 20);
     gainNode.gain.setValueAtTime(gainValue, context.currentTime);
 
@@ -99,9 +115,9 @@ export default function HearingTest() {
           setCurrentDecibelIndex(2);
           timeoutRef.current = setTimeout(() => playTone(testFrequencies[0], testDecibels[2]), 500);
       } else {
-          setTestState('finished');
+          finishTest();
       }
-  }, [currentFrequencyIndex, currentEar, playTone, stopTone]);
+  }, [currentFrequencyIndex, currentEar, playTone, stopTone, finishTest]);
 
   const handleHeard = () => {
     if (testState !== 'testing') return;
@@ -173,12 +189,12 @@ export default function HearingTest() {
       head: [['Frequency', 'Threshold']],
       body: formatResults(rightEarResults),
       theme: 'grid',
-      headStyles: { fillColor: [231, 48, 48] },
+      headStyles: { fillColor: [231, 48, 48] }, // A red color for right
     });
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.text("Interpretation:", 15, (doc as any).lastAutoTable.finalY + 10);
+    doc.text("Interpretation (Right Ear):", 15, (doc as any).lastAutoTable.finalY + 10);
     doc.setFont('helvetica', 'normal');
     doc.text(getInterpretation('right'), 15, (doc as any).lastAutoTable.finalY + 16, { maxWidth: 180 });
 
@@ -191,12 +207,12 @@ export default function HearingTest() {
       head: [['Frequency', 'Threshold']],
       body: formatResults(leftEarResults),
       theme: 'grid',
-      headStyles: { fillColor: [52, 152, 219] },
+      headStyles: { fillColor: [63, 81, 181] }, // A blue color for left
     });
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.text("Interpretation:", 15, (doc as any).lastAutoTable.finalY + 10);
+    doc.text("Interpretation (Left Ear):", 15, (doc as any).lastAutoTable.finalY + 10);
     doc.setFont('helvetica', 'normal');
     doc.text(getInterpretation('left'), 15, (doc as any).lastAutoTable.finalY + 16, { maxWidth: 180 });
 
@@ -321,18 +337,16 @@ export default function HearingTest() {
                         </p>
                     </div>
                 </CardContent>
-                 <CardContent className="flex justify-center gap-4">
+                 <CardFooter className="flex-col sm:flex-row justify-center gap-4">
                     <Button onClick={handleStartTest} variant="outline">
-                        <Play className="mr-2 h-4 w-4" /> Retake Test
+                        <RefreshCw className="mr-2 h-4 w-4" /> Retake Test
                     </Button>
                     <Button onClick={generatePDFReport}>
                         <Download className="mr-2 h-4 w-4" /> Download PDF Report
                     </Button>
-                </CardContent>
+                </CardFooter>
             </Card>
         )}
     </div>
   );
 }
-
-    
