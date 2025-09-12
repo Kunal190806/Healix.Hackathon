@@ -102,6 +102,7 @@ export default function EyeTest() {
   }, []);
 
   const finishTest = useCallback(async () => {
+    setTestState('finished');
     if (!user) return;
     const score = finalScore;
     const newResult: EyeTestResult = {
@@ -111,7 +112,6 @@ export default function EyeTest() {
         date: new Date().toISOString()
     };
     await addDoc(collection(db, "eyeTestHistory"), newResult);
-    setTestState('finished');
   }, [finalScore, getInterpretation, user]);
 
   const handleNextLine = useCallback(() => {
@@ -136,10 +136,9 @@ export default function EyeTest() {
   
   const disclaimerText = "This test is a screening tool and is NOT a substitute for a professional eye exam by a qualified optometrist or ophthalmologist. Results can be affected by screen size, resolution, and distance from the screen. This tool is for informational purposes only.";
 
-  const generatePDFReport = () => {
+  const generatePDFReport = (result: EyeTestResult) => {
     const doc = new jsPDF();
-    const latestTest = testHistory[0] || { score: finalScore, interpretation: getInterpretation(finalScore), date: new Date().toISOString() };
-    const testDate = format(new Date(latestTest.date), 'PPpp');
+    const testDate = format(new Date(result.date), 'PPpp');
     
     doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
@@ -157,7 +156,7 @@ export default function EyeTest() {
     doc.setFontSize(48);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(63, 81, 181); // Primary color
-    doc.text(latestTest.score, 15, 80);
+    doc.text(result.score, 15, 80);
     doc.setTextColor(0, 0, 0);
 
     doc.setFontSize(16);
@@ -165,7 +164,7 @@ export default function EyeTest() {
     doc.text("Interpretation:", 15, 100);
     doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
-    const interpretationLines = doc.splitTextToSize(latestTest.interpretation, 180);
+    const interpretationLines = doc.splitTextToSize(result.interpretation, 180);
     doc.text(interpretationLines, 15, 110);
     
     doc.setDrawColor(200); // Light gray
@@ -230,7 +229,12 @@ export default function EyeTest() {
           </Card>
         );
       case 'finished':
-        const result = testHistory[0] || { score: finalScore, interpretation: getInterpretation(finalScore) };
+        const result: EyeTestResult = {
+          userId: user.uid,
+          score: finalScore,
+          interpretation: getInterpretation(finalScore),
+          date: new Date().toISOString()
+        };
         return (
           <Card className="text-center">
             <CardHeader>
@@ -256,7 +260,7 @@ export default function EyeTest() {
               <Button onClick={handleRestart} variant="outline">
                 <RefreshCw className="mr-2 h-4 w-4" /> Take Test Again
               </Button>
-              <Button onClick={generatePDFReport}>
+              <Button onClick={() => generatePDFReport(result)}>
                 <Download className="mr-2 h-4 w-4" /> Download PDF Report
               </Button>
             </CardFooter>
@@ -309,3 +313,5 @@ export default function EyeTest() {
     </div>
   );
 }
+
+    

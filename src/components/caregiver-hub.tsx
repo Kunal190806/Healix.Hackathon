@@ -17,6 +17,9 @@ import autoTable from "jspdf-autotable";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth.tsx";
+import { useProfile } from "@/hooks/use-profile.tsx";
+
 
 const normalHearingThreshold = 25;
 
@@ -102,11 +105,10 @@ function LinkPatientForm({ caregiverId }: { caregiverId: string }) {
 }
 
 export default function CaregiverHub() {
-  const [user, setUser] = useState<User | null>(null);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const { userProfile, isLoading: isProfileLoading } = useProfile();
   const [patientProfile, setPatientProfile] = useState<UserProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
+  
   const [appointments, setAppointments] = useState<Appt[]>([]);
   const [vitals, setVitals] = useState<VitalLog[]>([]);
   const [medications, setMedications] = useState<Prescription[]>([]);
@@ -117,26 +119,12 @@ export default function CaregiverHub() {
   const [sampleNotifications, setSampleNotifications] = useState<any[]>([]);
   const [adherenceData, setAdherenceData] = useState<any[]>([]);
 
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-        const unsubProfile = onSnapshot(doc(db, 'users', currentUser.uid), (doc) => {
-          const profile = doc.data() as UserProfile;
-          setUserProfile(profile);
-          setIsLoading(false);
-        });
-        return () => unsubProfile();
-      } else {
-        setUser(null);
-        setUserProfile(null);
-        setIsLoading(false);
-      }
-    });
-    return () => unsubscribe();
-  }, []);
+  const isLoading = isAuthLoading || isProfileLoading;
 
   useEffect(() => {
+    if (isLoading || !userProfile) {
+        return;
+    }
     if (userProfile?.role === 'caregiver' && userProfile.monitoringPatientId) {
         const patientId = userProfile.monitoringPatientId;
         
@@ -195,7 +183,7 @@ export default function CaregiverHub() {
         setEyeTestHistory([]);
         setResponseTimeHistory([]);
       }
-  }, [userProfile]);
+  }, [userProfile, isLoading]);
 
   const latestHearingTest = hearingTestHistory?.[0];
   const latestEyeTest = eyeTestHistory?.[0];
@@ -615,3 +603,5 @@ export default function CaregiverHub() {
     </div>
   );
 }
+
+    

@@ -61,16 +61,16 @@ export default function HearingTest() {
     };
   }, []);
 
-  const finishTest = useCallback(async () => {
+  const finishTest = useCallback(async (finalResults: HearingResult[]) => {
+    setTestState('finished');
     if (!user) return;
     const newRecord: HearingTestRecord = {
         userId: user.uid,
-        results: results,
+        results: finalResults,
         date: new Date().toISOString()
     };
     await addDoc(collection(db, "hearingTestHistory"), newRecord);
-    setTestState('finished');
-  }, [results, user]);
+  }, [user]);
   
   const playTone = useCallback((frequency: number, decibel: number) => {
     if (!audioContextRef.current) {
@@ -110,7 +110,7 @@ export default function HearingTest() {
       oscillatorRef.current?.stop();
       oscillatorRef.current = null;
   }, []);
-
+  
   const handleStartTest = () => {
     setResults([]);
     setCurrentFrequencyIndex(0);
@@ -120,7 +120,7 @@ export default function HearingTest() {
     timeoutRef.current = setTimeout(() => playTone(testFrequencies[0], testDecibels[2]), 500);
   };
   
-  const nextStep = useCallback(() => {
+  const nextStep = useCallback((currentResults: HearingResult[]) => {
       stopTone();
       let freqIndex = currentFrequencyIndex;
       let ear = currentEar;
@@ -135,7 +135,7 @@ export default function HearingTest() {
           setCurrentDecibelIndex(2);
           timeoutRef.current = setTimeout(() => playTone(testFrequencies[0], testDecibels[2]), 500);
       } else {
-          finishTest();
+          finishTest(currentResults);
       }
   }, [currentFrequencyIndex, currentEar, playTone, stopTone, finishTest]);
 
@@ -148,8 +148,9 @@ export default function HearingTest() {
       decibel: testDecibels[currentDecibelIndex],
       ear: currentEar,
     };
-    setResults(prev => [...prev, newResult]);
-    nextStep();
+    const updatedResults = [...results, newResult];
+    setResults(updatedResults);
+    nextStep(updatedResults);
   };
   
   const handleNotHeard = useCallback(() => {
@@ -166,13 +167,14 @@ export default function HearingTest() {
             decibel: null, // Mark as not heard
             ear: currentEar
         };
-        setResults(prev => [...prev, newResult]);
-        nextStep();
+        const updatedResults = [...results, newResult];
+        setResults(updatedResults);
+        nextStep(updatedResults);
     }
-  }, [testState, currentDecibelIndex, currentFrequencyIndex, playTone, nextStep, currentEar]);
+  }, [testState, currentDecibelIndex, currentFrequencyIndex, playTone, nextStep, currentEar, results]);
 
-  const getInterpretation = (ear: 'left' | 'right') => {
-    const earResults = results.filter(r => r.ear === ear && r.decibel !== null).map(r => r.decibel as number);
+  const getInterpretation = (ear: 'left' | 'right', currentResults: HearingResult[]) => {
+    const earResults = currentResults.filter(r => r.ear === ear && r.decibel !== null).map(r => r.decibel as number);
     if (earResults.length === 0) return "Incomplete test for this ear.";
 
     const avgThreshold = earResults.reduce((sum, db) => sum + db, 0) / earResults.length;
@@ -184,18 +186,17 @@ export default function HearingTest() {
     return "Your results suggest a profound hearing loss. You may not hear most sounds and likely rely on visual cues or powerful hearing aids.";
   };
 
-  const generatePDFReport = () => {
+  const generatePDFReport = (record: HearingTestRecord) => {
     const doc = new jsPDF();
-    const latestTest = testHistory[0] || { date: new Date().toISOString(), results: results };
-    const reportDate = format(new Date(latestTest.date), 'PPpp');
+    const reportDate = format(new Date(record.date), 'PPpp');
     doc.setFontSize(20);
     doc.text("Hearing Screening Report", 105, 20, { align: "center" });
     doc.setFontSize(12);
     doc.text(`Date: ${reportDate}`, 15, 30);
     doc.text(`Patient: ${user?.displayName || "Anonymous User"}`, 15, 36); 
 
-    const leftEarResults = latestTest.results.filter(r => r.ear === 'left');
-    const rightEarResults = latestTest.results.filter(r => r.ear === 'right');
+    const leftEarResults = record.results.filter(r => r.ear === 'left');
+    const rightEarResults = record.results.filter(r => r.ear === 'right');
 
     const formatResults = (earResults: HearingResult[]) => 
       testFrequencies.map(freq => {
@@ -217,7 +218,7 @@ export default function HearingTest() {
     doc.setFont('helvetica', 'bold');
     doc.text("Interpretation (Right Ear):", 15, (doc as any).lastAutoTable.finalY + 10);
     doc.setFont('helvetica', 'normal');
-    doc.text(getInterpretation('right'), 15, (doc as any).lastAutoTable.finalY + 16, { maxWidth: 180 });
+    doc.text(getInterpretation('right', record.results), 15, (doc as any).lastAutoTable.finalY + 16, { maxWidth: 180 });
 
     const rightEarY = (doc as any).lastAutoTable.finalY;
 
@@ -235,7 +236,7 @@ export default function HearingTest() {
     doc.setFont('helvetica', 'bold');
     doc.text("Interpretation (Left Ear):", 15, (doc as any).lastAutoTable.finalY + 10);
     doc.setFont('helvetica', 'normal');
-    doc.text(getInterpretation('left'), 15, (doc as any).lastAutoTable.finalY + 16, { maxWidth: 180 });
+    doc.text(getInterpretation('left', record.results), 15, (doc as any).lastAutoTable.finalY + 16, { maxWidth: 180 });
 
     const finalY = (doc as any).lastAutoTable.finalY;
     doc.setFontSize(10);
@@ -248,7 +249,7 @@ export default function HearingTest() {
   };
 
   const chartData = testFrequencies.map(freq => {
-    const res = testState === 'finished' ? (testHistory[0]?.results || results) : results;
+    const res = (testState === 'finished' && testHistory.length > 0) ? testHistory[0].results : results;
     const leftResult = res.find(r => r.ear === 'left' && r.frequency === freq);
     const rightResult = res.find(r => r.ear === 'right' && r.frequency === freq);
     return {
@@ -376,7 +377,7 @@ export default function HearingTest() {
                     <Button onClick={handleStartTest} variant="outline">
                         <RefreshCw className="mr-2 h-4 w-4" /> Retake Test
                     </Button>
-                    <Button onClick={generatePDFReport}>
+                    <Button onClick={() => generatePDFReport({ userId: user.uid, date: new Date().toISOString(), results })}>
                         <Download className="mr-2 h-4 w-4" /> Download PDF Report
                     </Button>
                 </CardFooter>
@@ -385,3 +386,5 @@ export default function HearingTest() {
     </div>
   );
 }
+
+    
