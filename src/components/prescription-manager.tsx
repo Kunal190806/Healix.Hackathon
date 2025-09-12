@@ -37,7 +37,6 @@ export default function PrescriptionManager() {
 
   const { toast } = useToast();
   const [isScanning, setIsScanning] = useState(false);
-  const [scanResult, setScanResult] = useState<ScannedData | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Camera state
@@ -68,11 +67,24 @@ export default function PrescriptionManager() {
     return () => unsubscribe();
   }, []);
 
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+  };
+
   useEffect(() => {
     if (isCameraOn) {
       startCamera();
     } else {
       stopCamera();
+    }
+    
+    // Cleanup function
+    return () => {
+        stopCamera();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isCameraOn]);
@@ -96,14 +108,6 @@ export default function PrescriptionManager() {
         description: 'Please enable camera permissions in your browser settings.',
       });
       setIsCameraOn(false);
-    }
-  };
-
-  const stopCamera = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      const stream = videoRef.current.srcObject as MediaStream;
-      stream.getTracks().forEach(track => track.stop());
-      videoRef.current.srcObject = null;
     }
   };
 
@@ -137,10 +141,16 @@ export default function PrescriptionManager() {
   const handleScan = async () => {
     if (!capturedImage) return;
     setIsScanning(true);
-    setScanResult(null);
     try {
       const result = await extractPrescriptionDetails({ imageDataUri: capturedImage });
-      setScanResult(result);
+      setName(result.name);
+      setDosage(result.dosage);
+      setFrequency(result.frequency);
+      setIsDialogOpen(false); // Close dialog on success
+      toast({
+        title: "Scan Complete",
+        description: "Prescription details have been filled in. Please review and save.",
+      });
     } catch (error) {
       console.error("Scanning failed:", error);
       toast({
@@ -153,22 +163,8 @@ export default function PrescriptionManager() {
     }
   };
 
-  useEffect(() => {
-    if(scanResult) {
-      setName(scanResult.name);
-      setDosage(scanResult.dosage);
-      setFrequency(scanResult.frequency);
-      setIsDialogOpen(false); // Close dialog on success
-      toast({
-        title: "Scan Complete",
-        description: "Prescription details have been filled in. Please review and save.",
-      });
-    }
-  }, [scanResult, toast]);
-
   const resetScan = () => {
     setCapturedImage(null);
-    setScanResult(null);
     setIsScanning(false);
   };
   
@@ -176,10 +172,8 @@ export default function PrescriptionManager() {
     setIsDialogOpen(open);
     if (!open) {
       // Reset state when closing dialog
-      stopCamera();
       setIsCameraOn(false);
       setCapturedImage(null);
-      setScanResult(null);
       setIsScanning(false);
     }
   }
