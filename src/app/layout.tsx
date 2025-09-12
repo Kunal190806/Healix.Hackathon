@@ -120,14 +120,18 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     { href: '/blood-donors', label: 'Blood Donors', icon: Droplets },
     { href: '/fitness', label: 'Inclusive Fitness', icon: Dumbbell },
   ];
-
-  const otherItems = [
+  
+  const topLevelItems = [
+    { href: '/vitals-tracker', label: 'Vitals Tracker', icon: HeartPulse },
     { href: '/meal-planner', label: 'AI Meal Planner', icon: UtensilsCrossed },
     { href: '/prescriptions', label: 'Prescriptions', icon: Pill },
-    { href: '/vitals-tracker', label: 'Vitals Tracker', icon: HeartPulse },
-    { href: '/connect-devices', label: 'Connect Devices', icon: Watch },
-    { href: '/caregiver-hub', label: 'Caregiver Hub', icon: ShieldCheck },
   ];
+
+  const bottomLevelItems = [
+     { href: '/connect-devices', label: 'Connect Devices', icon: Watch },
+     { href: '/caregiver-hub', label: 'Caregiver Hub', icon: ShieldCheck },
+  ];
+
 
   const isAuthPage = pathname === '/login' || pathname === '/signup';
 
@@ -156,35 +160,23 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                 </Button>
               </SidebarMenuItem>
               
-              <Accordion type="multiple" className="w-full">
-                <AccordionItem value="emergency" className="border-none">
-                  <AccordionTrigger className="hover:no-underline text-destructive hover:text-destructive/90 [&[data-state=open]]:text-destructive font-semibold text-sm py-2 px-3 rounded-md hover:bg-destructive/10 w-full justify-start">
-                    <div className="flex items-center">
-                       <Siren className="mr-2 h-4 w-4" />
-                       Emergency
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="pb-1">
-                    <SidebarMenu className="ml-5 border-l border-destructive/50 pl-3">
-                      {emergencyItems.map((item) => (
-                        <SidebarMenuItem key={item.href}>
-                          <Button
-                            variant={pathname === item.href ? 'secondary' : 'ghost'}
-                            className="w-full justify-start h-8"
-                            asChild
-                          >
-                            <Link href={item.href}>
-                              <item.icon className="mr-2 h-4 w-4" />
-                              {item.label}
-                            </Link>
-                          </Button>
-                        </SidebarMenuItem>
-                      ))}
-                    </SidebarMenu>
-                  </AccordionContent>
-                </AccordionItem>
+              {topLevelItems.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <Button
+                    variant={pathname === item.href ? 'default' : 'ghost'}
+                    className="w-full justify-start"
+                    asChild
+                  >
+                    <Link href={item.href}>
+                      <item.icon className="mr-2 h-4 w-4" />
+                      {item.label}
+                    </Link>
+                  </Button>
+                </SidebarMenuItem>
+              ))}
 
-                <AccordionItem value="find-my" className="border-none">
+              <Accordion type="multiple" className="w-full">
+                 <AccordionItem value="find-my" className="border-none">
                   <AccordionTrigger className="hover:no-underline text-muted-foreground hover:text-foreground [&[data-state=open]]:text-foreground font-semibold text-sm py-2 px-3 rounded-md hover:bg-muted/50 w-full justify-start">
                     <div className="flex items-center">
                        <Search className="mr-2 h-4 w-4" />
@@ -264,9 +256,36 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                     </SidebarMenu>
                   </AccordionContent>
                 </AccordionItem>
+                
+                <AccordionItem value="emergency" className="border-none">
+                  <AccordionTrigger className="hover:no-underline text-destructive hover:text-destructive/90 [&[data-state=open]]:text-destructive font-semibold text-sm py-2 px-3 rounded-md hover:bg-destructive/10 w-full justify-start">
+                    <div className="flex items-center">
+                       <Siren className="mr-2 h-4 w-4" />
+                       Emergency
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-1">
+                    <SidebarMenu className="ml-5 border-l border-destructive/50 pl-3">
+                      {emergencyItems.map((item) => (
+                        <SidebarMenuItem key={item.href}>
+                          <Button
+                            variant={pathname === item.href ? 'secondary' : 'ghost'}
+                            className="w-full justify-start h-8"
+                            asChild
+                          >
+                            <Link href={item.href}>
+                              <item.icon className="mr-2 h-4 w-4" />
+                              {item.label}
+                            </Link>
+                          </Button>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </AccordionContent>
+                </AccordionItem>
               </Accordion>
                
-              {otherItems.map((item) => (
+              {bottomLevelItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <Button
                     variant={pathname === item.href ? 'default' : 'ghost'}
@@ -333,3 +352,5 @@ export default function RootLayout({
     </html>
   );
 }
+
+    
