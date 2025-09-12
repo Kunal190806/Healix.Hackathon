@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { auth, db } from "@/lib/firebase";
-import { collection, onSnapshot, query, where, orderBy, limit, addDoc, getDocs } from "firebase/firestore";
+import { collection, onSnapshot, query, where, orderBy, limit, addDoc } from "firebase/firestore";
 import type { User } from "firebase/auth";
 import type { VitalLog, HearingTestRecord, EyeTestResult, ResponseTimeResult } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -113,21 +113,31 @@ function AddVitalsDialog({ user }: { user: User }) {
 
 export default function VitalsTracker() {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [latestVitals, setLatestVitals] = useState<Partial<VitalLog> | null>(null);
   const [latestHearingTest, setLatestHearingTest] = useState<HearingTestRecord | null>(null);
   const [latestEyeTest, setLatestEyeTest] = useState<EyeTestResult | null>(null);
   const [latestResponseTimeTest, setLatestResponseTimeTest] = useState<ResponseTimeResult | null>(null);
 
+  const [loadingStates, setLoadingStates] = useState({
+    auth: true,
+    vitals: true,
+    hearing: true,
+    eye: true,
+    response: true,
+  });
+
+  const isLoading = Object.values(loadingStates).some(state => state);
+
   useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged((currentUser) => {
       setUser(currentUser);
+      setLoadingStates(prev => ({...prev, auth: false}));
       if (!currentUser) {
-        setIsLoading(false);
         setLatestVitals(null);
         setLatestHearingTest(null);
         setLatestEyeTest(null);
         setLatestResponseTimeTest(null);
+        setLoadingStates({ auth: false, vitals: false, hearing: false, eye: false, response: false });
       }
     });
     return () => unsubscribeAuth();
@@ -136,11 +146,10 @@ export default function VitalsTracker() {
   useEffect(() => {
     if (!user) return;
 
-    setIsLoading(true);
-
-    const createListener = <T extends { date: string }>(
+    const createListener = <T,>(
       collectionName: string,
-      setter: (data: T | null) => void
+      setter: (data: T | null) => void,
+      loadingKey: keyof typeof loadingStates
     ) => {
       const q = query(
         collection(db, collectionName),
@@ -148,49 +157,28 @@ export default function VitalsTracker() {
         orderBy("date", "desc"),
         limit(1)
       );
-
-      // Initial fetch
-      getDocs(q).then(snapshot => {
-        if (!snapshot.empty) {
-          setter(snapshot.docs[0].data() as T);
-        }
-      });
       
-      // Real-time listener
       const unsubscribe = onSnapshot(q, (snapshot) => {
         if (!snapshot.empty) {
           setter(snapshot.docs[0].data() as T);
         } else {
           setter(null);
         }
+        setLoadingStates(prev => ({...prev, [loadingKey]: false}));
       }, (error) => {
         console.error(`Error fetching ${collectionName}:`, error);
+        setLoadingStates(prev => ({...prev, [loadingKey]: false}));
       });
 
       return unsubscribe;
     };
     
-    const collections = [
-        { name: 'vitals', setter: setLatestVitals },
-        { name: 'hearingTestHistory', setter: setLatestHearingTest },
-        { name: 'eyeTestHistory', setter: setLatestEyeTest },
-        { name: 'responseTimeHistory', setter: setLatestResponseTimeTest }
+    const unsubs = [
+      createListener<VitalLog>( 'vitals', setLatestVitals, 'vitals'),
+      createListener<HearingTestRecord>('hearingTestHistory', setLatestHearingTest, 'hearing'),
+      createListener<EyeTestResult>('eyeTestHistory', setLatestEyeTest, 'eye'),
+      createListener<ResponseTimeResult>('responseTimeHistory', setLatestResponseTimeTest, 'response')
     ];
-
-    // Initial load for all collections
-    Promise.all(collections.map(c => {
-        const q = query(collection(db, c.name), where("userId", "==", user.uid), orderBy("date", "desc"), limit(1));
-        return getDocs(q).then(snapshot => {
-            if (!snapshot.empty) {
-                c.setter(snapshot.docs[0].data() as any);
-            }
-        });
-    })).then(() => {
-        setIsLoading(false);
-    });
-
-    // Set up real-time listeners
-    const unsubs = collections.map(c => createListener(c.name, c.setter as any));
     
     return () => {
       unsubs.forEach(unsub => unsub());
@@ -291,7 +279,3 @@ export default function VitalsTracker() {
     </div>
   );
 }
-
-    
-
-    
