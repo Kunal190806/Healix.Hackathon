@@ -1,21 +1,22 @@
 
 "use client";
 
-import { useState } from "react";
-import useLocalStorage from "@/hooks/use-local-storage";
-import type { Hospital, Doctor, Appointment } from "@/lib/types";
+import { useState, useEffect } from "react";
+import type { Hospital, Doctor } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogClose } from "@/components/ui/dialog";
-import { Hospital as HospitalIcon, Search, Stethoscope, MapPin, IndianRupee, User, Star, CalendarDays, Clock, CheckCircle } from "lucide-react";
+import { Hospital as HospitalIcon, Stethoscope, MapPin, IndianRupee, User, Star, Clock, CheckCircle } from "lucide-react";
 import Image from "next/image";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import dynamic from "next/dynamic";
+import { auth, db } from "@/lib/firebase";
+import { collection, addDoc } from "firebase/firestore";
+import type { User as FirebaseUser } from "firebase/auth";
 
 const sampleHospitals: Hospital[] = [
   // Mumbai
@@ -52,40 +53,39 @@ const sampleHospitals: Hospital[] = [
 
 const sampleDoctors: Doctor[] = [
   // Delhi
-  { id: 'd1', name: 'Dr. Priya Sharma', specialty: 'Cardiology', experience: 15, city: 'Delhi', fees: 1500, hospital: 'Max Healthcare, Saket', bio: 'Chief Cardiologist at Max Healthcare with extensive experience in interventional cardiology.', image: 'https://picsum.photos/400/400?random=1' },
-  { id: 'd7', name: 'Dr. Aisha Gupta', specialty: 'Gynecology', experience: 14, city: 'Delhi', fees: 1400, hospital: 'Fortis La Femme', bio: 'Dedicated to women\'s health, from adolescence to post-menopause. Practices at Fortis La Femme.', image: 'https://picsum.photos/400/400?random=7' },
-  { id: 'd11', name: 'Dr. Neha Sharma', specialty: 'ENT', experience: 7, city: 'Delhi', fees: 900, hospital: 'Sir Ganga Ram Hospital', bio: 'Expert in treating ear, nose, and throat disorders, including sinus issues.', image: 'https://picsum.photos/400/400?random=11' },
-  { id: 'd13', name: 'Dr. Alok Kumar', specialty: 'Orthopedics', experience: 18, city: 'Delhi', fees: 1300, hospital: 'Indraprastha Apollo Hospitals', bio: 'Senior orthopedic surgeon at Indraprastha Apollo Hospitals.', image: 'https://picsum.photos/400/400?random=13' },
-  { id: 'd14', name: 'Dr. Meenakshi Singh', specialty: 'Pediatrics', experience: 12, city: 'Delhi', fees: 850, hospital: 'Sir Ganga Ram Hospital', bio: 'Specializes in pediatric critical care at Sir Ganga Ram Hospital.', image: 'https://picsum.photos/400/400?random=14' },
+  { id: 'd1', name: 'Dr. Priya Sharma', specialty: 'Cardiology', experience: 15, city: 'Delhi', fees: 1500, hospital: 'Max Healthcare, Saket', bio: 'Chief Cardiologist at Max Healthcare with extensive experience in interventional cardiology.', image: 'https://picsum.photos/seed/d1/400/400' },
+  { id: 'd7', name: 'Dr. Aisha Gupta', specialty: 'Gynecology', experience: 14, city: 'Delhi', fees: 1400, hospital: 'Fortis La Femme', bio: 'Dedicated to women\'s health, from adolescence to post-menopause. Practices at Fortis La Femme.', image: 'https://picsum.photos/seed/d7/400/400' },
+  { id: 'd11', name: 'Dr. Neha Sharma', specialty: 'ENT', experience: 7, city: 'Delhi', fees: 900, hospital: 'Sir Ganga Ram Hospital', bio: 'Expert in treating ear, nose, and throat disorders, including sinus issues.', image: 'https://picsum.photos/seed/d11/400/400' },
+  { id: 'd13', name: 'Dr. Alok Kumar', specialty: 'Orthopedics', experience: 18, city: 'Delhi', fees: 1300, hospital: 'Indraprastha Apollo Hospitals', bio: 'Senior orthopedic surgeon at Indraprastha Apollo Hospitals.', image: 'https://picsum.photos/seed/d13/400/400' },
+  { id: 'd14', name: 'Dr. Meenakshi Singh', specialty: 'Pediatrics', experience: 12, city: 'Delhi', fees: 850, hospital: 'Sir Ganga Ram Hospital', bio: 'Specializes in pediatric critical care at Sir Ganga Ram Hospital.', image: 'https://picsum.photos/seed/d14/400/400' },
   // Mumbai
-  { id: 'd2', name: 'Dr. Amit Joshi', specialty: 'Neurology', experience: 12, city: 'Mumbai', fees: 1800, hospital: 'Kokilaben Dhirubhai Ambani Hospital', bio: 'Specializes in treating stroke and epilepsy. Affiliated with Kokilaben Ambani Hospital.', image: 'https://picsum.photos/400/400?random=2' },
-  { id: 'd8', name: 'Dr. Arjun Shetty', specialty: 'Cardiology', experience: 10, city: 'Mumbai', fees: 1600, hospital: 'Fortis Hospital, Mulund', bio: 'Consultant cardiologist focusing on preventative heart care and cardiac rehabilitation.', image: 'https://picsum.photos/400/400?random=8' },
-  { id: 'd12', name: 'Dr. Rajesh Khanna', specialty: 'Psychiatry', experience: 16, city: 'Mumbai', fees: 2000, hospital: 'Lilavati Hospital & Research Centre', bio: 'Provides counseling and treatment for various mental health conditions.', image: 'https://picsum.photos/400/400?random=12' },
-  { id: 'd15', name: 'Dr. Sneha Patil', specialty: 'Dermatology', experience: 9, city: 'Mumbai', fees: 1100, hospital: 'Lilavati Hospital & Research Centre', bio: 'Expert in laser treatments and cosmetic dermatology at Lilavati Hospital.', image: 'https://picsum.photos/400/400?random=15' },
-  { id: 'd16', name: 'Dr. Rahul Desai', specialty: 'Gastroenterology', experience: 11, city: 'Mumbai', fees: 1700, hospital: 'Breach Candy Hospital', bio: 'Specialist in liver diseases at Breach Candy Hospital.', image: 'https://picsum.photos/400/400?random=16' },
+  { id: 'd2', name: 'Dr. Amit Joshi', specialty: 'Neurology', experience: 12, city: 'Mumbai', fees: 1800, hospital: 'Kokilaben Dhirubhai Ambani Hospital', bio: 'Specializes in treating stroke and epilepsy. Affiliated with Kokilaben Ambani Hospital.', image: 'https://picsum.photos/seed/d2/400/400' },
+  { id: 'd8', name: 'Dr. Arjun Shetty', specialty: 'Cardiology', experience: 10, city: 'Mumbai', fees: 1600, hospital: 'Fortis Hospital, Mulund', bio: 'Consultant cardiologist focusing on preventative heart care and cardiac rehabilitation.', image: 'https://picsum.photos/seed/d8/400/400' },
+  { id: 'd12', name: 'Dr. Rajesh Khanna', specialty: 'Psychiatry', experience: 16, city: 'Mumbai', fees: 2000, hospital: 'Lilavati Hospital & Research Centre', bio: 'Provides counseling and treatment for various mental health conditions.', image: 'https://picsum.photos/seed/d12/400/400' },
+  { id: 'd15', name: 'Dr. Sneha Patil', specialty: 'Dermatology', experience: 9, city: 'Mumbai', fees: 1100, hospital: 'Lilavati Hospital & Research Centre', bio: 'Expert in laser treatments and cosmetic dermatology at Lilavati Hospital.', image: 'https://picsum.photos/seed/d15/400/400' },
+  { id: 'd16', name: 'Dr. Rahul Desai', specialty: 'Gastroenterology', experience: 11, city: 'Mumbai', fees: 1700, hospital: 'Breach Candy Hospital', bio: 'Specialist in liver diseases at Breach Candy Hospital.', image: 'https://picsum.photos/seed/d16/400/400' },
   // Bangalore
-  { id: 'd3', name: 'Dr. Anjali Desai', specialty: 'Dermatology', experience: 8, city: 'Bangalore', fees: 1000, hospital: 'Sakra World Hospital', bio: 'Expert in cosmetic dermatology and skin allergies. Runs a private clinic in Koramangala.', image: 'https://picsum.photos/400/400?random=3' },
-  { id: 'd9', name: 'Dr. Kavita Iyer', specialty: 'Dentist', experience: 9, city: 'Bangalore', fees: 700, hospital: 'Manipal Hospitals, Old Airport Road', bio: 'Focuses on cosmetic dentistry and root canal treatments.', image: 'https://picsum.photos/400/400?random=9' },
-  { id: 'd17', name: 'Dr. Santosh Kumar', specialty: 'Urology', experience: 15, city: 'Bangalore', fees: 1400, hospital: 'Manipal Hospitals, Old Airport Road', bio: 'Leading urologist at Manipal Hospitals specializing in kidney stones.', image: 'https://picsum.photos/400/400?random=17' },
-  { id: 'd18', name: 'Dr. Divya Nair', specialty: 'Ophthalmology', experience: 10, city: 'Bangalore', fees: 950, hospital: 'Narayana Institute of Cardiac Sciences', bio: 'Cataract and refractive surgeon at Narayana Nethralaya.', image: 'https://picsum.photos/400/400?random=18' },
-  { id: 'd19', name: 'Dr. Vijay Rajan', specialty: 'Pulmonology', experience: 13, city: 'Bangalore', fees: 1250, hospital: 'Fortis Hospital, Bannerghatta Road', bio: 'Expert in treating respiratory diseases at Fortis Hospital, Bannerghatta.', image: 'https://picsum.photos/400/400?random=19' },
+  { id: 'd3', name: 'Dr. Anjali Desai', specialty: 'Dermatology', experience: 8, city: 'Bangalore', fees: 1000, hospital: 'Sakra World Hospital', bio: 'Expert in cosmetic dermatology and skin allergies. Runs a private clinic in Koramangala.', image: 'https://picsum.photos/seed/d3/400/400' },
+  { id: 'd9', name: 'Dr. Kavita Iyer', specialty: 'Dentist', experience: 9, city: 'Bangalore', fees: 700, hospital: 'Manipal Hospitals, Old Airport Road', bio: 'Focuses on cosmetic dentistry and root canal treatments.', image: 'https://picsum.photos/seed/d9/400/400' },
+  { id: 'd17', name: 'Dr. Santosh Kumar', specialty: 'Urology', experience: 15, city: 'Bangalore', fees: 1400, hospital: 'Manipal Hospitals, Old Airport Road', bio: 'Leading urologist at Manipal Hospitals specializing in kidney stones.', image: 'https://picsum.photos/seed/d17/400/400' },
+  { id: 'd18', name: 'Dr. Divya Nair', specialty: 'Ophthalmology', experience: 10, city: 'Bangalore', fees: 950, hospital: 'Narayana Institute of Cardiac Sciences', bio: 'Cataract and refractive surgeon at Narayana Nethralaya.', image: 'https://picsum.photos/seed/d18/400/400' },
+  { id: 'd19', name: 'Dr. Vijay Rajan', specialty: 'Pulmonology', experience: 13, city: 'Bangalore', fees: 1250, hospital: 'Fortis Hospital, Bannerghatta Road', bio: 'Expert in treating respiratory diseases at Fortis Hospital, Bannerghatta.', image: 'https://picsum.photos/seed/d19/400/400' },
   // Chennai
-  { id: 'd4', name: 'Dr. Rohan Mehra', specialty: 'Orthopedics', experience: 20, city: 'Chennai', fees: 1200, hospital: 'Apollo Hospitals, Greams Road', bio: 'Leading orthopedic surgeon specializing in knee and hip replacements at Apollo Hospitals.', image: 'https://picsum.photos/400/400?random=4' },
-  { id: 'd20', name: 'Dr. Lakshmi Menon', specialty: 'Endocrinology', experience: 11, city: 'Chennai', fees: 1350, hospital: 'MIOT International', bio: 'Specializes in diabetes and thyroid disorders at MIOT International.', image: 'https://picsum.photos/400/400?random=20' },
-  { id: 'd21', name: 'Dr. Karthik Sundaram', specialty: 'Oncology', experience: 16, city: 'Chennai', fees: 1900, hospital: 'Apollo Hospitals, Greams Road', bio: 'Surgical oncologist at Adyar Cancer Institute.', image: 'https://picsum.photos/400/400?random=21' },
-  { id: 'd22', name: 'Dr. Priya Murthy', specialty: 'Rheumatology', experience: 9, city: 'Chennai', fees: 1150, hospital: 'Gleneagles Global Health City', bio: 'Treats autoimmune and rheumatic diseases at Gleneagles Global Health City.', image: 'https://picsum.photos/400/400?random=22' },
-  { id: 'd23', name: 'Dr. Anand Selvan', specialty: 'Nephrology', experience: 14, city: 'Chennai', fees: 1550, hospital: 'SIMS Hospital', bio: 'Specialist in kidney disease and dialysis at SIMS Hospital.', image: 'https://picsum.photos/400/400?random=23' },
+  { id: 'd4', name: 'Dr. Rohan Mehra', specialty: 'Orthopedics', experience: 20, city: 'Chennai', fees: 1200, hospital: 'Apollo Hospitals, Greams Road', bio: 'Leading orthopedic surgeon specializing in knee and hip replacements at Apollo Hospitals.', image: 'https://picsum.photos/seed/d4/400/400' },
+  { id: 'd20', name: 'Dr. Lakshmi Menon', specialty: 'Endocrinology', experience: 11, city: 'Chennai', fees: 1350, hospital: 'MIOT International', bio: 'Specializes in diabetes and thyroid disorders at MIOT International.', image: 'https://picsum.photos/seed/d20/400/400' },
+  { id: 'd21', name: 'Dr. Karthik Sundaram', specialty: 'Oncology', experience: 16, city: 'Chennai', fees: 1900, hospital: 'Apollo Hospitals, Greams Road', bio: 'Surgical oncologist at Adyar Cancer Institute.', image: 'https://picsum.photos/seed/d21/400/400' },
+  { id: 'd22', name: 'Dr. Priya Murthy', specialty: 'Rheumatology', experience: 9, city: 'Chennai', fees: 1150, hospital: 'Gleneagles Global Health City', bio: 'Treats autoimmune and rheumatic diseases at Gleneagles Global Health City.', image: 'https://picsum.photos/seed/d22/400/400' },
+  { id: 'd23', name: 'Dr. Anand Selvan', specialty: 'Nephrology', experience: 14, city: 'Chennai', fees: 1550, hospital: 'SIMS Hospital', bio: 'Specialist in kidney disease and dialysis at SIMS Hospital.', image: 'https://picsum.photos/seed/d23/400/400' },
 ];
 
 const timeSlots = ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
 
-const AppointmentBookingForm = dynamic(() => Promise.resolve(function AppointmentBookingForm({ doctor, onBookingConfirmed }: { doctor: Doctor; onBookingConfirmed: () => void; }) {
-  const [appointments, setAppointments] = useLocalStorage<Appointment[]>("appointments", []);
+const AppointmentBookingForm = dynamic(() => Promise.resolve(function AppointmentBookingForm({ doctor, user, onBookingConfirmed }: { doctor: Doctor; user: FirebaseUser | null; onBookingConfirmed: () => void; }) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const handleBookAppointment = () => {
+  const handleBookAppointment = async () => {
     if (!selectedDate || !selectedTime) {
       toast({
         variant: "destructive",
@@ -95,17 +95,26 @@ const AppointmentBookingForm = dynamic(() => Promise.resolve(function Appointmen
       return;
     }
 
-    const newAppointment: Appointment = {
-      id: crypto.randomUUID(),
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Not Logged In",
+        description: "You must be logged in to book an appointment.",
+      });
+      return;
+    }
+
+    const newAppointmentData = {
+      userId: user.uid,
       doctorId: doctor.id,
       doctorName: doctor.name,
       specialty: doctor.specialty,
       date: selectedDate.toISOString(),
       time: selectedTime,
-      status: "Confirmed",
+      status: "Confirmed" as const,
     };
 
-    setAppointments([...appointments, newAppointment]);
+    await addDoc(collection(db, "appointments"), newAppointmentData);
     
     toast({
       title: "Appointment Booked!",
@@ -163,8 +172,8 @@ const AppointmentBookingForm = dynamic(() => Promise.resolve(function Appointmen
                     </Button>
                 ))}
                 </div>
-                <Button onClick={handleBookAppointment} className="w-full mt-6" disabled={!selectedDate || !selectedTime}>
-                Confirm Booking
+                <Button onClick={handleBookAppointment} className="w-full mt-6" disabled={!selectedDate || !selectedTime || !user}>
+                  {user ? 'Confirm Booking' : 'Log in to Book'}
                 </Button>
             </div>
         </div>
@@ -174,8 +183,17 @@ const AppointmentBookingForm = dynamic(() => Promise.resolve(function Appointmen
 
 
 export default function HospitalFinder() {
-  const [hospitals] = useLocalStorage<Hospital[]>("hospitals", sampleHospitals);
-  const [doctors] = useLocalStorage<Doctor[]>("doctors", sampleDoctors);
+  const [hospitals] = useState<Hospital[]>(sampleHospitals);
+  const [doctors] = useState<Doctor[]>(sampleDoctors);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
   
   const [searchQuery, setSearchQuery] = useState("");
   const [searchLocation, setSearchLocation] = useState("");
@@ -293,6 +311,7 @@ export default function HospitalFinder() {
                               {selectedDoctor && selectedDoctor.id === doctor.id && (
                                 <AppointmentBookingForm 
                                   doctor={selectedDoctor} 
+                                  user={user}
                                   onBookingConfirmed={closeAllDialogs} 
                                 />
                               )}
@@ -323,3 +342,5 @@ export default function HospitalFinder() {
     </div>
   );
 }
+
+    
