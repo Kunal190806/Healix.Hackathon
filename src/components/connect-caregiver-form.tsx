@@ -34,7 +34,7 @@ export default function ConnectCaregiverForm() {
     if (code === '1234') {
       try {
         const patientId = 'patient123'; // The ID of the sample patient
-        const caregiverDocRef = doc(db, "users", userProfile.uid);
+        const caregiverDocRef = doc(db, "users", userProfile.userId);
         
         await updateDoc(caregiverDocRef, {
           monitoringPatientId: patientId,
