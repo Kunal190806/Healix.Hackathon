@@ -98,7 +98,10 @@ export default function ProfileDisplay() {
               <span className="capitalize">{userProfile.role}</span>
             </Badge>
           ) : (
-            <span className="text-lg font-semibold text-muted-foreground">Role not found</span>
+            <Badge variant="outline" className="w-fit text-base px-3 py-1 text-muted-foreground">
+              <UserCircle className="h-5 w-5 mr-2" />
+              <span>Not specified</span>
+            </Badge>
           )}
         </div>
       </CardContent>
