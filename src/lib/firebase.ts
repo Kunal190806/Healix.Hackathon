@@ -6,12 +6,12 @@ import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  "projectId": "healix-2-55914771-2d61d",
-  "appId": "1:766817866970:web:1ec47b623768c8ea8fc1e3",
-  "storageBucket": "healix-2-55914771-2d61d.appspot.com",
-  "apiKey": "AIzaSyCPHxuHG13WB84-vcc4wutpehIyUGRyP1A",
-  "authDomain": "healix-2-55914771-2d61d.firebaseapp.com",
-  "messagingSenderId": "766817866970"
+  "apiKey": "AIzaSyCKuykOGu445JC9dXF7TkDiD_02C-sq3Xg",
+  "authDomain": "healix-2-55914771-322a9.firebaseapp.com",
+  "projectId": "healix-2-55914771-322a9",
+  "storageBucket": "healix-2-55914771-322a9.appspot.com",
+  "messagingSenderId": "638476279907",
+  "appId": "1:638476279907:web:1ec47b623768c8ea8fc1e3"
 };
 
 
