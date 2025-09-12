@@ -104,16 +104,16 @@ export default function EyeTest() {
   }, []);
 
   const finishTest = useCallback(async () => {
+    if (!user) return;
     setTestState('finished');
     const score = finalScore;
     const newResult: EyeTestResult = {
-        userId: user!.uid,
+        userId: user.uid,
         score: score,
         interpretation: getInterpretation(score),
         date: new Date().toISOString()
     };
     setFinalResult(newResult);
-    if (!user) return;
     await addDoc(collection(db, "eyeTestHistory"), newResult);
   }, [finalScore, getInterpretation, user]);
 

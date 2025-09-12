@@ -63,14 +63,14 @@ export default function HearingTest() {
   }, []);
 
   const finishTest = useCallback(async (finalResults: HearingResult[]) => {
+    if (!user) return;
     setTestState('finished');
     const newRecord: HearingTestRecord = {
-        userId: user!.uid,
+        userId: user.uid,
         results: finalResults,
         date: new Date().toISOString()
     };
     setFinalRecord(newRecord);
-    if (!user) return;
     await addDoc(collection(db, "hearingTestHistory"), newRecord);
   }, [user]);
   
