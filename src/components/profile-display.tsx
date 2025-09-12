@@ -19,7 +19,7 @@ export default function ProfileDisplay() {
   const { toast } = useToast();
 
   const handleGenerateCode = async () => {
-    if (!user || userProfile?.role !== 'patient') return;
+    if (!user) return;
     setIsGeneratingCode(true);
     try {
       const code = Math.floor(1000 + Math.random() * 9000).toString();
@@ -59,7 +59,7 @@ export default function ProfileDisplay() {
     );
   }
 
-  if (!user) {
+  if (!user || !userProfile) {
     return (
       <Card className="text-center p-8">
         <CardTitle>Error Loading Profile</CardTitle>
@@ -86,40 +86,48 @@ export default function ProfileDisplay() {
             <span className="text-sm font-medium text-muted-foreground">Email Address</span>
             <span className="text-lg font-semibold">{user.email}</span>
           </div>
+          <div className="flex flex-col space-y-1">
+            <span className="text-sm font-medium text-muted-foreground">Registered as</span>
+            <span className="text-lg font-semibold">
+                <Badge variant="secondary" className="capitalize">
+                    {userProfile.role === 'patient' && <UserCircle className="mr-2 h-4 w-4" />}
+                    {userProfile.role === 'caregiver' && <ShieldCheck className="mr-2 h-4 w-4" />}
+                    {userProfile.role}
+                </Badge>
+            </span>
+          </div>
         </CardContent>
       </Card>
       
-      {userProfile?.role === 'patient' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Share2 className="h-5 w-5 text-primary" />
-              Share Your Profile
-            </CardTitle>
-            <CardDescription>Generate a one-time code to securely share your profile with a caregiver.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {userProfile.accessCode && !isCodeExpired ? (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Share2 className="h-5 w-5 text-primary" />
+            Profile Access Code
+          </CardTitle>
+          <CardDescription>Generate a one-time code to securely share your profile with another user.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {userProfile.accessCode && !isCodeExpired ? (
+            <div className="text-center p-6 bg-muted rounded-lg">
+              <p className="text-sm text-muted-foreground">Your one-time access code is:</p>
+              <p className="text-5xl font-bold tracking-widest text-primary font-mono">{userProfile.accessCode}</p>
+              <p className="text-xs text-muted-foreground mt-2">This code expires in {Math.round((new Date(userProfile.accessCodeExpires!).getTime() - new Date().getTime()) / 60000)} minutes.</p>
+            </div>
+          ) : (
               <div className="text-center p-6 bg-muted rounded-lg">
-                <p className="text-sm text-muted-foreground">Your one-time access code is:</p>
-                <p className="text-5xl font-bold tracking-widest text-primary font-mono">{userProfile.accessCode}</p>
-                <p className="text-xs text-muted-foreground mt-2">This code expires in {Math.round((new Date(userProfile.accessCodeExpires!).getTime() - new Date().getTime()) / 60000)} minutes.</p>
+              <KeyRound className="h-10 w-10 mx-auto text-muted-foreground mb-2"/>
+              <p className="text-muted-foreground">You have no active code.</p>
               </div>
-            ) : (
-               <div className="text-center p-6 bg-muted rounded-lg">
-                <KeyRound className="h-10 w-10 mx-auto text-muted-foreground mb-2"/>
-                <p className="text-muted-foreground">You have no active code.</p>
-               </div>
-            )}
-          </CardContent>
-          <CardFooter>
-            <Button className="w-full" onClick={handleGenerateCode} disabled={isGeneratingCode}>
-              {isGeneratingCode ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
-              {userProfile.accessCode && !isCodeExpired ? 'Generate New Code' : 'Generate Access Code'}
-            </Button>
-          </CardFooter>
-        </Card>
-      )}
+          )}
+        </CardContent>
+        <CardFooter>
+          <Button className="w-full" onClick={handleGenerateCode} disabled={isGeneratingCode}>
+            {isGeneratingCode ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+            {userProfile.accessCode && !isCodeExpired ? 'Generate New Code' : 'Generate Access Code'}
+          </Button>
+        </CardFooter>
+      </Card>
     </div>
   );
 }
