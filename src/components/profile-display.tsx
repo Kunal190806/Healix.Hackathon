@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import type { User } from "firebase/auth";
 import type { UserProfile } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,23 +16,33 @@ export default function ProfileDisplay() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
+    const authUnsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+      setIsLoading(!currentUser);
+
       if (currentUser) {
-        setUser(currentUser);
-        // Fetch user role from Firestore
         const userDocRef = doc(db, "users", currentUser.uid);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-          setUserProfile(userDoc.data() as UserProfile);
-        }
+        const firestoreUnsubscribe = onSnapshot(userDocRef, 
+          (doc) => {
+            if (doc.exists()) {
+              setUserProfile(doc.data() as UserProfile);
+            }
+            setIsLoading(false);
+          },
+          (error) => {
+            console.error("Error fetching user profile:", error);
+            setIsLoading(false);
+          }
+        );
+        return () => firestoreUnsubscribe();
       } else {
         setUser(null);
         setUserProfile(null);
+        setIsLoading(false);
       }
-      setIsLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => authUnsubscribe();
   }, []);
 
   if (isLoading) {
@@ -53,7 +63,8 @@ export default function ProfileDisplay() {
     );
   }
 
-  const getRoleIcon = (role: string) => {
+  const getRoleIcon = (role?: string) => {
+    if (!role) return <UserCircle className="h-5 w-5 mr-2" />;
     switch (role.toLowerCase()) {
       case 'patient':
         return <UserCircle className="h-5 w-5 mr-2" />;
