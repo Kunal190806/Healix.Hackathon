@@ -3,30 +3,108 @@
 
 import { useState, useEffect } from "react";
 import { auth, db } from "@/lib/firebase";
-import { collection, onSnapshot, query, where, orderBy } from "firebase/firestore";
+import { collection, onSnapshot, query, where, orderBy, doc, getDocs, updateDoc, writeBatch } from "firebase/firestore";
 import type { User } from "firebase/auth";
-import type { VitalLog, Prescription, HearingTestRecord, EyeTestResult, ResponseTimeResult, Appointment as Appt } from "@/lib/types";
+import type { UserProfile, VitalLog, Prescription, HearingTestRecord, EyeTestResult, ResponseTimeResult, Appointment as Appt } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, Legend, ReferenceLine } from 'recharts';
 import { format, subDays, addDays } from "date-fns";
-import { AlertTriangle, Bell, Calendar, Download, HeartPulse, Pill, User, Loader2, Ear, Eye, Timer } from "lucide-react";
+import { AlertTriangle, Bell, Calendar, Download, HeartPulse, Pill, User, Loader2, Ear, Eye, Timer, Link, ShieldCheck } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-
-// Sample data to simulate a patient's profile
-const samplePatient = {
-  id: "P001",
-  name: "Rohan Verma",
-  age: 68,
-  condition: "Hypertension & Type 2 Diabetes"
-};
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { useToast } from "@/hooks/use-toast";
 
 const normalHearingThreshold = 25;
 
+function LinkPatientForm({ caregiverId }: { caregiverId: string }) {
+    const [patientEmail, setPatientEmail] = useState('');
+    const [accessCode, setAccessCode] = useState('');
+    const [isLinking, setIsLinking] = useState(false);
+    const { toast } = useToast();
+
+    const handleLinkPatient = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!patientEmail || !accessCode) {
+            toast({ variant: 'destructive', title: 'Missing Information', description: 'Please enter both patient email and access code.' });
+            return;
+        }
+        setIsLinking(true);
+
+        try {
+            // Find patient by email
+            const usersRef = collection(db, "users");
+            const q = query(usersRef, where("email", "==", patientEmail), where("role", "==", "patient"));
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                throw new Error("No patient found with that email address.");
+            }
+
+            const patientDoc = querySnapshot.docs[0];
+            const patientData = patientDoc.data() as UserProfile;
+
+            // Verify access code
+            if (!patientData.accessCode || patientData.accessCode !== accessCode) {
+                throw new Error("The access code is incorrect.");
+            }
+            if (!patientData.accessCodeExpires || new Date() > new Date(patientData.accessCodeExpires)) {
+                throw new Error("The access code has expired. Please ask the patient to generate a new one.");
+            }
+
+            // Link successful, update both profiles in a batch
+            const batch = writeBatch(db);
+            const caregiverRef = doc(db, "users", caregiverId);
+            batch.update(caregiverRef, { monitoringPatientId: patientData.uid });
+            
+            const patientRef = doc(db, "users", patientData.uid);
+            batch.update(patientRef, { accessCode: null, accessCodeExpires: null });
+
+            await batch.commit();
+
+            toast({ title: 'Success!', description: `You are now monitoring ${patientData.name}.` });
+
+        } catch (error: any) {
+            console.error("Failed to link patient:", error);
+            toast({ variant: 'destructive', title: 'Linking Failed', description: error.message || 'An unknown error occurred.' });
+        } finally {
+            setIsLinking(false);
+        }
+    };
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Link className="h-5 w-5" /> Link to a Patient</CardTitle>
+                <CardDescription>Enter the patient's email and the 4-digit code they shared with you.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <form onSubmit={handleLinkPatient} className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="patient-email">Patient's Email</Label>
+                        <Input id="patient-email" type="email" value={patientEmail} onChange={(e) => setPatientEmail(e.target.value)} placeholder="patient@example.com" required />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="access-code">4-Digit Access Code</Label>
+                        <Input id="access-code" value={accessCode} onChange={(e) => setAccessCode(e.target.value)} placeholder="1234" required maxLength={4} />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={isLinking}>
+                        {isLinking ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+                        Link and Monitor
+                    </Button>
+                </form>
+            </CardContent>
+        </Card>
+    );
+}
+
 export default function CaregiverHub() {
   const [user, setUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [patientProfile, setPatientProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const [appointments, setAppointments] = useState<Appt[]>([]);
@@ -42,12 +120,35 @@ export default function CaregiverHub() {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
       setUser(currentUser);
-      setIsLoading(false);
-      if (currentUser) {
-        // In a real app, you'd fetch data for the patient the caregiver is monitoring.
-        // For this demo, we'll fetch the logged-in user's own data to demonstrate.
-        const patientId = currentUser.uid;
+      if (!currentUser) {
+          setIsLoading(false);
+          setUserProfile(null);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
+  useEffect(() => {
+    if (user) {
+      const unsubProfile = onSnapshot(doc(db, 'users', user.uid), (doc) => {
+        const profile = doc.data() as UserProfile;
+        setUserProfile(profile);
+        setIsLoading(false);
+      });
+      return () => unsubProfile();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (userProfile?.role === 'caregiver' && userProfile.monitoringPatientId) {
+        const patientId = userProfile.monitoringPatientId;
+        
+        // Subscribe to patient's profile
+        const unsubPatientProfile = onSnapshot(doc(db, 'users', patientId), (doc) => {
+            setPatientProfile(doc.data() as UserProfile);
+        });
+
+        // Fetch all patient data
         const collectionsToFetch = [
           { name: "appointments", setter: setAppointments },
           { name: "vitals", setter: setVitals },
@@ -68,7 +169,7 @@ export default function CaregiverHub() {
         // Mock data for notifications and adherence as they are not stored in DB
         const today = new Date();
         setSampleNotifications([
-            { id: 'n1', type: 'Missed Medication', message: 'Rohan missed his evening dose of Metformin.', date: subDays(today, 1).toISOString(), severity: 'high' },
+            { id: 'n1', type: 'Missed Medication', message: `Patient missed evening dose of Metformin.`, date: subDays(today, 1).toISOString(), severity: 'high' },
             { id: 'n2', type: 'Abnormal Vital', message: 'Blood Pressure reading was high: 145/92 mmHg.', date: subDays(today, 4).toISOString(), severity: 'high' },
             { id: 'n3', type: 'Appointment Reminder', message: 'Cardiologist appointment in 3 days.', date: today.toISOString(), severity: 'medium' },
             { id: 'n4', type: 'Low Adherence', message: 'Medication adherence dropped to 75% this week.', date: today.toISOString(), severity: 'medium' },
@@ -83,10 +184,13 @@ export default function CaregiverHub() {
           { date: format(today, 'EEE'), taken: 1, total: 2 }, // Today
         ].map(d => ({ ...d, adherence: (d.taken / d.total) * 100 })));
 
-
-        return () => unsubscribers.forEach(unsub => unsub());
+        return () => {
+            unsubPatientProfile();
+            unsubscribers.forEach(unsub => unsub());
+        };
       } else {
-        // Clear all data if logged out
+        // Clear all data if not monitoring
+        setPatientProfile(null);
         setAppointments([]);
         setVitals([]);
         setMedications([]);
@@ -94,15 +198,12 @@ export default function CaregiverHub() {
         setEyeTestHistory([]);
         setResponseTimeHistory([]);
       }
-    });
-    return () => unsubscribe();
-  }, []);
+  }, [userProfile]);
 
   const latestHearingTest = hearingTestHistory?.[0];
   const latestEyeTest = eyeTestHistory?.[0];
   const latestResponseTimeTest = responseTimeHistory?.[0];
-  const patientDisplayName = user ? (user.displayName || "Patient") : samplePatient.name;
-
+  const patientDisplayName = patientProfile ? patientProfile.name : "Patient";
 
   const generatePDF = () => {
     const doc = new jsPDF();
@@ -116,7 +217,7 @@ export default function CaregiverHub() {
     doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
     doc.text(`Patient Name: ${patientDisplayName}`, 15, 45);
-    doc.text(`Patient ID: ${user?.uid.slice(0, 10) || "N/A"}`, 15, 51);
+    doc.text(`Patient ID: ${patientProfile?.uid.slice(0, 10) || "N/A"}`, 15, 51);
     doc.text(`Export Date: ${format(new Date(), 'PPpp')}`, pageWidth - 15, 45, {align: 'right'});
     
     // Appointments
@@ -296,11 +397,24 @@ export default function CaregiverHub() {
     );
   }
   
-  if (!user) {
+  if (!user || !userProfile) {
     return (
         <Card className="text-center p-8">
             <CardTitle>Please Log In</CardTitle>
             <CardDescription>You need to be logged in to access the Caregiver Hub.</CardDescription>
+        </Card>
+    );
+  }
+
+  if (userProfile.role === 'caregiver' && !userProfile.monitoringPatientId) {
+    return <LinkPatientForm caregiverId={user.uid} />;
+  }
+  
+  if (userProfile.role !== 'caregiver') {
+     return (
+        <Card className="text-center p-8">
+            <CardTitle>Access Denied</CardTitle>
+            <CardDescription>This page is for caregivers only.</CardDescription>
         </Card>
     );
   }
@@ -314,7 +428,7 @@ export default function CaregiverHub() {
                         <User className="h-6 w-6 text-primary"/>
                         <span>Monitoring: {patientDisplayName}</span>
                     </CardTitle>
-                    <CardDescription>{samplePatient.condition}</CardDescription>
+                    {patientProfile && <CardDescription>Managing profile for {patientProfile.email}</CardDescription>}
                 </div>
                 <Button onClick={handleDownload}>
                   <Download className="mr-2 h-4 w-4" /> Download Summary

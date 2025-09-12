@@ -44,13 +44,19 @@ export default function SignUpForm() {
 
       await updateProfile(user, { displayName: name });
       
-      await setDoc(doc(db, "users", user.uid), { 
+      const userProfileData: any = {
         uid: user.uid,
         name: name,
         email: email,
         role: role,
         createdAt: new Date().toISOString()
-      });
+      };
+
+      if (role === 'caregiver') {
+        userProfileData.monitoringPatientId = '';
+      }
+      
+      await setDoc(doc(db, "users", user.uid), userProfileData);
 
       toast({
         title: "Account Created!",
@@ -212,11 +218,7 @@ export default function SignUpForm() {
             'caregiver', 
             'Caregiver Registration', 
             'Create an account to monitor and support a loved one.',
-            <div className="space-y-2 pt-4">
-                <Label htmlFor="patient-id">Patient's Unique ID or Email (Optional)</Label>
-                <Input id="patient-id" placeholder="Enter the ID to link to a patient account" />
-                <p className="text-xs text-muted-foreground">The patient can find their ID in their profile. You can link accounts later.</p>
-            </div>,
+            null,
             'Create Caregiver Account'
         )}
       </TabsContent>
