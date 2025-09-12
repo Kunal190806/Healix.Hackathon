@@ -8,9 +8,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, Legend, ReferenceLine } from 'recharts';
 import { format, subDays, addDays } from "date-fns";
-import { AlertTriangle, Bell, Calendar, Download, HeartPulse, Pill, User, Loader2, Ear, Eye, Timer, Link, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Bell, Calendar, Download, HeartPulse, Pill, User, Loader2, Ear, Eye, Timer, Link2, ShieldCheck } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { useProfile } from "@/hooks/use-profile";
+import Link from "next/link";
 
 const normalHearingThreshold = 25;
 
@@ -68,6 +70,8 @@ const sampleResponseTimeHistory: ResponseTimeResult[] = [{
 }];
 
 export default function CaregiverHub() {
+  const { userProfile, isLoading: isProfileLoading } = useProfile();
+
   const [patientProfile, setPatientProfile] = useState<UserProfile | null>(null);
   const [appointments, setAppointments] = useState<Appt[]>([]);
   const [vitals, setVitals] = useState<VitalLog[]>([]);
@@ -81,39 +85,43 @@ export default function CaregiverHub() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate loading data
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      setPatientProfile(samplePatientProfile);
-      setAppointments(sampleAppointments);
-      setVitals(sampleVitals);
-      setMedications(sampleMedications);
-      setHearingTestHistory(sampleHearingHistory);
-      setEyeTestHistory(sampleEyeHistory);
-      setResponseTimeHistory(sampleResponseTimeHistory);
+    // Simulate loading data if a patient is being monitored
+    if (userProfile?.monitoringPatientId) {
+      setIsLoading(true);
+      const timer = setTimeout(() => {
+        setPatientProfile(samplePatientProfile);
+        setAppointments(sampleAppointments);
+        setVitals(sampleVitals);
+        setMedications(sampleMedications);
+        setHearingTestHistory(sampleHearingHistory);
+        setEyeTestHistory(sampleEyeHistory);
+        setResponseTimeHistory(sampleResponseTimeHistory);
 
-      const today = new Date();
-      setSampleNotifications([
-          { id: 'n1', type: 'Missed Medication', message: `Patient missed evening dose of Metformin.`, date: subDays(today, 1).toISOString(), severity: 'high' },
-          { id: 'n2', type: 'Abnormal Vital', message: 'Blood Pressure reading was high: 145/92 mmHg.', date: subDays(today, 4).toISOString(), severity: 'high' },
-          { id: 'n3', type: 'Appointment Reminder', message: 'Cardiologist appointment in 3 days.', date: today.toISOString(), severity: 'medium' },
-          { id: 'n4', type: 'Low Adherence', message: 'Medication adherence dropped to 75% this week.', date: today.toISOString(), severity: 'medium' },
-      ]);
-      setAdherenceData([
-        { date: format(subDays(today, 6), 'EEE'), taken: 3, total: 4 },
-        { date: format(subDays(today, 5), 'EEE'), taken: 4, total: 4 },
-        { date: format(subDays(today, 4), 'EEE'), taken: 4, total: 4 },
-        { date: format(subDays(today, 3), 'EEE'), taken: 3, total: 4 },
-        { date: format(subDays(today, 2), 'EEE'), taken: 4, total: 4 },
-        { date: format(subDays(today, 1), 'EEE'), taken: 3, total: 4 },
-        { date: format(today, 'EEE'), taken: 1, total: 2 }, // Today
-      ].map(d => ({ ...d, adherence: (d.taken / d.total) * 100 })));
-      
-      setIsLoading(false);
-    }, 1000); // Simulate network delay
+        const today = new Date();
+        setSampleNotifications([
+            { id: 'n1', type: 'Missed Medication', message: `Patient missed evening dose of Metformin.`, date: subDays(today, 1).toISOString(), severity: 'high' },
+            { id: 'n2', type: 'Abnormal Vital', message: 'Blood Pressure reading was high: 145/92 mmHg.', date: subDays(today, 4).toISOString(), severity: 'high' },
+            { id: 'n3', type: 'Appointment Reminder', message: 'Cardiologist appointment in 3 days.', date: today.toISOString(), severity: 'medium' },
+            { id: 'n4', type: 'Low Adherence', message: 'Medication adherence dropped to 75% this week.', date: today.toISOString(), severity: 'medium' },
+        ]);
+        setAdherenceData([
+          { date: format(subDays(today, 6), 'EEE'), taken: 3, total: 4 },
+          { date: format(subDays(today, 5), 'EEE'), taken: 4, total: 4 },
+          { date: format(subDays(today, 4), 'EEE'), taken: 4, total: 4 },
+          { date: format(subDays(today, 3), 'EEE'), taken: 3, total: 4 },
+          { date: format(subDays(today, 2), 'EEE'), taken: 4, total: 4 },
+          { date: format(subDays(today, 1), 'EEE'), taken: 3, total: 4 },
+          { date: format(today, 'EEE'), taken: 1, total: 2 }, // Today
+        ].map(d => ({ ...d, adherence: (d.taken / d.total) * 100 })));
+        
+        setIsLoading(false);
+      }, 1000); // Simulate network delay
 
-    return () => clearTimeout(timer);
-  }, []);
+      return () => clearTimeout(timer);
+    } else {
+        setIsLoading(false);
+    }
+  }, [userProfile]);
 
   const latestHearingTest = hearingTestHistory?.[0];
   const latestEyeTest = eyeTestHistory?.[0];
@@ -312,12 +320,27 @@ export default function CaregiverHub() {
     };
   });
   
-  if (isLoading) {
+  if (isLoading || isProfileLoading) {
     return (
       <div className="flex justify-center items-center h-[80vh]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-4 text-muted-foreground">Loading Patient Dashboard...</p>
+        <p className="ml-4 text-muted-foreground">Loading Caregiver Dashboard...</p>
       </div>
+    );
+  }
+  
+  if (!userProfile?.monitoringPatientId) {
+    return (
+        <Card className="text-center p-8 flex flex-col items-center gap-4">
+            <CardTitle>No Patient Linked</CardTitle>
+            <CardDescription>To view a patient's dashboard, you must first link your account to theirs.</CardDescription>
+            <Button asChild>
+                <Link href="/connect-caregiver">
+                    <Link2 className="mr-2 h-4 w-4" />
+                    Connect to a Patient
+                </Link>
+            </Button>
+        </Card>
     );
   }
 

@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { Home, Pill, Droplets, Users, UtensilsCrossed, BookHeart, Dumbbell, PanelLeft, Hospital, UserPlus, Stethoscope, HeartPulse, ShieldCheck, CalendarDays, LogOut, Ear, Eye, Timer, LogIn, UserCircle, Loader2 } from 'lucide-react';
+import { Home, Pill, Droplets, Users, UtensilsCrossed, BookHeart, Dumbbell, PanelLeft, Hospital, UserPlus, Stethoscope, HeartPulse, ShieldCheck, CalendarDays, LogOut, Ear, Eye, Timer, LogIn, UserCircle, Loader2, Link as LinkIcon } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Toaster } from '@/components/ui/toaster';
@@ -16,7 +16,7 @@ import { Inter, Exo_2 } from 'next/font/google';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth, AuthProvider } from '@/hooks/use-auth.tsx';
-import { ProfileProvider } from '@/hooks/use-profile.tsx';
+import { ProfileProvider, useProfile } from '@/hooks/use-profile.tsx';
 
 
 const inter = Inter({
@@ -101,8 +101,9 @@ function UserNav() {
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { userProfile } = useProfile();
   
-  const menuItems = [
+  const patientMenuItems = [
     { href: '/', label: 'Dashboard', icon: Home },
     { href: '/profile', label: 'Profile', icon: UserCircle },
     { href: '/hospitals', label: 'Find a Hospital', icon: Hospital },
@@ -118,8 +119,15 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     { href: '/support-groups', label: 'Support Groups', icon: Users },
     { href: '/blood-donors', label: 'Blood Donors', icon: Droplets },
     { href: '/fitness', label: 'Inclusive Fitness', icon: Dumbbell },
-    { href: '/caregiver-hub', label: 'Caregiver Hub', icon: ShieldCheck },
   ];
+  
+  const caregiverMenuItems = [
+    { href: '/caregiver-hub', label: 'Caregiver Hub', icon: ShieldCheck },
+    { href: '/profile', label: 'Profile', icon: UserCircle },
+    { href: '/connect-caregiver', label: 'Connect to Patient', icon: LinkIcon },
+  ];
+
+  const menuItems = userProfile?.role === 'caregiver' ? caregiverMenuItems : patientMenuItems;
   
   const isAuthPage = pathname === '/login' || pathname === '/signup';
 
