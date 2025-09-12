@@ -90,7 +90,7 @@ export default function ProfileDisplay() {
     );
   }
 
-  if (!user) {
+  if (!user || !userProfile) {
     return (
       <Card className="text-center p-8">
         <CardTitle>Please Log In</CardTitle>
@@ -137,9 +137,8 @@ export default function ProfileDisplay() {
                 <span className="capitalize">{userProfile.role}</span>
               </Badge>
             ) : (
-              <Badge variant="outline" className="w-fit text-base px-3 py-1 text-muted-foreground">
-                <UserCircle className="h-5 w-5 mr-2" />
-                <span>Not specified</span>
+              <Badge variant="outline" className="w-fit">
+                Role not found
               </Badge>
             )}
           </div>
