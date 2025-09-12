@@ -130,3 +130,5 @@ export type DeviceVitals = {
     sleep: { hours: number; minutes: number };
     steps: number;
 };
+
+    

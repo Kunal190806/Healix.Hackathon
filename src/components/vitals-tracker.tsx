@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { auth, db } from "@/lib/firebase";
-import { collection, onSnapshot, query, where, orderBy, limit } from "firebase/firestore";
+import { collection, onSnapshot, query, where, orderBy, limit, addDoc } from "firebase/firestore";
 import type { User } from "firebase/auth";
 import type { VitalLog, HearingTestRecord, EyeTestResult, ResponseTimeResult } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,60 @@ const MetricCard = ({ icon, title, value, unit, description, href }: { icon: Rea
     </Card>
   );
 };
+
+function AddVitalsDialog({ user }: { user: User }) {
+  const [systolic, setSystolic] = useState('');
+  const [diastolic, setDiastolic] = useState('');
+  const [sugar, setSugar] = useState('');
+  const [rate, setRate] = useState('');
+  const [temp, setTemp] = useState('');
+
+  const handleSubmit = async () => {
+    const vitalLog: Omit<VitalLog, 'id' | 'userId' | 'date'> & { userId: string, date: string } = {
+        userId: user.uid,
+        date: new Date().toISOString(),
+    };
+    if (systolic && diastolic) vitalLog.bloodPressure = { systolic: parseInt(systolic), diastolic: parseInt(diastolic) };
+    if (sugar) vitalLog.bloodSugar = parseInt(sugar);
+    if (rate) vitalLog.heartRate = parseInt(rate);
+    if (temp) vitalLog.bodyTemperature = parseFloat(temp);
+
+    await addDoc(collection(db, "vitals"), vitalLog);
+  };
+
+  return (
+      <DialogContent>
+          <DialogHeader>
+              <DialogTitle>Log New Vital Signs</DialogTitle>
+              <DialogDescription>Record your current health metrics. Only fill what you've measured.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="bp" className="text-right">Blood Pressure</Label>
+                  <div className="col-span-3 flex gap-2">
+                      <Input id="bp-sys" placeholder="Systolic" type="number" value={systolic} onChange={e => setSystolic(e.target.value)} />
+                      <Input id="bp-dia" placeholder="Diastolic" type="number" value={diastolic} onChange={e => setDiastolic(e.target.value)} />
+                  </div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="sugar" className="text-right">Blood Sugar</Label>
+                  <Input id="sugar" placeholder="mg/dL" type="number" className="col-span-3" value={sugar} onChange={e => setSugar(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="hr" className="text-right">Heart Rate</Label>
+                  <Input id="hr" placeholder="BPM" type="number" className="col-span-3" value={rate} onChange={e => setRate(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="temp" className="text-right">Body Temp</Label>
+                  <Input id="temp" placeholder="°F" type="number" className="col-span-3" value={temp} onChange={e => setTemp(e.target.value)} />
+              </div>
+          </div>
+          <DialogFooter>
+              <Button onClick={handleSubmit}>Save Vitals</Button>
+          </DialogFooter>
+      </DialogContent>
+  );
+}
 
 export default function VitalsTracker() {
   const [user, setUser] = useState<User | null>(null);
@@ -185,31 +239,26 @@ export default function VitalsTracker() {
 
         {/* Add New Log */}
         <Dialog>
-           <DialogTrigger asChild>
+          <DialogTrigger asChild>
             <button className="w-full h-full">
-                <Card className="flex flex-col items-center justify-center text-center cursor-pointer hover:bg-muted/50 transition-colors h-full">
-                <PlusCircle className="h-12 w-12 text-muted-foreground mb-2" />
-                <h3 className="font-semibold text-muted-foreground">Log Manual Vitals</h3>
-                </Card>
+              <Card className="flex flex-col items-center justify-center text-center cursor-pointer hover:bg-muted/50 transition-colors h-full">
+                  <PlusCircle className="h-12 w-12 text-muted-foreground mb-2" />
+                  <h3 className="font-semibold text-muted-foreground">Log Manual Vitals</h3>
+              </Card>
             </button>
           </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Log New Vital Signs</DialogTitle>
-              <DialogDescription>Record your current health metrics. Only fill what you've measured.</DialogDescription>
-            </DialogHeader>
-            {/* Form can be placed here */}
-            <p className="text-center text-muted-foreground py-8">Manual entry form would go here.</p>
-          </DialogContent>
+          <AddVitalsDialog user={user} />
         </Dialog>
 
-         <Link href="/connect-devices" className="w-full h-full">
-            <Card className="flex flex-col items-center justify-center text-center cursor-pointer hover:bg-muted/50 transition-colors h-full">
-                <Watch className="h-12 w-12 text-muted-foreground mb-2" />
-                <h3 className="font-semibold text-muted-foreground">Connect a Device</h3>
-            </Card>
+        <Link href="/connect-devices" className="w-full h-full">
+          <Card className="flex flex-col items-center justify-center text-center cursor-pointer hover:bg-muted/50 transition-colors h-full">
+              <Watch className="h-12 w-12 text-muted-foreground mb-2" />
+              <h3 className="font-semibold text-muted-foreground">Connect a Device</h3>
+          </Card>
         </Link>
       </div>
     </div>
   );
 }
+
+    
