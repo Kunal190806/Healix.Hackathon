@@ -59,7 +59,7 @@ export default function ProfileDisplay() {
     );
   }
 
-  if (!user || !userProfile) {
+  if (!user) {
     return (
       <Card className="text-center p-8">
         <CardTitle>Error Loading Profile</CardTitle>
