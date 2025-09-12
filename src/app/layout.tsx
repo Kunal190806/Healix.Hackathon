@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { Home, Pill, Droplets, Users, UtensilsCrossed, BookHeart, Dumbbell, PanelLeft, Hospital, UserPlus, Stethoscope, HeartPulse, ShieldCheck, CalendarDays, LogOut, Ear, Eye, Timer, LogIn, UserCircle } from 'lucide-react';
+import { Home, Pill, Droplets, Users, UtensilsCrossed, BookHeart, Dumbbell, PanelLeft, Hospital, UserPlus, Stethoscope, HeartPulse, ShieldCheck, CalendarDays, LogOut, Ear, Eye, Timer, LogIn, UserCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Toaster } from '@/components/ui/toaster';
@@ -15,6 +15,7 @@ import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
 import { Inter, Exo_2 } from 'next/font/google';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useAuth } from '@/hooks/use-auth';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -107,6 +108,36 @@ function UserNav() {
 }
 
 
+const AuthGuard = ({ children }: { children: React.ReactNode }) => {
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const isPublicPage = pathname === '/login' || pathname === '/signup';
+
+  useEffect(() => {
+    if (!isLoading && !user && !isPublicPage) {
+      router.push('/login');
+    }
+  }, [user, isLoading, isPublicPage, router]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user && !isPublicPage) {
+    // This will be shown briefly before redirection
+    return null;
+  }
+
+  return <>{children}</>;
+};
+
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -132,56 +163,67 @@ export default function RootLayout({
     { href: '/fitness', label: 'Inclusive Fitness', icon: Dumbbell },
     { href: '/caregiver-hub', label: 'Caregiver Hub', icon: ShieldCheck },
   ];
+  
+  const isAuthPage = pathname === '/login' || pathname === '/signup';
 
   return (
     <html lang="en" className="dark">
       <body className={cn(inter.variable, exo2.variable, "font-body antialiased")}>
-        <SidebarProvider>
-          <Sidebar collapsible="icon">
-            <SidebarHeader>
-              <div className="flex items-center justify-center p-2 h-14 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:p-0 transition-all duration-200">
-                <span className="text-lg font-logo font-bold group-data-[collapsible=icon]:hidden">HEALIX</span>
-                <span className="text-2xl font-logo font-bold hidden group-data-[collapsible=icon]:block">H</span>
-              </div>
-            </SidebarHeader>
-            <SidebarContent>
-              <SidebarMenu>
-                {menuItems.map((item) => (
-                  <SidebarMenuItem key={item.href}>
-                    <Button
-                      variant={pathname === item.href ? 'default' : 'ghost'}
-                      className="w-full justify-start"
-                      asChild
-                    >
-                      <Link href={item.href}>
-                        <item.icon className="mr-2 h-4 w-4" />
-                        {item.label}
-                      </Link>
-                    </Button>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarContent>
-          </Sidebar>
-          <SidebarInset>
-            <header className="flex items-center justify-between mb-4 p-4 sm:p-6 lg:p-8 lg:pb-0 h-16 border-b">
-                <div className="flex items-center gap-2">
-                    <div className="md:hidden">
-                      <SidebarTrigger>
-                          <PanelLeft />
-                      </SidebarTrigger>
+        <AuthGuard>
+          <SidebarProvider>
+            {!isAuthPage && (
+              <Sidebar collapsible="icon">
+                <SidebarHeader>
+                  <div className="flex items-center justify-center p-2 h-14 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:p-0 transition-all duration-200">
+                    <span className="text-lg font-logo font-bold group-data-[collapsible=icon]:hidden">HEALIX</span>
+                    <span className="text-2xl font-logo font-bold hidden group-data-[collapsible=icon]:block">H</span>
+                  </div>
+                </SidebarHeader>
+                <SidebarContent>
+                  <SidebarMenu>
+                    {menuItems.map((item) => (
+                      <SidebarMenuItem key={item.href}>
+                        <Button
+                          variant={pathname === item.href ? 'default' : 'ghost'}
+                          className="w-full justify-start"
+                          asChild
+                        >
+                          <Link href={item.href}>
+                            <item.icon className="mr-2 h-4 w-4" />
+                            {item.label}
+                          </Link>
+                        </Button>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarContent>
+              </Sidebar>
+            )}
+            <SidebarInset>
+              {!isAuthPage && (
+                <header className="flex items-center justify-between mb-4 p-4 sm:p-6 lg:p-8 lg:pb-0 h-16 border-b">
+                    <div className="flex items-center gap-2">
+                        <div className="md:hidden">
+                          <SidebarTrigger>
+                              <PanelLeft />
+                          </SidebarTrigger>
+                        </div>
+                        <span className="text-lg font-logo font-bold md:hidden">HEALIX</span>
                     </div>
-                    <span className="text-lg font-logo font-bold md:hidden">HEALIX</span>
-                </div>
-                 <div className="flex items-center gap-4 ml-auto">
-                    <UserNav />
-                 </div>
-            </header>
-            <main className="min-h-screen p-4 sm:p-6 lg:p-8 pt-0 lg:pt-8">
-              {children}
-            </main>
-          </SidebarInset>
-        </SidebarProvider>
+                     <div className="flex items-center gap-4 ml-auto">
+                        <UserNav />
+                     </div>
+                </header>
+              )}
+              <main className={cn(
+                "min-h-screen",
+                !isAuthPage && "p-4 sm:p-6 lg:p-8 pt-0 lg:pt-8"
+              )}>
+                {children}
+              </main>
+            </SidebarInset>
+          </SidebarProvider>
+        </AuthGuard>
         <Toaster />
       </body>
     </html>

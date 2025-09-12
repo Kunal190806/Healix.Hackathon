@@ -5,9 +5,10 @@ import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { UtensilsCrossed, Pill, BookHeart, Users, Droplets, Dumbbell, ArrowRight, Hospital, Stethoscope, HeartPulse, ShieldCheck, CalendarDays, Ear, Eye, Timer } from 'lucide-react';
+import { UtensilsCrossed, Pill, BookHeart, Users, Droplets, Dumbbell, ArrowRight, Hospital, Stethoscope, HeartPulse, ShieldCheck, CalendarDays, Ear, Eye, Timer, LogIn, UserPlus } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import type { User } from 'firebase/auth';
+import { Loader2 } from 'lucide-react';
 
 const modules = [
   {
@@ -112,22 +113,63 @@ const modules = [
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Listen for authentication state changes
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
       setUser(currentUser);
+      setIsLoading(false);
     });
 
     // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
+  
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+       <div className="flex flex-col items-center justify-center text-center py-16">
+        <div className="relative w-24 h-24 mb-4">
+            <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping"></div>
+            <div className="relative flex items-center justify-center w-full h-full bg-primary rounded-full">
+                <HeartPulse className="h-12 w-12 text-primary-foreground" />
+            </div>
+        </div>
+        <h1 className="text-4xl font-bold font-headline tracking-tight text-primary">Welcome to HEALIX</h1>
+        <p className="text-muted-foreground mt-4 max-w-xl">
+          Your all-in-one platform for a healthier, more connected life. Please sign in or create an account to access your personalized health dashboard.
+        </p>
+        <div className="mt-8 flex gap-4">
+            <Button size="lg" asChild>
+              <Link href="/login">
+                <LogIn className="mr-2 h-5 w-5"/>
+                Log In
+              </Link>
+            </Button>
+            <Button size="lg" variant="outline" asChild>
+                <Link href="/signup">
+                  <UserPlus className="mr-2 h-5 w-5"/>
+                  Sign Up
+                </Link>
+            </Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-8">
       <div>
         <h1 className="text-3xl font-bold font-headline tracking-tight text-primary">
-          {user ? `Welcome, ${user.displayName || 'User'}` : 'Welcome to HEALIX'}
+          {`Welcome, ${user.displayName || 'User'}`}
         </h1>
         <p className="text-muted-foreground mt-2">Your all-in-one platform for a healthier, more connected life.</p>
       </div>
