@@ -19,15 +19,14 @@ import { doc, setDoc } from "firebase/firestore";
 export default function SignUpForm() {
   const router = useRouter();
   const { toast } = useToast();
-  const [patientName, setPatientName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [caregiverName, setCaregiverName] = useState('');
-  const [caregiverEmail, setCaregiverEmail] = useState('');
-  const [caregiverPassword, setCaregiverPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSignUp = async (name: string, email: string, password: string, role: string) => {
+  // Common state
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleSignUp = async (role: string) => {
     if (!name.trim() || !email.trim() || !password.trim()) {
        toast({
         variant: "destructive",
@@ -42,10 +41,8 @@ export default function SignUpForm() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Update the user's profile with their name
       await updateProfile(user, { displayName: name });
       
-      // Save the user's role and other info to Firestore
       await setDoc(doc(db, "users", user.uid), { 
         uid: user.uid,
         name: name,
@@ -58,12 +55,17 @@ export default function SignUpForm() {
         title: "Account Created!",
         description: `Welcome to HEALIX, ${name}. You are now being redirected.`,
       });
+
+      // Reset form fields
+      setName('');
+      setEmail('');
+      setPassword('');
+
       router.push('/');
 
     } catch (error: any) {
       console.error("Firebase sign up error:", error);
       let description = "An unexpected error occurred. Please try again.";
-      // Provide more specific error messages
       switch (error.code) {
         case 'auth/email-already-in-use':
           description = "This email address is already in use by another account.";
@@ -88,18 +90,75 @@ export default function SignUpForm() {
     }
   };
 
-  const handlePatientSignUp = (e: React.FormEvent) => {
-    e.preventDefault();
-    handleSignUp(patientName, email, password, 'patient');
+  const createForm = (role: string, title: string, description: string, fields: React.ReactNode, submitText: string) => {
+    return (
+        <Card>
+          <CardHeader>
+            <CardTitle>{title}</CardTitle>
+            <CardDescription>{description}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={(e) => { e.preventDefault(); handleSignUp(role); }} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor={`${role}-name`}>Full Name / Organization Name</Label>
+                <Input 
+                  id={`${role}-name`} 
+                  placeholder="e.g., Rohan Verma" 
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required 
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor={`${role}-email`}>Email</Label>
+                  <Input 
+                    id={`${role}-email`} 
+                    type="email"
+                    placeholder="e.g., example@example.com" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`${role}-password`}>Password</Label>
+                  <Input 
+                    id={`${role}-password`} 
+                    type="password" 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Must be at least 6 characters"
+                    required 
+                  />
+                </div>
+              </div>
+              {fields}
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating Account...
+                  </>
+                ) : (
+                  submitText
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+    )
   };
   
-  const handleCaregiverSignUp = (e: React.FormEvent) => {
-    e.preventDefault();
-    handleSignUp(caregiverName, caregiverEmail, caregiverPassword, 'caregiver');
+  const resetFormFields = () => {
+    setName('');
+    setEmail('');
+    setPassword('');
   };
 
+
   return (
-    <Tabs defaultValue="patient" className="w-full">
+    <Tabs defaultValue="patient" className="w-full" onValueChange={resetFormFields}>
       <TabsList className="grid w-full grid-cols-3 md:grid-cols-6">
         <TabsTrigger value="patient"><User className="mr-2 h-4 w-4" />Patient</TabsTrigger>
         <TabsTrigger value="caregiver"><ShieldCheck className="mr-2 h-4 w-4" />Caregiver</TabsTrigger>
@@ -109,50 +168,12 @@ export default function SignUpForm() {
         <TabsTrigger value="hospital"><HeartPulse className="mr-2 h-4 w-4" />Hospital</TabsTrigger>
       </TabsList>
       
-      {/* Patient Registration */}
       <TabsContent value="patient" className="mt-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Patient Registration</CardTitle>
-            <CardDescription>Create your personal health account.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handlePatientSignUp} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="patient-name">Full Name</Label>
-                <Input 
-                  id="patient-name" 
-                  placeholder="e.g., Rohan Verma" 
-                  value={patientName}
-                  onChange={(e) => setPatientName(e.target.value)}
-                  required 
-                />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="patient-email">Email</Label>
-                  <Input 
-                    id="patient-email" 
-                    type="email"
-                    placeholder="e.g., rohan.verma@example.com" 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required 
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="patient-password">Password</Label>
-                  <Input 
-                    id="patient-password" 
-                    type="password" 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Must be at least 6 characters"
-                    required 
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {createForm(
+            'patient', 
+            'Patient Registration', 
+            'Create your personal health account.',
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                  <div className="space-y-2">
                   <Label htmlFor="patient-age">Age</Label>
                   <Input id="patient-age" type="number" placeholder="e.g., 34" />
@@ -172,135 +193,105 @@ export default function SignUpForm() {
                   <Label htmlFor="patient-city">City</Label>
                   <Input id="patient-city" placeholder="e.g., Mumbai" />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="patient-history">Medical History (Optional)</Label>
-                <Textarea id="patient-history" placeholder="e.g., Allergies, chronic conditions..." />
-              </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating Account...
-                  </>
-                ) : (
-                  'Create Patient Account'
-                )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+              </div>,
+            'Create Patient Account'
+        )}
       </TabsContent>
       
       <TabsContent value="caregiver" className="mt-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Caregiver Registration</CardTitle>
-            <CardDescription>Create an account to monitor and support a loved one.</CardDescription>
-          </CardHeader>
-          <CardContent>
-             <form onSubmit={handleCaregiverSignUp} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="caregiver-name">Full Name</Label>
-                <Input 
-                  id="caregiver-name" 
-                  placeholder="e.g., Anita Desai" 
-                  value={caregiverName}
-                  onChange={(e) => setCaregiverName(e.target.value)}
-                  required 
-                />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="caregiver-email">Email</Label>
-                  <Input 
-                    id="caregiver-email" 
-                    type="email"
-                    placeholder="e.g., anita.desai@example.com" 
-                    value={caregiverEmail}
-                    onChange={(e) => setCaregiverEmail(e.target.value)}
-                    required 
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="caregiver-password">Password</Label>
-                  <Input 
-                    id="caregiver-password" 
-                    type="password" 
-                    value={caregiverPassword}
-                    onChange={(e) => setCaregiverPassword(e.target.value)}
-                    placeholder="Must be at least 6 characters"
-                    required 
-                  />
-                </div>
-              </div>
-               <div className="space-y-2 pt-4">
+         {createForm(
+            'caregiver', 
+            'Caregiver Registration', 
+            'Create an account to monitor and support a loved one.',
+            <div className="space-y-2 pt-4">
                 <Label htmlFor="patient-id">Patient's Unique ID or Email (Optional)</Label>
                 <Input id="patient-id" placeholder="Enter the ID to link to a patient account" />
                 <p className="text-xs text-muted-foreground">The patient can find their ID in their profile. You can link accounts later.</p>
-              </div>
-              <Button type="submit" className="w-full !mt-6" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating Account...
-                  </>
-                ) : (
-                  'Create Caregiver Account'
-                )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+            </div>,
+            'Create Caregiver Account'
+        )}
       </TabsContent>
 
-      {/* Other Registration Forms */}
       <TabsContent value="doctor" className="mt-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Doctor Registration</CardTitle>
-            <CardDescription>Join our network of trusted medical professionals.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-center text-muted-foreground">This feature is coming soon.</p>
-          </CardContent>
-        </Card>
+        {createForm(
+            'doctor', 
+            'Doctor Registration', 
+            'Join our network of trusted medical professionals.',
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="doctor-specialty">Specialty</Label>
+                    <Input id="doctor-specialty" placeholder="e.g., Cardiology" />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="doctor-mci">MCI Registration Number</Label>
+                    <Input id="doctor-mci" placeholder="e.g., 12345" />
+                </div>
+             </div>,
+            'Create Doctor Account'
+        )}
       </TabsContent>
 
        <TabsContent value="donor" className="mt-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Blood Donor Registration</CardTitle>
-            <CardDescription>Become a lifesaver. Join our donor network.</CardDescription>
-          </CardHeader>
-           <CardContent>
-            <p className="text-center text-muted-foreground">This feature is coming soon.</p>
-          </CardContent>
-        </Card>
+        {createForm(
+            'donor', 
+            'Blood Donor Registration', 
+            'Become a lifesaver. Join our donor network.',
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="donor-blood-type">Blood Type</Label>
+                   <Select>
+                    <SelectTrigger id="donor-blood-type"><SelectValue placeholder="Select Blood Type" /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="A+">A+</SelectItem>
+                        <SelectItem value="A-">A-</SelectItem>
+                        <SelectItem value="B+">B+</SelectItem>
+                        <SelectItem value="B-">B-</SelectItem>
+                        <SelectItem value="AB+">AB+</SelectItem>
+                        <SelectItem value="AB-">AB-</SelectItem>
+                        <SelectItem value="O+">O+</SelectItem>
+                        <SelectItem value="O-">O-</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="donor-city">City</Label>
+                    <Input id="donor-city" placeholder="e.g., Delhi" />
+                </div>
+             </div>,
+            'Create Donor Account'
+        )}
       </TabsContent>
 
       <TabsContent value="trainer" className="mt-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Fitness Trainer Registration</CardTitle>
-            <CardDescription>Offer your expertise on our inclusive fitness platform.</CardDescription>
-          </CardHeader>
-           <CardContent>
-            <p className="text-center text-muted-foreground">This feature is coming soon.</p>
-          </CardContent>
-        </Card>
+        {createForm(
+            'trainer', 
+            'Fitness Trainer Registration', 
+            'Offer your expertise on our inclusive fitness platform.',
+            <div className="space-y-2">
+                <Label htmlFor="trainer-skills">Specialized Skills</Label>
+                <Textarea id="trainer-skills" placeholder="e.g., Adaptive Yoga, Senior Mobility, Wheelchair Zumba..." />
+            </div>,
+            'Create Trainer Account'
+        )}
       </TabsContent>
 
        <TabsContent value="hospital" className="mt-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Hospital Registration</CardTitle>
-            <CardDescription>List your hospital on our platform to reach more patients.</CardDescription>
-          </CardHeader>
-           <CardContent>
-            <p className="text-center text-muted-foreground">This feature is coming soon.</p>
-          </CardContent>
-        </Card>
+        {createForm(
+            'hospital', 
+            'Hospital Registration', 
+            'List your hospital on our platform to reach more patients.',
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="hospital-city">City</Label>
+                    <Input id="hospital-city" placeholder="e.g., Bangalore" />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="hospital-address">Full Address</Label>
+                    <Input id="hospital-address" placeholder="e.g., 123 Health St, Medical City" />
+                </div>
+             </div>,
+            'Create Hospital Account'
+        )}
       </TabsContent>
     </Tabs>
   );
