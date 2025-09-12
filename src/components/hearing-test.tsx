@@ -4,7 +4,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Ear, Play, Pause, Download, Volume2, AlertCircle, CheckCircle } from 'lucide-react';
+import { Ear, Play, Download, Volume2, AlertCircle, CheckCircle, Info } from 'lucide-react';
 import type { HearingResult } from '@/lib/types';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -14,6 +14,7 @@ import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tool
 const testFrequencies = [250, 500, 1000, 2000, 4000, 8000]; // in Hz
 const testDecibels = [-10, 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]; // in dBHL
 const normalHearingThreshold = 25; // dBHL
+const maxDecibelIndex = testDecibels.length - 1;
 
 type TestState = 'idle' | 'testing' | 'finished';
 
@@ -27,10 +28,12 @@ export default function HearingTest() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const oscillatorRef = useRef<OscillatorNode | null>(null);
   const gainNodeRef = useRef<GainNode | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     return () => {
       audioContextRef.current?.close();
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
   
@@ -46,7 +49,6 @@ export default function HearingTest() {
 
     const context = audioContextRef.current;
     
-    // Stop any existing tone
     oscillatorRef.current?.stop();
 
     const oscillator = context.createOscillator();
@@ -56,7 +58,6 @@ export default function HearingTest() {
     oscillator.type = 'sine';
     oscillator.frequency.setValueAtTime(frequency, context.currentTime);
 
-    // This is a simplified conversion from dBHL to gain. It's not perfectly accurate but serves for this test.
     const gainValue = Math.pow(10, (decibel - 100) / 20);
     gainNode.gain.setValueAtTime(gainValue, context.currentTime);
 
@@ -77,10 +78,10 @@ export default function HearingTest() {
   const handleStartTest = () => {
     setResults([]);
     setCurrentFrequencyIndex(0);
-    setCurrentDecibelIndex(2); // Start at 10dB
+    setCurrentDecibelIndex(2);
     setCurrentEar('right');
     setTestState('testing');
-    playTone(testFrequencies[0], testDecibels[2]);
+    timeoutRef.current = setTimeout(() => playTone(testFrequencies[0], testDecibels[2]), 500);
   };
   
   const nextStep = useCallback(() => {
@@ -91,12 +92,12 @@ export default function HearingTest() {
       if (freqIndex < testFrequencies.length - 1) {
           setCurrentFrequencyIndex(freqIndex + 1);
           setCurrentDecibelIndex(2);
-          playTone(testFrequencies[freqIndex + 1], testDecibels[2]);
+          timeoutRef.current = setTimeout(() => playTone(testFrequencies[freqIndex + 1], testDecibels[2]), 500);
       } else if (ear === 'right') {
           setCurrentEar('left');
           setCurrentFrequencyIndex(0);
           setCurrentDecibelIndex(2);
-          playTone(testFrequencies[0], testDecibels[2]);
+          timeoutRef.current = setTimeout(() => playTone(testFrequencies[0], testDecibels[2]), 500);
       } else {
           setTestState('finished');
       }
@@ -104,6 +105,7 @@ export default function HearingTest() {
 
   const handleHeard = () => {
     if (testState !== 'testing') return;
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
     const newResult = {
       frequency: testFrequencies[currentFrequencyIndex],
@@ -114,15 +116,15 @@ export default function HearingTest() {
     nextStep();
   };
   
-  const handleNotHeard = () => {
+  const handleNotHeard = useCallback(() => {
     if (testState !== 'testing') return;
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
     
-    if (currentDecibelIndex < testDecibels.length - 1) {
+    if (currentDecibelIndex < maxDecibelIndex) {
         const nextDbIndex = currentDecibelIndex + 1;
         setCurrentDecibelIndex(nextDbIndex);
-        playTone(testFrequencies[currentFrequencyIndex], testDecibels[nextDbIndex]);
+        timeoutRef.current = setTimeout(() => playTone(testFrequencies[currentFrequencyIndex], testDecibels[nextDbIndex]), 500);
     } else {
-        // Max decibel reached, treat as not heard at all and move on
         const newResult = {
             frequency: testFrequencies[currentFrequencyIndex],
             decibel: null, // Mark as not heard
@@ -131,16 +133,45 @@ export default function HearingTest() {
         setResults(prev => [...prev, newResult]);
         nextStep();
     }
+  }, [testState, currentDecibelIndex, currentFrequencyIndex, playTone, nextStep, currentEar]);
+
+  useEffect(() => {
+    if (testState === 'testing') {
+      const handleKeyPress = (event: KeyboardEvent) => {
+        if (event.code === 'Space') {
+          event.preventDefault();
+          handleHeard();
+        }
+      };
+      window.addEventListener('keydown', handleKeyPress);
+      return () => {
+        window.removeEventListener('keydown', handleKeyPress);
+      };
+    }
+  }, [testState, handleHeard]);
+
+
+  const getInterpretation = (ear: 'left' | 'right') => {
+    const earResults = results.filter(r => r.ear === ear && r.decibel !== null).map(r => r.decibel as number);
+    if (earResults.length === 0) return "Incomplete test for this ear.";
+
+    const avgThreshold = earResults.reduce((sum, db) => sum + db, 0) / earResults.length;
+
+    if (avgThreshold <= 25) return "Your results indicate hearing within the normal range. You can likely hear most everyday sounds clearly.";
+    if (avgThreshold <= 40) return "Your results suggest a mild hearing loss. You might have difficulty hearing soft speech or sounds from a distance.";
+    if (avgThreshold <= 70) return "Your results suggest a moderate hearing loss. You may have trouble following conversations, especially in noisy environments.";
+    if (avgThreshold <= 90) return "Your results suggest a severe hearing loss. You likely have significant difficulty understanding speech without amplification.";
+    return "Your results suggest a profound hearing loss. You may not hear most sounds and likely rely on visual cues or powerful hearing aids.";
   };
 
   const generatePDFReport = () => {
     const doc = new jsPDF();
     const today = format(new Date(), 'PPpp');
     doc.setFontSize(20);
-    doc.text("Hearing Test Report", 105, 20, { align: "center" });
+    doc.text("Hearing Screening Report", 105, 20, { align: "center" });
     doc.setFontSize(12);
     doc.text(`Date: ${today}`, 15, 30);
-    doc.text("Patient: User", 15, 36); 
+    doc.text("Patient: Anonymous User", 15, 36); 
 
     const leftEarResults = results.filter(r => r.ear === 'left');
     const rightEarResults = results.filter(r => r.ear === 'right');
@@ -148,29 +179,47 @@ export default function HearingTest() {
     const formatResults = (earResults: HearingResult[]) => 
       testFrequencies.map(freq => {
         const result = earResults.find(r => r.frequency === freq);
-        return [freq + " Hz", result?.decibel !== null ? `${result?.decibel} dBHL` : '> 120 dBHL'];
+        return [freq + " Hz", result?.decibel !== null && result?.decibel !== undefined ? `${result?.decibel} dBHL` : '> 120 dBHL'];
       });
 
-    doc.setFontSize(16);
+    doc.setFontSize(14);
     doc.text("Right Ear Results", 15, 50);
     autoTable(doc, {
       startY: 55,
       head: [['Frequency', 'Threshold']],
       body: formatResults(rightEarResults),
       theme: 'grid',
-      headStyles: { fillColor: [63, 81, 181] },
-    });
-    
-    doc.setFontSize(16);
-    doc.text("Left Ear Results", 15, (doc as any).lastAutoTable.finalY + 15);
-    autoTable(doc, {
-      startY: (doc as any).lastAutoTable.finalY + 20,
-      head: [['Frequency', 'Threshold']],
-      body: formatResults(leftEarResults),
-      theme: 'grid',
       headStyles: { fillColor: [231, 48, 48] },
     });
     
+    doc.setFontSize(10);
+    doc.text("Interpretation:", 15, (doc as any).lastAutoTable.finalY + 10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(getInterpretation('right'), 15, (doc as any).lastAutoTable.finalY + 16, { maxWidth: 180 });
+
+    doc.setFontSize(14);
+    doc.text("Left Ear Results", 15, (doc as any).lastAutoTable.finalY + 30);
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 35,
+      head: [['Frequency', 'Threshold']],
+      body: formatResults(leftEarResults),
+      theme: 'grid',
+      headStyles: { fillColor: [52, 152, 219] },
+    });
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text("Interpretation:", 15, (doc as any).lastAutoTable.finalY + 10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(getInterpretation('left'), 15, (doc as any).lastAutoTable.finalY + 16, { maxWidth: 180 });
+
+    const finalY = (doc as any).lastAutoTable.finalY;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text("Disclaimer:", 15, finalY + 30);
+    doc.setFont('helvetica', 'normal');
+    doc.text("This is a basic hearing screening and is not a substitute for a professional audiogram or medical diagnosis. The results are for informational purposes only. Please consult a qualified audiologist or ENT specialist for a comprehensive evaluation.", 15, finalY + 36, { maxWidth: 180 });
+
     doc.save(`HEALIX_Hearing_Report_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   };
 
@@ -210,8 +259,8 @@ export default function HearingTest() {
                    <div className="flex items-start gap-4 p-4 rounded-lg bg-muted_50">
                         <span className="text-primary font-bold text-2xl">3</span>
                         <div>
-                            <h4 className="font-semibold">Press 'I Heard It'</h4>
-                            <p className="text-sm text-muted-foreground">As soon as you hear a tone, no matter how faint, click the button.</p>
+                            <h4 className="font-semibold">Listen for the Tone</h4>
+                            <p className="text-sm text-muted-foreground">Click the "I Hear the Tone" button as soon as you hear a sound, no matter how faint.</p>
                         </div>
                    </div>
                 </CardContent>
@@ -227,16 +276,23 @@ export default function HearingTest() {
             <Card>
                 <CardHeader className="text-center">
                     <CardTitle>Test in Progress</CardTitle>
-                    <CardDescription className="capitalize text-lg">
+                    <CardDescription className="capitalize text-lg font-semibold">
                         Testing {currentEar} Ear at {testFrequencies[currentFrequencyIndex]} Hz
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col items-center justify-center space-y-6 py-16">
                     <Volume2 className="h-24 w-24 text-primary animate-pulse" />
-                    <p className="text-muted-foreground">Listen carefully for the tone.</p>
-                    <div className="flex gap-4">
-                        <Button size="lg" onClick={handleHeard} className="bg-green-600 hover:bg-green-700">I Heard It</Button>
-                        <Button size="lg" variant="destructive" onClick={handleNotHeard}>I Don't Hear It</Button>
+                    <div className="text-center">
+                      <p className="font-semibold text-xl">Listen for the faint tone.</p>
+                      <p className="text-muted-foreground">Click the button below (or press Spacebar) as soon as you hear it.</p>
+                    </div>
+                    <Button size="lg" onClick={handleHeard} className="w-64 h-16 text-lg">
+                      <CheckCircle className="mr-3 h-6 w-6"/>
+                      I Hear the Tone
+                    </Button>
+                    <div className="text-center text-muted-foreground text-sm space-y-1">
+                      <p>If you don't hear anything after a few moments...</p>
+                      <Button variant="link" onClick={handleNotHeard} className="h-auto p-0">Click here to continue</Button>
                     </div>
                 </CardContent>
             </Card>
@@ -246,7 +302,7 @@ export default function HearingTest() {
             <Card>
                 <CardHeader>
                     <CardTitle>Test Complete</CardTitle>
-                    <CardDescription>Review your results below on the audiogram.</CardDescription>
+                    <CardDescription>Review your results below. This is a screening, not a medical diagnosis.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="h-[400px]">
@@ -256,12 +312,18 @@ export default function HearingTest() {
                                 <XAxis dataKey="frequency" type="category" allowDuplicatedCategory={false} label={{ value: 'Frequency (Hz)', position: 'bottom', offset: 0 }}/>
                                 <YAxis reversed domain={[-10, 120]} label={{ value: 'Hearing Level (dBHL)', angle: -90, position: 'insideLeft' }}/>
                                 <Tooltip />
-                                <Legend verticalAlign="top" />
-                                <ReferenceLine y={normalHearingThreshold} label={{value: "Normal Hearing Range", position: "insideTopLeft"}} stroke="hsl(var(--primary))" strokeDasharray="3 3" />
-                                <Line type="monotone" dataKey="right" name="Right Ear" stroke="#e74c3c" strokeWidth={2} connectNulls />
-                                <Line type="monotone" dataKey="left" name="Left Ear" stroke="#3498db" strokeWidth={2} connectNulls/>
+                                <Legend verticalAlign="top" wrapperStyle={{paddingBottom: '10px'}}/>
+                                <ReferenceLine y={normalHearingThreshold} label={{value: "Normal Hearing Range", position: "insideTopLeft", fill: 'hsl(var(--muted-foreground))', fontSize: 12}} stroke="hsl(var(--primary))" strokeDasharray="3 3" />
+                                <Line type="monotone" dataKey="right" name="Right Ear" stroke="hsl(var(--destructive))" strokeWidth={2} connectNulls />
+                                <Line type="monotone" dataKey="left" name="hsl(210 40% 50%)" stroke="hsl(var(--ring))" strokeWidth={2} connectNulls/>
                             </LineChart>
                         </ResponsiveContainer>
+                    </div>
+                    <div className="mt-6 p-4 rounded-lg bg-muted/50 border">
+                        <h4 className="font-semibold flex items-center gap-2 mb-2"><Info className="h-5 w-5 text-primary"/>Disclaimer</h4>
+                        <p className="text-sm text-muted-foreground">
+                            This hearing screening is intended for informational purposes only and is not a substitute for a professional medical diagnosis. Results can be affected by your environment and equipment. Please consult a qualified audiologist or healthcare provider for a comprehensive hearing evaluation.
+                        </p>
                     </div>
                 </CardContent>
                  <CardContent className="flex justify-center gap-4">
@@ -277,3 +339,5 @@ export default function HearingTest() {
     </div>
   );
 }
+
+    
