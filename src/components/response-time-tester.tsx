@@ -5,10 +5,11 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import useLocalStorage from '@/hooks/use-local-storage';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Timer, Play, XCircle, CheckCircle, RefreshCw, Zap } from 'lucide-react';
+import { Timer, Play, XCircle, CheckCircle, RefreshCw, Zap, Download } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { type ResponseTimeResult } from '@/lib/types';
 import { format } from 'date-fns';
+import jsPDF from 'jspdf';
 
 type TestStatus = 'idle' | 'waiting' | 'ready' | 'tooSoon' | 'result' | 'finished';
 const TOTAL_ROUNDS = 5;
@@ -64,13 +65,15 @@ export default function ResponseTimeTester() {
       }, 2000);
       return () => clearTimeout(timeout);
     }
-  }, [status]);
+  }, [status, nextRound]);
   
   useEffect(() => {
+    // This effect ensures nextRound is called with the updated scores state
     if (scores.length > 0 && scores.length === currentRound -1) {
         nextRound();
     }
-  }, [scores]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scores, currentRound]);
   
   const handleStart = () => {
     setScores([]);
@@ -84,6 +87,56 @@ export default function ResponseTimeTester() {
     setScores([]);
     setAverage(0);
     setCurrentRound(0);
+  };
+  
+  const generatePDFReport = () => {
+    const doc = new jsPDF();
+    const testResult = history[0];
+    if (!testResult) return;
+    
+    doc.setFontSize(22);
+    doc.setFont("helvetica", "bold");
+    doc.text("Cognitive Response Test Report", 105, 25, { align: "center" });
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Date of Test: ${format(new Date(testResult.date), 'PPpp')}`, 15, 40);
+
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("Average Response Time:", 15, 60);
+    
+    doc.setFontSize(48);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(63, 81, 181); // Primary color
+    doc.text(`${Math.round(testResult.average)} ms`, 15, 80);
+    doc.setTextColor(0, 0, 0);
+
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("Scores per Round:", 15, 100);
+    
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    testResult.scores.forEach((score, index) => {
+        doc.text(`Round ${index + 1}: ${score} ms`, 15, 110 + (index * 8));
+    });
+
+    doc.setDrawColor(200); // Light gray
+    const finalY = 110 + (testResult.scores.length * 8);
+    doc.line(15, finalY + 5, 195, finalY + 5);
+
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("Interpretation & Disclaimer:", 15, finalY + 15);
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    const interpretationText = "This test measures simple reaction time to a visual stimulus. A lower score is better. For most people, the average reaction time is between 200-300 milliseconds. This is a screening tool and not a substitute for a professional neurological or cognitive assessment. Results can be affected by device performance, alertness, and other factors.";
+    const disclaimerLines = doc.splitTextToSize(interpretationText, 180);
+    doc.text(disclaimerLines, 15, finalY + 22);
+
+    doc.save(`HEALIX_Response_Time_Report_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   };
 
   const renderContent = () => {
@@ -136,8 +189,11 @@ export default function ResponseTimeTester() {
                   </ul>
               </div>
             </CardContent>
-            <CardFooter className="justify-center">
-                <Button onClick={handleRestart}><RefreshCw className="mr-2 h-4 w-4" />Take Test Again</Button>
+            <CardFooter className="flex-col sm:flex-row justify-center gap-4">
+                <Button onClick={handleRestart} variant="outline"><RefreshCw className="mr-2 h-4 w-4" />Take Test Again</Button>
+                 <Button onClick={generatePDFReport}>
+                    <Download className="mr-2 h-4 w-4" /> Download PDF Report
+                </Button>
             </CardFooter>
           </Card>
         );
