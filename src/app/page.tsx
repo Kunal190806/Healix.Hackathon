@@ -7,12 +7,19 @@ import { useRouter, usePathname } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { UtensilsCrossed, Pill, BookHeart, Users, Droplets, Dumbbell, ArrowRight, Hospital, Stethoscope, HeartPulse, ShieldCheck, CalendarDays, Ear, Eye, Timer, LogIn, UserPlus, Watch } from 'lucide-react';
+import { UtensilsCrossed, Pill, BookHeart, Users, Droplets, Dumbbell, ArrowRight, Hospital, Stethoscope, HeartPulse, ShieldCheck, CalendarDays, Ear, Eye, Timer, LogIn, UserPlus, Watch, Siren } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useProfile } from '@/hooks/use-profile';
 
 const modules = [
+    {
+    title: "Emergency Hub",
+    description: "Access ambulance, broadcast, and hospital notification services.",
+    icon: Siren,
+    href: "/call-ambulance",
+    color: "text-destructive",
+  },
   {
     title: "Find a Hospital",
     description: "Search for specialist hospitals based on your condition and location.",

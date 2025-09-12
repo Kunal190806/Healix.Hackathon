@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { Home, Pill, Droplets, Users, UtensilsCrossed, BookHeart, Dumbbell, PanelLeft, Hospital, UserPlus, Stethoscope, HeartPulse, ShieldCheck, CalendarDays, LogOut, Ear, Eye, Timer, LogIn, UserCircle, Loader2, Link as LinkIcon, Search, TestTube, MessagesSquare, Watch } from 'lucide-react';
+import { Home, Pill, Droplets, Users, UtensilsCrossed, BookHeart, Dumbbell, PanelLeft, Hospital, UserPlus, Stethoscope, HeartPulse, ShieldCheck, CalendarDays, LogOut, Ear, Eye, Timer, LogIn, UserCircle, Loader2, Link as LinkIcon, Search, TestTube, MessagesSquare, Watch, Siren, PhoneCall, TowerControl, ClipboardPlus } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Toaster } from '@/components/ui/toaster';
@@ -101,6 +101,13 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     { href: '/appointments', label: 'My Appointments', icon: CalendarDays },
   ];
 
+  const emergencyItems = [
+    { href: '/call-ambulance', label: 'Call Ambulance', icon: PhoneCall },
+    { href: '/ambulance-status', label: 'Ambulance Status', icon: TowerControl },
+    { href: '/emergency-broadcast', label: 'Emergency Broadcast', icon: Users },
+    { href: '/pre-arrival-info', label: 'Pre-Arrival Info', icon: ClipboardPlus },
+  ];
+
   const testItems = [
     { href: '/hearing-test', label: 'Hearing Test', icon: Ear },
     { href: '/eye-test', label: 'Eye Test', icon: Eye },
@@ -150,6 +157,33 @@ function AppLayout({ children }: { children: React.ReactNode }) {
               </SidebarMenuItem>
               
               <Accordion type="multiple" className="w-full">
+                <AccordionItem value="emergency" className="border-none">
+                  <AccordionTrigger className="hover:no-underline text-destructive hover:text-destructive/90 [&[data-state=open]]:text-destructive font-semibold text-sm py-2 px-3 rounded-md hover:bg-destructive/10 w-full justify-start">
+                    <div className="flex items-center">
+                       <Siren className="mr-2 h-4 w-4" />
+                       Emergency
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-1">
+                    <SidebarMenu className="ml-5 border-l border-destructive/50 pl-3">
+                      {emergencyItems.map((item) => (
+                        <SidebarMenuItem key={item.href}>
+                          <Button
+                            variant={pathname === item.href ? 'secondary' : 'ghost'}
+                            className="w-full justify-start h-8"
+                            asChild
+                          >
+                            <Link href={item.href}>
+                              <item.icon className="mr-2 h-4 w-4" />
+                              {item.label}
+                            </Link>
+                          </Button>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </AccordionContent>
+                </AccordionItem>
+
                 <AccordionItem value="find-my" className="border-none">
                   <AccordionTrigger className="hover:no-underline text-muted-foreground hover:text-foreground [&[data-state=open]]:text-foreground font-semibold text-sm py-2 px-3 rounded-md hover:bg-muted/50 w-full justify-start">
                     <div className="flex items-center">
