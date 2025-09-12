@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { Home, Pill, Droplets, Users, UtensilsCrossed, BookHeart, Dumbbell, PanelLeft, Hospital, UserPlus, Stethoscope, HeartPulse, ShieldCheck, CalendarDays, LogOut, Ear, Eye, Timer, LogIn } from 'lucide-react';
+import { Home, Pill, Droplets, Users, UtensilsCrossed, BookHeart, Dumbbell, PanelLeft, Hospital, UserPlus, Stethoscope, HeartPulse, ShieldCheck, CalendarDays, LogOut, Ear, Eye, Timer, LogIn, UserCircle } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Toaster } from '@/components/ui/toaster';
@@ -55,6 +55,7 @@ export default function RootLayout({
 
   const menuItems = [
     { href: '/', label: 'Dashboard', icon: Home },
+    { href: '/profile', label: 'Profile', icon: UserCircle },
     { href: '/hospitals', label: 'Find a Hospital', icon: Hospital },
     { href: '/doctors', label: 'Find a Doctor', icon: Stethoscope },
     { href: '/appointments', label: 'My Appointments', icon: CalendarDays },
@@ -100,6 +101,51 @@ export default function RootLayout({
                 ))}
               </SidebarMenu>
             </SidebarContent>
+            <SidebarContent className='mt-auto'>
+              <SidebarMenu>
+                {!isLoading && (
+                  user ? (
+                    <SidebarMenuItem>
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start"
+                        onClick={handleLogout}
+                      >
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Logout
+                      </Button>
+                    </SidebarMenuItem>
+                  ) : (
+                    <>
+                      <SidebarMenuItem>
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start"
+                          asChild
+                        >
+                          <Link href="/login">
+                            <LogIn className="mr-2 h-4 w-4" />
+                            Login
+                          </Link>
+                        </Button>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <Button
+                          variant="default"
+                          className="w-full justify-start"
+                          asChild
+                        >
+                          <Link href="/signup">
+                            <UserPlus className="mr-2 h-4 w-4" />
+                            Sign Up
+                          </Link>
+                        </Button>
+                      </SidebarMenuItem>
+                    </>
+                  )
+                )}
+              </SidebarMenu>
+            </SidebarContent>
           </Sidebar>
           <SidebarInset>
             <header className="flex items-center justify-between mb-4 p-4 sm:p-6 lg:p-8 lg:pb-0">
@@ -107,29 +153,6 @@ export default function RootLayout({
                     <span className="text-lg font-logo font-bold">HEALIX</span>
                 </div>
                  <div className="flex items-center gap-2 ml-auto">
-                    {!isLoading && (
-                      user ? (
-                        <Button variant="outline" onClick={handleLogout}>
-                          <LogOut className="mr-2 h-4 w-4" />
-                          Logout
-                        </Button>
-                      ) : (
-                        <>
-                          <Button variant="outline" asChild>
-                            <Link href="/login">
-                              <LogIn className="mr-2 h-4 w-4" />
-                              Login
-                            </Link>
-                          </Button>
-                          <Button variant="default" asChild>
-                            <Link href="/signup">
-                              <UserPlus className="mr-2 h-4 w-4" />
-                              Sign Up
-                            </Link>
-                          </Button>
-                        </>
-                      )
-                    )}
                     <div className="md:hidden">
                       <SidebarTrigger>
                           <PanelLeft />

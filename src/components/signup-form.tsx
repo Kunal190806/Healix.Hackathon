@@ -12,8 +12,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, HeartPulse, Stethoscope, Handshake, Dumbbell, Loader2, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 
 export default function SignUpForm() {
   const router = useRouter();
@@ -44,8 +45,14 @@ export default function SignUpForm() {
       // Update the user's profile with their name
       await updateProfile(user, { displayName: name });
       
-      // In a real app, you'd also save the role to Firestore here.
-      // await setDoc(doc(db, "users", user.uid), { role: role });
+      // Save the user's role and other info to Firestore
+      await setDoc(doc(db, "users", user.uid), { 
+        uid: user.uid,
+        name: name,
+        email: email,
+        role: role,
+        createdAt: new Date().toISOString()
+      });
 
       toast({
         title: "Account Created!",

@@ -1,5 +1,13 @@
 
 
+export type UserProfile = {
+  uid: string;
+  name: string;
+  email: string;
+  role: 'patient' | 'caregiver' | 'doctor' | 'hospital' | 'donor' | 'trainer';
+  createdAt: string;
+}
+
 export type Prescription = {
   id: string;
   userId: string;
