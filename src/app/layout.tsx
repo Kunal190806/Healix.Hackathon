@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { Home, Pill, Droplets, Users, UtensilsCrossed, BookHeart, Dumbbell, PanelLeft, Hospital, UserPlus, Stethoscope, HeartPulse, ShieldCheck, CalendarDays, LogOut, Ear, Eye, Timer, LogIn, UserCircle, Loader2, Link as LinkIcon } from 'lucide-react';
+import { Home, Pill, Droplets, Users, UtensilsCrossed, BookHeart, Dumbbell, PanelLeft, Hospital, UserPlus, Stethoscope, HeartPulse, ShieldCheck, CalendarDays, LogOut, Ear, Eye, Timer, LogIn, UserCircle, Loader2, Link as LinkIcon, Search, TestTube, MessagesSquare } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Toaster } from '@/components/ui/toaster';
@@ -17,6 +17,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth, AuthProvider } from '@/hooks/use-auth.tsx';
 import { ProfileProvider, useProfile } from '@/hooks/use-profile.tsx';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 
 const inter = Inter({
@@ -94,24 +95,32 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { userProfile } = useProfile();
   
-  const menuItems = [
-    { href: '/', label: 'Dashboard', icon: Home },
+  const findMyItems = [
     { href: '/hospitals', label: 'Find a Hospital', icon: Hospital },
     { href: '/doctors', label: 'Find a Doctor', icon: Stethoscope },
     { href: '/appointments', label: 'My Appointments', icon: CalendarDays },
-    { href: '/meal-planner', label: 'AI Meal Planner', icon: UtensilsCrossed },
-    { href: '/prescriptions', label: 'Prescriptions', icon: Pill },
-    { href: '/vitals-tracker', label: 'Vitals Tracker', icon: HeartPulse },
+  ];
+
+  const testItems = [
     { href: '/hearing-test', label: 'Hearing Test', icon: Ear },
     { href: '/eye-test', label: 'Eye Test', icon: Eye },
     { href: '/response-time', label: 'Response Time Test', icon: Timer },
+  ];
+
+  const forumItems = [
     { href: '/journal', label: 'Mental Health Journal', icon: BookHeart },
     { href: '/support-groups', label: 'Support Groups', icon: Users },
     { href: '/blood-donors', label: 'Blood Donors', icon: Droplets },
     { href: '/fitness', label: 'Inclusive Fitness', icon: Dumbbell },
+  ];
+
+  const otherItems = [
+    { href: '/meal-planner', label: 'AI Meal Planner', icon: UtensilsCrossed },
+    { href: '/prescriptions', label: 'Prescriptions', icon: Pill },
+    { href: '/vitals-tracker', label: 'Vitals Tracker', icon: HeartPulse },
     { href: '/caregiver-hub', label: 'Caregiver Hub', icon: ShieldCheck },
   ];
-  
+
   const isAuthPage = pathname === '/login' || pathname === '/signup';
 
   return (
@@ -126,7 +135,103 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              <SidebarMenuItem>
+                <Button
+                  variant={pathname === '/' ? 'default' : 'ghost'}
+                  className="w-full justify-start"
+                  asChild
+                >
+                  <Link href="/">
+                    <Home className="mr-2 h-4 w-4" />
+                    Dashboard
+                  </Link>
+                </Button>
+              </SidebarMenuItem>
+              
+              <Accordion type="multiple" className="w-full">
+                <AccordionItem value="find-my" className="border-none">
+                  <AccordionTrigger className="hover:no-underline text-muted-foreground hover:text-foreground [&[data-state=open]]:text-foreground font-semibold text-sm py-2 px-3 rounded-md hover:bg-muted/50 w-full justify-start">
+                    <div className="flex items-center">
+                       <Search className="mr-2 h-4 w-4" />
+                       Find My
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-1">
+                    <SidebarMenu className="ml-5 border-l border-border pl-3">
+                      {findMyItems.map((item) => (
+                        <SidebarMenuItem key={item.href}>
+                          <Button
+                            variant={pathname === item.href ? 'secondary' : 'ghost'}
+                            className="w-full justify-start h-8"
+                            asChild
+                          >
+                            <Link href={item.href}>
+                              <item.icon className="mr-2 h-4 w-4" />
+                              {item.label}
+                            </Link>
+                          </Button>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="tests" className="border-none">
+                   <AccordionTrigger className="hover:no-underline text-muted-foreground hover:text-foreground [&[data-state=open]]:text-foreground font-semibold text-sm py-2 px-3 rounded-md hover:bg-muted/50 w-full justify-start">
+                    <div className="flex items-center">
+                       <TestTube className="mr-2 h-4 w-4" />
+                       Tests
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-1">
+                    <SidebarMenu className="ml-5 border-l border-border pl-3">
+                      {testItems.map((item) => (
+                        <SidebarMenuItem key={item.href}>
+                          <Button
+                            variant={pathname === item.href ? 'secondary' : 'ghost'}
+                            className="w-full justify-start h-8"
+                            asChild
+                          >
+                            <Link href={item.href}>
+                              <item.icon className="mr-2 h-4 w-4" />
+                              {item.label}
+                            </Link>
+                          </Button>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="forums" className="border-none">
+                   <AccordionTrigger className="hover:no-underline text-muted-foreground hover:text-foreground [&[data-state=open]]:text-foreground font-semibold text-sm py-2 px-3 rounded-md hover:bg-muted/50 w-full justify-start">
+                    <div className="flex items-center">
+                       <MessagesSquare className="mr-2 h-4 w-4" />
+                       Forums
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-1">
+                    <SidebarMenu className="ml-5 border-l border-border pl-3">
+                      {forumItems.map((item) => (
+                        <SidebarMenuItem key={item.href}>
+                          <Button
+                            variant={pathname === item.href ? 'secondary' : 'ghost'}
+                            className="w-full justify-start h-8"
+                            asChild
+                          >
+                            <Link href={item.href}>
+                              <item.icon className="mr-2 h-4 w-4" />
+                              {item.label}
+                            </Link>
+                          </Button>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+               
+              {otherItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <Button
                     variant={pathname === item.href ? 'default' : 'ghost'}
@@ -140,32 +245,35 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                   </Button>
                 </SidebarMenuItem>
               ))}
+
             </SidebarMenu>
           </SidebarContent>
         </Sidebar>
       )}
       <SidebarInset>
-        {!isAuthPage && (
-          <header className="flex items-center justify-between mb-4 p-4 sm:p-6 lg:p-8 lg:pb-0 h-16 border-b">
-              <div className="flex items-center gap-2">
-                  <div className="md:hidden">
-                    <SidebarTrigger>
-                        <PanelLeft />
-                    </SidebarTrigger>
-                  </div>
-                  <span className="text-lg font-logo font-bold md:hidden">HEALIX</span>
-              </div>
-                <div className="flex items-center gap-4 ml-auto">
-                  <UserNav />
+        <div className={cn('min-h-screen', isAuthPage ? 'bg-background' : 'bg-background/50 backdrop-blur-sm')}>
+          {!isAuthPage && (
+            <header className="flex items-center justify-between mb-4 p-4 sm:p-6 lg:p-8 lg:pb-0 h-16 border-b">
+                <div className="flex items-center gap-2">
+                    <div className="md:hidden">
+                      <SidebarTrigger>
+                          <PanelLeft />
+                      </SidebarTrigger>
+                    </div>
+                    <span className="text-lg font-logo font-bold md:hidden">HEALIX</span>
                 </div>
-          </header>
-        )}
-        <main className={cn(
-          "min-h-screen",
-          !isAuthPage && "p-4 sm:p-6 lg:p-8 pt-0 lg:pt-8"
-        )}>
-          {children}
-        </main>
+                  <div className="flex items-center gap-4 ml-auto">
+                    <UserNav />
+                  </div>
+            </header>
+          )}
+          <main className={cn(
+            "min-h-screen",
+            !isAuthPage && "p-4 sm:p-6 lg:p-8 pt-0 lg:pt-8"
+          )}>
+            {children}
+          </main>
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );
