@@ -11,10 +11,12 @@ import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/use-profile.tsx";
 import { db } from "@/lib/firebase";
 import { doc, updateDoc } from "firebase/firestore";
+import { useRouter } from "next/navigation";
 
 export default function ConnectCaregiverForm() {
   const { toast } = useToast();
-  const { userProfile, isLoading: isProfileLoading } = useProfile();
+  const { userProfile, isLoading: isProfileLoading, revalidate } = useProfile();
+  const router = useRouter();
   const [code, setCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -37,12 +39,15 @@ export default function ConnectCaregiverForm() {
         await updateDoc(caregiverDocRef, {
           monitoringPatientId: patientId,
         });
+        
+        await revalidate(); // Re-fetch the profile data
 
         toast({
           title: "Connection Successful!",
           description: `You are now monitoring the sample patient's dashboard.`,
         });
         setIsSuccess(true);
+        router.push('/caregiver-hub'); // Redirect to hub after success
 
       } catch (error: any) {
         console.error("Failed to update profile for demo:", error);
@@ -77,12 +82,12 @@ export default function ConnectCaregiverForm() {
       )
   }
 
-  if (isSuccess) {
+  if (isSuccess || (userProfile && userProfile.monitoringPatientId)) {
     return (
         <Card className="text-center p-8">
             <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
             <CardTitle>Successfully Connected</CardTitle>
-            <CardDescription>You can now view the sample patient's dashboard from the Caregiver Hub.</CardDescription>
+            <CardDescription>You can now view the patient's dashboard from the Caregiver Hub.</CardDescription>
         </Card>
     )
   }
