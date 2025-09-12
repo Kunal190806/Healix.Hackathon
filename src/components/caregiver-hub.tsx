@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, Legend, ReferenceLine } from 'recharts';
 import { format, subDays, addDays } from "date-fns";
-import { AlertTriangle, Bell, Calendar, Download, HeartPulse, Pill, User, Loader2, Ear, Eye, Timer, Link2, MessageSquare } from "lucide-react";
+import { AlertTriangle, Bell, Calendar, Download, HeartPulse, Pill, User, Loader2, Ear, Eye, Timer, Link2, Mail } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useProfile } from "@/hooks/use-profile";
@@ -24,7 +24,6 @@ const samplePatientProfile: UserProfile = {
   uid: 'patient123',
   name: 'Rohan Sharma',
   email: 'rohan.sharma@example.com',
-  role: 'patient',
   createdAt: new Date().toISOString(),
 };
 
@@ -73,52 +72,62 @@ const sampleResponseTimeHistory: ResponseTimeResult[] = [{
     scores: [280, 295, 270, 300, 280]
 }];
 
-function SendSmsDialog({ patientName }: { patientName: string }) {
-    const [phoneNumber, setPhoneNumber] = useState('');
-    const [message, setMessage] = useState(`Hi ${patientName}, this is a reminder about your upcoming appointment. Please let me know if you have any questions.`);
+function SendEmailDialog({ patientName }: { patientName: string }) {
+    const [email, setEmail] = useState('');
+    const [message, setMessage] = useState(`Hi ${patientName},\n\nThis is a friendly reminder about your upcoming appointment. Please let me know if you have any questions.\n\nBest regards,`);
+    const [subject, setSubject] = useState('Friendly Reminder from Your Caregiver');
 
-    const handleSendSms = () => {
-        const smsLink = `sms:${phoneNumber}?&body=${encodeURIComponent(message)}`;
-        window.open(smsLink, '_blank');
+    const handleSendEmail = () => {
+        const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
+        window.open(mailtoLink, '_blank');
     }
     
     return (
         <Dialog>
             <DialogTrigger asChild>
                 <Button variant="outline">
-                    <MessageSquare className="mr-2 h-4 w-4" /> Send SMS Reminder
+                    <Mail className="mr-2 h-4 w-4" /> Send Email Reminder
                 </Button>
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Send SMS to {patientName}</DialogTitle>
+                    <DialogTitle>Send Email to {patientName}</DialogTitle>
                     <DialogDescription>
-                        Craft a message and send a reminder. This will open your default messaging app.
+                        Craft a message and send a reminder. This will open your default email application.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                     <div className="space-y-2">
-                        <Label htmlFor="phone-number">Patient's Phone Number</Label>
+                        <Label htmlFor="email-address">Patient's Email Address</Label>
                         <Input 
-                          id="phone-number" 
-                          type="tel" 
-                          placeholder="e.g., +919876543210" 
-                          value={phoneNumber} 
-                          onChange={(e) => setPhoneNumber(e.target.value)} 
+                          id="email-address" 
+                          type="email" 
+                          placeholder="e.g., patient@example.com" 
+                          value={email} 
+                          onChange={(e) => setEmail(e.target.value)} 
+                        />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="subject">Subject</Label>
+                        <Input 
+                          id="subject" 
+                          type="text"
+                          value={subject}
+                          onChange={(e) => setSubject(e.target.value)} 
                         />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="message">Message</Label>
                         <Textarea 
                           id="message" 
-                          rows={5} 
+                          rows={8} 
                           value={message} 
                           onChange={(e) => setMessage(e.target.value)} 
                         />
                     </div>
                 </div>
                 <DialogFooter>
-                    <Button onClick={handleSendSms} disabled={!phoneNumber || !message}>Open Messaging App</Button>
+                    <Button onClick={handleSendEmail} disabled={!email || !message}>Open Email App</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -394,7 +403,7 @@ export default function CaregiverHub() {
                     {patientProfile && <CardDescription>Managing profile for {patientProfile.email}</CardDescription>}
                 </div>
                 <div className="flex gap-2">
-                   <SendSmsDialog patientName={patientDisplayName} />
+                   <SendEmailDialog patientName={patientDisplayName} />
                    <Button onClick={handleDownload}>
                       <Download className="mr-2 h-4 w-4" /> Download Summary
                    </Button>
@@ -587,4 +596,6 @@ export default function CaregiverHub() {
 
 
     
+    
+
     
