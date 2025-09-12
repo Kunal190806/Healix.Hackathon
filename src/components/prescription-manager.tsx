@@ -264,7 +264,7 @@ export default function PrescriptionManager() {
                             <Button className="flex-1" asChild>
                               <label htmlFor="file-upload">
                                 <Upload className="mr-2"/> Upload File
-                                <input id="file-upload" type="file" accept="image/*,.pdf" className="sr-only" onChange={handleFileUpload}/>
+                                <input id="file-upload" type="file" accept="image/*" className="sr-only" onChange={handleFileUpload}/>
                               </label>
                             </Button>
                           </div>
@@ -363,3 +363,5 @@ export default function PrescriptionManager() {
     </div>
   );
 }
+
+    
