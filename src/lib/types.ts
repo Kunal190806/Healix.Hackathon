@@ -5,6 +5,8 @@ export type UserProfile = {
   name: string;
   email: string;
   createdAt: string;
+  role?: 'patient' | 'caregiver';
+  monitoringPatientId?: string;
 }
 
 export type Prescription = {

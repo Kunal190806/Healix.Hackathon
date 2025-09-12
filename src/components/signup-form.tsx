@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { auth, db } from "@/lib/firebase";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 export default function SignUpForm() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export default function SignUpForm() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState<'patient' | 'caregiver'>('patient');
 
   const handleSignUp = async () => {
     if (!name.trim() || !email.trim() || !password.trim()) {
@@ -44,6 +46,7 @@ export default function SignUpForm() {
         userId: user.uid,
         name: name,
         email: email,
+        role: role,
         createdAt: new Date().toISOString()
       };
       
@@ -95,6 +98,23 @@ export default function SignUpForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={(e) => { e.preventDefault(); handleSignUp(); }} className="space-y-4">
+          <div className="space-y-2">
+            <Label>I am a...</Label>
+            <RadioGroup
+                defaultValue="patient"
+                onValueChange={(value: 'patient' | 'caregiver') => setRole(value)}
+                className="flex gap-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="patient" id="role-patient" />
+                  <Label htmlFor="role-patient">Patient</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="caregiver" id="role-caregiver" />
+                  <Label htmlFor="role-caregiver">Caregiver</Label>
+                </div>
+            </RadioGroup>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="signup-name">Full Name</Label>
             <Input 
