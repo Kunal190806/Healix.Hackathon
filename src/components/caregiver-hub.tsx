@@ -78,7 +78,8 @@ function SendSmsDialog({ patientName }: { patientName: string }) {
     const [message, setMessage] = useState(`Hi ${patientName}, this is a reminder about your upcoming appointment. Please let me know if you have any questions.`);
 
     const handleSendSms = () => {
-        alert(`SMS sent to ${phoneNumber} with message: "${message}"`);
+        const smsLink = `sms:${phoneNumber}?&body=${encodeURIComponent(message)}`;
+        window.open(smsLink, '_blank');
     }
     
     return (
@@ -92,7 +93,7 @@ function SendSmsDialog({ patientName }: { patientName: string }) {
                 <DialogHeader>
                     <DialogTitle>Send SMS to {patientName}</DialogTitle>
                     <DialogDescription>
-                        Craft a message and send a reminder. Standard messaging rates may apply.
+                        Craft a message and send a reminder. This will open your default messaging app.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
@@ -117,7 +118,7 @@ function SendSmsDialog({ patientName }: { patientName: string }) {
                     </div>
                 </div>
                 <DialogFooter>
-                    <Button onClick={handleSendSms} disabled={!phoneNumber || !message}>Send Message</Button>
+                    <Button onClick={handleSendSms} disabled={!phoneNumber || !message}>Open Messaging App</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -362,8 +363,9 @@ export default function CaregiverHub() {
   }
   
   const hearingChartData = [250, 500, 1000, 2000, 4000, 8000].map(freq => {
-    const leftResult = latestHearingTest?.results.find(r => r.ear === 'left' && r.frequency === freq);
-    const rightResult = latestHearingTest?.results.find(r => r.ear === 'right' && r.frequency === freq);
+    const res = latestHearingTest?.results ?? [];
+    const leftResult = res.find(r => r.ear === 'left' && r.frequency === freq);
+    const rightResult = res.find(r => r.ear === 'right' && r.frequency === freq);
     return {
       frequency: freq,
       left: leftResult?.decibel,
