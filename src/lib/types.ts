@@ -4,7 +4,7 @@ export type Prescription = {
   name: string;
   dosage: string;
   frequency: string;
-  time: string;
+  time?: string;
 };
 
 export type PainLog = {
@@ -81,3 +81,4 @@ export type Appointment = {
   time: string;
   status: "Confirmed" | "Cancelled" | "Completed";
 };
+

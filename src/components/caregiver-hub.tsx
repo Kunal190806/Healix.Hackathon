@@ -2,18 +2,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import useLocalStorage from "@/hooks/use-local-storage";
 import type { VitalLog, Prescription } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format, subDays, addDays } from "date-fns";
-import { AlertTriangle, Bell, Calendar, Download, HeartPulse, Pill, User, Users, Loader2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { AlertTriangle, Bell, Calendar, Download, HeartPulse, Pill, User, Loader2 } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { cn } from "@/lib/utils";
 
 // Sample data to simulate a patient's profile
 const samplePatient = {
@@ -71,20 +68,16 @@ export default function CaregiverHub() {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
 
-    // 1. Header
     doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
     doc.text("HEALIX Health Summary", pageWidth / 2, 25, { align: "center" });
 
-    // 2. Patient Information
     doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
     doc.text(`Patient Name: ${samplePatient.name}`, 15, 45);
     doc.text(`Patient ID: ${samplePatient.id}`, 15, 51);
     doc.text(`Export Date: ${format(new Date(), 'PPpp')}`, pageWidth - 15, 45, {align: 'right'});
 
-
-    // 3. Appointments Table
     autoTable(doc, {
         startY: 60,
         head: [['Date & Time', 'Doctor', 'Specialty']],
@@ -94,10 +87,8 @@ export default function CaregiverHub() {
             a.specialty
         ]),
         headStyles: { fillColor: [63, 81, 181] },
-        didDrawPage: (data) => addFooter(doc, data.pageNumber)
     });
 
-    // 4. Vitals Table
     autoTable(doc, {
         head: [['Date', 'Metric', 'Value']],
         body: sampleVitals.flatMap(v => {
@@ -109,30 +100,17 @@ export default function CaregiverHub() {
             return entries;
         }),
         headStyles: { fillColor: [63, 81, 181] },
-        didDrawPage: (data) => addFooter(doc, data.pageNumber)
     });
     
-     // 5. Adherence Table
     autoTable(doc, {
         head: [['Medication', 'Dosage', 'Frequency', 'Time']],
         body: sampleMedications.map(m => [m.name, m.dosage, m.frequency, m.time || 'N/A']),
-         headStyles: { fillColor: [63, 81, 181] },
-        didDrawPage: (data) => addFooter(doc, data.pageNumber)
+        headStyles: { fillColor: [63, 81, 181] },
     });
 
     doc.save(`HEALIX_Summary_${samplePatient.name}_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   };
   
-  const addFooter = (doc: jsPDF, pageNumber: number) => {
-    const pageCount = doc.getNumberOfPages();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    doc.setFontSize(8);
-    doc.setTextColor(150);
-    doc.text(`© ${new Date().getFullYear()} HEALIX. All rights reserved. | support@healix.io`, pageWidth / 2, pageHeight - 10, { align: 'center' });
-    doc.text(`Page ${pageNumber} of ${pageCount}`, pageWidth - 15, pageHeight - 10, { align: 'right' });
-  };
-
   const generateCSV = () => {
     const headers = [
         `HEALIX Health Summary`,
@@ -166,7 +144,6 @@ export default function CaregiverHub() {
     ];
 
     let csvContent = headers.join("\n") + "\n\n";
-
     sections.forEach(section => {
         csvContent += section.title + "\n";
         csvContent += section.columns.join(",") + "\n";
@@ -178,15 +155,13 @@ export default function CaregiverHub() {
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
-    if (link.download !== undefined) {
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", `HEALIX_Summary_${samplePatient.name}_${format(new Date(), 'yyyy-MM-dd')}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `HEALIX_Summary_${samplePatient.name}_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleDownload = () => {
