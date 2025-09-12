@@ -8,11 +8,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, Legend, ReferenceLine } from 'recharts';
 import { format, subDays, addDays } from "date-fns";
-import { AlertTriangle, Bell, Calendar, Download, HeartPulse, Pill, User, Loader2, Ear, Eye, Timer, Link2, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Bell, Calendar, Download, HeartPulse, Pill, User, Loader2, Ear, Eye, Timer, Link2, MessageSquare } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useProfile } from "@/hooks/use-profile";
 import Link from "next/link";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { Label } from "./ui/label";
+import { Input } from "./ui/input";
+import { Textarea } from "./ui/textarea";
 
 const normalHearingThreshold = 25;
 
@@ -68,6 +72,57 @@ const sampleResponseTimeHistory: ResponseTimeResult[] = [{
     average: 285,
     scores: [280, 295, 270, 300, 280]
 }];
+
+function SendSmsDialog({ patientName }: { patientName: string }) {
+    const [phoneNumber, setPhoneNumber] = useState('');
+    const [message, setMessage] = useState(`Hi ${patientName}, this is a reminder about your upcoming appointment. Please let me know if you have any questions.`);
+
+    const handleSendSms = () => {
+        alert(`SMS sent to ${phoneNumber} with message: "${message}"`);
+    }
+    
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button variant="outline">
+                    <MessageSquare className="mr-2 h-4 w-4" /> Send SMS Reminder
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Send SMS to {patientName}</DialogTitle>
+                    <DialogDescription>
+                        Craft a message and send a reminder. Standard messaging rates may apply.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="phone-number">Patient's Phone Number</Label>
+                        <Input 
+                          id="phone-number" 
+                          type="tel" 
+                          placeholder="e.g., +919876543210" 
+                          value={phoneNumber} 
+                          onChange={(e) => setPhoneNumber(e.target.value)} 
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="message">Message</Label>
+                        <Textarea 
+                          id="message" 
+                          rows={5} 
+                          value={message} 
+                          onChange={(e) => setMessage(e.target.value)} 
+                        />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button onClick={handleSendSms} disabled={!phoneNumber || !message}>Send Message</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
 
 export default function CaregiverHub() {
   const { userProfile, isLoading: isProfileLoading } = useProfile();
@@ -347,7 +402,7 @@ export default function CaregiverHub() {
   return (
     <div className="space-y-6">
         <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-4">
                 <div>
                     <CardTitle className="flex items-center gap-2">
                         <User className="h-6 w-6 text-primary"/>
@@ -355,9 +410,12 @@ export default function CaregiverHub() {
                     </CardTitle>
                     {patientProfile && <CardDescription>Managing profile for {patientProfile.email}</CardDescription>}
                 </div>
-                <Button onClick={handleDownload}>
-                  <Download className="mr-2 h-4 w-4" /> Download Summary
-                </Button>
+                <div className="flex gap-2">
+                   <SendSmsDialog patientName={patientDisplayName} />
+                   <Button onClick={handleDownload}>
+                      <Download className="mr-2 h-4 w-4" /> Download Summary
+                   </Button>
+                </div>
             </CardHeader>
         </Card>
 
@@ -543,3 +601,6 @@ export default function CaregiverHub() {
     </div>
   );
 }
+
+
+    
