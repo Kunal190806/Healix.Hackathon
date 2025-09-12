@@ -140,10 +140,9 @@ export default function CaregiverHub() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate loading data if a patient is being monitored
-    if (userProfile?.monitoringPatientId) {
-      setIsLoading(true);
-      const timer = setTimeout(() => {
+    // Simulate loading sample data directly
+    setIsLoading(true);
+    const timer = setTimeout(() => {
         setPatientProfile(samplePatientProfile);
         setAppointments(sampleAppointments);
         setVitals(sampleVitals);
@@ -173,10 +172,7 @@ export default function CaregiverHub() {
       }, 1000); // Simulate network delay
 
       return () => clearTimeout(timer);
-    } else {
-        setIsLoading(false);
-    }
-  }, [userProfile]);
+  }, []);
 
   const latestHearingTest = hearingTestHistory?.[0];
   const latestEyeTest = eyeTestHistory?.[0];
@@ -383,21 +379,6 @@ export default function CaregiverHub() {
       </div>
     );
   }
-  
-  if (!userProfile?.monitoringPatientId) {
-    return (
-        <Card className="text-center p-8 flex flex-col items-center gap-4">
-            <CardTitle>No Patient Linked</CardTitle>
-            <CardDescription>To view a patient's dashboard, you must first link your account to theirs.</CardDescription>
-            <Button asChild>
-                <Link href="/connect-caregiver">
-                    <Link2 className="mr-2 h-4 w-4" />
-                    Connect to a Patient
-                </Link>
-            </Button>
-        </Card>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -406,7 +387,7 @@ export default function CaregiverHub() {
                 <div>
                     <CardTitle className="flex items-center gap-2">
                         <User className="h-6 w-6 text-primary"/>
-                        <span>Monitoring: {patientDisplayName}</span>
+                        <span>Monitoring Sample Patient: {patientDisplayName}</span>
                     </CardTitle>
                     {patientProfile && <CardDescription>Managing profile for {patientProfile.email}</CardDescription>}
                 </div>
@@ -603,4 +584,5 @@ export default function CaregiverHub() {
 }
 
 
+    
     
