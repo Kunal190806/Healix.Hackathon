@@ -1,34 +1,19 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow users to read and write to their own user profile document.
-    match /users/{userId} {
-      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null;
-    }
 
-    // Secure all other data collections by user ID.
-    // This allows a user to read/write/list documents where their UID matches the document's userId field.
-    match /appointments/{docId} {
-      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
-    }
-    match /eyeTestHistory/{docId} {
-      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
-    }
-    match /hearingTestHistory/{docId} {
-      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
-    }
-    match /journalEntries/{docId} {
-      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
-    }
-    match /prescriptions/{docId} {
-      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
-    }
-    match /responseTimeHistory/{docId} {
-      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
-    }
-    match /vitals/{docId} {
-      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+    // Apply to ALL collections
+    match /{collection}/{docId} {
+      
+      // Only allow access if the document has a field `userId` 
+      // matching the logged-in user's UID
+      allow read, write: if request.auth != null
+                         && request.auth.uid == resource.data.userId;
+
+      // Allow creating docs if userId in the request matches the logged-in UID
+      allow create: if request.auth != null
+                    && request.auth.uid == request.resource.data.userId;
     }
   }
 }
