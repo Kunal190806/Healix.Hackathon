@@ -82,6 +82,8 @@ export default function VitalsTracker() {
   useEffect(() => {
     if (!user) return;
 
+    setIsLoading(true);
+
     const createListener = <T,>(collectionName: string, setter: (data: T | null) => void) => {
       const q = query(collection(db, collectionName), where("userId", "==", user.uid), orderBy("date", "desc"), limit(1));
       return onSnapshot(q, (snapshot) => {
@@ -90,23 +92,23 @@ export default function VitalsTracker() {
         } else {
           setter(null);
         }
-        setIsLoading(false);
       }, (error) => {
         console.error(`Error fetching ${collectionName}:`, error);
-        setIsLoading(false);
       });
     };
-
-    const unsubVitals = createListener<VitalLog>('vitals', setLatestVitals);
-    const unsubHearing = createListener<HearingTestRecord>('hearingTestHistory', setLatestHearingTest);
-    const unsubEye = createListener<EyeTestResult>('eyeTestHistory', setLatestEyeTest);
-    const unsubResponse = createListener<ResponseTimeResult>('responseTimeHistory', setLatestResponseTimeTest);
+    
+    const unsubs: (() => void)[] = [];
+    unsubs.push(createListener<VitalLog>('vitals', setLatestVitals));
+    unsubs.push(createListener<HearingTestRecord>('hearingTestHistory', setLatestHearingTest));
+    unsubs.push(createListener<EyeTestResult>('eyeTestHistory', setLatestEyeTest));
+    unsubs.push(createListener<ResponseTimeResult>('responseTimeHistory', setLatestResponseTimeTest));
+    
+    // Once all listeners are set up, we can consider it "loaded"
+    // A more robust solution might use Promise.all if the first fetch was manual
+    setIsLoading(false);
 
     return () => {
-      unsubVitals();
-      unsubHearing();
-      unsubEye();
-      unsubResponse();
+      unsubs.forEach(unsub => unsub());
     };
   }, [user]);
 
@@ -183,8 +185,8 @@ export default function VitalsTracker() {
 
         {/* Add New Log */}
         <Dialog>
-          <DialogTrigger asChild>
-             <button className="w-full h-full">
+           <DialogTrigger asChild>
+            <button className="w-full h-full">
                 <Card className="flex flex-col items-center justify-center text-center cursor-pointer hover:bg-muted/50 transition-colors h-full">
                 <PlusCircle className="h-12 w-12 text-muted-foreground mb-2" />
                 <h3 className="font-semibold text-muted-foreground">Log Manual Vitals</h3>
@@ -200,6 +202,7 @@ export default function VitalsTracker() {
             <p className="text-center text-muted-foreground py-8">Manual entry form would go here.</p>
           </DialogContent>
         </Dialog>
+
          <Link href="/connect-devices" className="w-full h-full">
             <Card className="flex flex-col items-center justify-center text-center cursor-pointer hover:bg-muted/50 transition-colors h-full">
                 <Watch className="h-12 w-12 text-muted-foreground mb-2" />
