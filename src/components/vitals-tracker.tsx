@@ -5,16 +5,17 @@ import { useState, useEffect } from "react";
 import { auth, db } from "@/lib/firebase";
 import { collection, addDoc, onSnapshot, query, where, deleteDoc, doc, orderBy } from "firebase/firestore";
 import type { User } from "firebase/auth";
-import type { VitalLog } from "@/lib/types";
+import type { VitalLog, DeviceVitals } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { format } from "date-fns";
-import { HeartPulse, Trash2, Loader2 } from "lucide-react";
+import { format, subHours } from "date-fns";
+import { HeartPulse, Trash2, Loader2, Watch, Moon, Footprints } from "lucide-react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 
 const ResponsiveContainer = dynamic(() => import('recharts').then(mod => mod.ResponsiveContainer), { ssr: false });
 const LineChart = dynamic(() => import('recharts').then(mod => mod.LineChart), { ssr: false });
@@ -25,9 +26,17 @@ const CartesianGrid = dynamic(() => import('recharts').then(mod => mod.Cartesian
 const Tooltip = dynamic(() => import('recharts').then(mod => mod.Tooltip), { ssr: false });
 const Legend = dynamic(() => import('recharts').then(mod => mod.Legend), { ssr: false });
 
+const sampleDeviceVitals: DeviceVitals = {
+    lastSync: new Date().toISOString(),
+    heartRate: 74,
+    sleep: { hours: 7, minutes: 30 },
+    steps: 8234
+};
+
 export default function VitalsTracker() {
   const [user, setUser] = useState<User | null>(null);
   const [logs, setLogs] = useState<VitalLog[]>([]);
+  const [deviceVitals] = useState<DeviceVitals>(sampleDeviceVitals);
   const [isLoading, setIsLoading] = useState(true);
 
   // Form state for all vitals
@@ -185,6 +194,39 @@ export default function VitalsTracker() {
         </Card>
       </div>
       <div className="lg:col-span-3 space-y-6">
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <Watch className="h-6 w-6 text-primary" />
+                    <span>Device Sync (Sample)</span>
+                </CardTitle>
+                <CardDescription>
+                    Real-time data from your connected health device. Last synced: {format(subHours(new Date(deviceVitals.lastSync), 2), 'p')}
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-3 gap-4 text-center">
+                <div className="p-4 bg-muted/50 rounded-lg">
+                    <HeartPulse className="mx-auto h-8 w-8 text-red-500 mb-2" />
+                    <p className="text-2xl font-bold">{deviceVitals.heartRate}</p>
+                    <p className="text-xs text-muted-foreground">Heart Rate (BPM)</p>
+                </div>
+                <div className="p-4 bg-muted/50 rounded-lg">
+                    <Moon className="mx-auto h-8 w-8 text-indigo-500 mb-2" />
+                    <p className="text-2xl font-bold">{deviceVitals.sleep.hours}h {deviceVitals.sleep.minutes}m</p>
+                    <p className="text-xs text-muted-foreground">Sleep Last Night</p>
+                </div>
+                <div className="p-4 bg-muted/50 rounded-lg">
+                    <Footprints className="mx-auto h-8 w-8 text-green-500 mb-2" />
+                    <p className="text-2xl font-bold">{deviceVitals.steps.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground">Steps Today</p>
+                </div>
+            </CardContent>
+             <CardFooter>
+                <Button variant="link" asChild>
+                    <Link href="/connect-devices">Manage connected devices</Link>
+                </Button>
+            </CardFooter>
+        </Card>
         <Card>
             <CardHeader>
                 <div className="flex items-start justify-between">

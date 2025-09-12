@@ -7,7 +7,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { UtensilsCrossed, Pill, BookHeart, Users, Droplets, Dumbbell, ArrowRight, Hospital, Stethoscope, HeartPulse, ShieldCheck, CalendarDays, Ear, Eye, Timer, LogIn, UserPlus } from 'lucide-react';
+import { UtensilsCrossed, Pill, BookHeart, Users, Droplets, Dumbbell, ArrowRight, Hospital, Stethoscope, HeartPulse, ShieldCheck, CalendarDays, Ear, Eye, Timer, LogIn, UserPlus, Watch } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useProfile } from '@/hooks/use-profile';
@@ -75,6 +75,13 @@ const modules = [
     icon: Timer,
     href: "/response-time",
     color: "text-amber-500",
+  },
+  {
+    title: "Connect Devices",
+    description: "Sync your smart watch or health band to automatically track your vitals.",
+    icon: Watch,
+    href: "/connect-devices",
+    color: "text-slate-500",
   },
   {
     title: "Mental Health Journal",

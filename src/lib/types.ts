@@ -120,3 +120,10 @@ export type ResponseTimeResult = {
     scores: number[];
     date: string;
 };
+
+export type DeviceVitals = {
+    lastSync: string;
+    heartRate: number;
+    sleep: { hours: number; minutes: number };
+    steps: number;
+};

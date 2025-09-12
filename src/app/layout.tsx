@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { Home, Pill, Droplets, Users, UtensilsCrossed, BookHeart, Dumbbell, PanelLeft, Hospital, UserPlus, Stethoscope, HeartPulse, ShieldCheck, CalendarDays, LogOut, Ear, Eye, Timer, LogIn, UserCircle, Loader2, Link as LinkIcon, Search, TestTube, MessagesSquare } from 'lucide-react';
+import { Home, Pill, Droplets, Users, UtensilsCrossed, BookHeart, Dumbbell, PanelLeft, Hospital, UserPlus, Stethoscope, HeartPulse, ShieldCheck, CalendarDays, LogOut, Ear, Eye, Timer, LogIn, UserCircle, Loader2, Link as LinkIcon, Search, TestTube, MessagesSquare, Watch } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Toaster } from '@/components/ui/toaster';
@@ -118,6 +118,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     { href: '/meal-planner', label: 'AI Meal Planner', icon: UtensilsCrossed },
     { href: '/prescriptions', label: 'Prescriptions', icon: Pill },
     { href: '/vitals-tracker', label: 'Vitals Tracker', icon: HeartPulse },
+    { href: '/connect-devices', label: 'Connect Devices', icon: Watch },
     { href: '/caregiver-hub', label: 'Caregiver Hub', icon: ShieldCheck },
   ];
 
