@@ -2,14 +2,17 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import useLocalStorage from "@/hooks/use-local-storage";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Eye, Play, Info, Check, X, RefreshCw, Download } from 'lucide-react';
+import { Eye, Play, Info, Check, X, RefreshCw, Download, Loader2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { format } from 'date-fns';
+import type { EyeTestResult } from '@/lib/types';
+import { auth, db } from "@/lib/firebase";
+import { collection, addDoc, onSnapshot, query, where, orderBy, limit } from "firebase/firestore";
+import type { User } from "firebase/auth";
 
 // Snellen chart letters - avoiding letters that can be confused (O, G, C)
 const snellenLetters = ['C', 'D', 'E', 'F', 'H', 'K', 'N', 'P', 'R', 'T', 'V', 'Z'];
@@ -35,21 +38,37 @@ const generateRandomLetters = (count: number) => {
 };
 
 type TestState = 'idle' | 'testing' | 'finished';
-type EyeTestResult = {
-    score: string;
-    interpretation: string;
-    date: string;
-};
+
 
 export default function EyeTest() {
+  const [user, setUser] = useState<User | null>(null);
   const [testState, setTestState] = useState<TestState>('idle');
   const [currentLineIndex, setCurrentLineIndex] = useState(0);
   const [userInput, setUserInput] = useState('');
   const [lastCorrectLine, setLastCorrectLine] = useState<number | null>(null);
   const [currentLetters, setCurrentLetters] = useState('');
-  const [testHistory, setTestHistory] = useLocalStorage<EyeTestResult[]>("eyeTestHistory", []);
+  const [testHistory, setTestHistory] = useState<EyeTestResult[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+      setIsLoading(false);
+      if (currentUser) {
+        const q = query(collection(db, "eyeTestHistory"), where("userId", "==", currentUser.uid), orderBy("date", "desc"), limit(10));
+        const unsubFirestore = onSnapshot(q, (snapshot) => {
+          const userHistory: EyeTestResult[] = snapshot.docs.map(doc => doc.data() as EyeTestResult);
+          setTestHistory(userHistory);
+        });
+        return () => unsubFirestore();
+      } else {
+        setTestHistory([]);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (testState === 'testing') {
@@ -68,29 +87,32 @@ export default function EyeTest() {
   
   const finalScore = useMemo(() => lastCorrectLine !== null ? chartLines[lastCorrectLine].score : 'Below 20/200', [lastCorrectLine]);
 
-  const getInterpretation = useCallback(() => {
-    if (lastCorrectLine === null) {
-      return "Your vision appears to be significantly impaired. It's highly recommended to see an eye care professional.";
-    }
-    const score = chartLines[lastCorrectLine].score;
-    if (lastCorrectLine >= chartLines.findIndex(l => l.score === '20/40')) {
-      return `Your estimated visual acuity is ${score}. This is within the normal range for most activities, but regular check-ups are still important.`;
-    }
-    if (lastCorrectLine >= chartLines.findIndex(l => l.score === '20/60')) {
-      return `Your estimated visual acuity is ${score}. You may experience some difficulty with distance vision. It is advisable to consult an optometrist.`;
-    }
-    return `Your estimated visual acuity is ${score}. You likely have difficulty seeing distant objects clearly. A professional eye examination is strongly recommended.`;
-  }, [lastCorrectLine]);
+  const getInterpretation = useCallback((score: string) => {
+      const lineIndex = chartLines.findIndex(l => l.score === score);
+      if (lineIndex === -1) {
+        return "Your vision appears to be significantly impaired. It's highly recommended to see an eye care professional.";
+      }
+      if (lineIndex >= chartLines.findIndex(l => l.score === '20/40')) {
+        return `Your estimated visual acuity is ${score}. This is within the normal range for most activities, but regular check-ups are still important.`;
+      }
+      if (lineIndex >= chartLines.findIndex(l => l.score === '20/60')) {
+        return `Your estimated visual acuity is ${score}. You may experience some difficulty with distance vision. It is advisable to consult an optometrist.`;
+      }
+      return `Your estimated visual acuity is ${score}. You likely have difficulty seeing distant objects clearly. A professional eye examination is strongly recommended.`;
+  }, []);
 
-  const finishTest = useCallback(() => {
+  const finishTest = useCallback(async () => {
+    if (!user) return;
+    const score = finalScore;
     const newResult: EyeTestResult = {
-        score: finalScore,
-        interpretation: getInterpretation(),
+        userId: user.uid,
+        score: score,
+        interpretation: getInterpretation(score),
         date: new Date().toISOString()
     };
-    setTestHistory([newResult, ...testHistory]);
+    await addDoc(collection(db, "eyeTestHistory"), newResult);
     setTestState('finished');
-  }, [finalScore, getInterpretation, testHistory, setTestHistory]);
+  }, [finalScore, getInterpretation, user]);
 
   const handleNextLine = useCallback(() => {
     const isCorrect = userInput.toUpperCase() === currentLetters;
@@ -101,11 +123,9 @@ export default function EyeTest() {
         setCurrentLineIndex(prev => prev + 1);
         setUserInput('');
       } else {
-        // Finished all lines correctly
         finishTest();
       }
     } else {
-      // Incorrect, end the test
       finishTest();
     }
   }, [userInput, currentLetters, currentLineIndex, finishTest]);
@@ -118,7 +138,8 @@ export default function EyeTest() {
 
   const generatePDFReport = () => {
     const doc = new jsPDF();
-    const today = format(new Date(), 'PPpp');
+    const latestTest = testHistory[0] || { score: finalScore, interpretation: getInterpretation(finalScore), date: new Date().toISOString() };
+    const testDate = format(new Date(latestTest.date), 'PPpp');
     
     doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
@@ -126,7 +147,8 @@ export default function EyeTest() {
 
     doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
-    doc.text(`Date of Test: ${today}`, 15, 40);
+    doc.text(`Date of Test: ${testDate}`, 15, 40);
+    doc.text(`Patient: ${user?.displayName || 'Anonymous User'}`, 15, 46);
 
     doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
@@ -135,7 +157,7 @@ export default function EyeTest() {
     doc.setFontSize(48);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(63, 81, 181); // Primary color
-    doc.text(finalScore, 15, 80);
+    doc.text(latestTest.score, 15, 80);
     doc.setTextColor(0, 0, 0);
 
     doc.setFontSize(16);
@@ -143,7 +165,7 @@ export default function EyeTest() {
     doc.text("Interpretation:", 15, 100);
     doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
-    const interpretationLines = doc.splitTextToSize(getInterpretation(), 180);
+    const interpretationLines = doc.splitTextToSize(latestTest.interpretation, 180);
     doc.text(interpretationLines, 15, 110);
     
     doc.setDrawColor(200); // Light gray
@@ -159,6 +181,19 @@ export default function EyeTest() {
 
     doc.save(`HEALIX_Eye_Test_Report_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   };
+  
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+  }
+
+  if (!user) {
+    return (
+      <Card className="text-center p-8">
+        <CardTitle>Please Log In</CardTitle>
+        <CardDescription>You need to be logged in to take the eye test.</CardDescription>
+      </Card>
+    );
+  }
 
   const renderContent = () => {
     switch (testState) {
@@ -195,6 +230,7 @@ export default function EyeTest() {
           </Card>
         );
       case 'finished':
+        const result = testHistory[0] || { score: finalScore, interpretation: getInterpretation(finalScore) };
         return (
           <Card className="text-center">
             <CardHeader>
@@ -205,10 +241,10 @@ export default function EyeTest() {
               <div className="p-8 rounded-lg bg-muted/50 w-full">
                 <p className="text-sm text-muted-foreground">Your Score</p>
                 <p className="text-6xl font-bold text-primary">
-                  {finalScore}
+                  {result.score}
                 </p>
               </div>
-              <p className="max-w-prose">{getInterpretation()}</p>
+              <p className="max-w-prose">{result.interpretation}</p>
               <div className="mt-4 p-4 rounded-lg bg-muted/50 border">
                 <h4 className="font-semibold flex items-center justify-center gap-2 mb-2"><Info className="h-5 w-5 text-primary"/>Disclaimer</h4>
                 <p className="text-sm text-muted-foreground max-w-prose">

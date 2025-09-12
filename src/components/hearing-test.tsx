@@ -3,14 +3,16 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Ear, Play, Download, Volume2, AlertCircle, CheckCircle, Info, XCircle, RefreshCw } from 'lucide-react';
-import type { HearingResult } from '@/lib/types';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Ear, Play, Download, Volume2, CheckCircle, Info, XCircle, RefreshCw, Loader2 } from 'lucide-react';
+import type { HearingResult, HearingTestRecord } from '@/lib/types';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine } from 'recharts';
-import useLocalStorage from '@/hooks/use-local-storage';
+import { auth, db } from "@/lib/firebase";
+import { collection, addDoc, onSnapshot, query, where, orderBy, limit } from "firebase/firestore";
+import type { User } from "firebase/auth";
 
 const testFrequencies = [250, 500, 1000, 2000, 4000, 8000]; // in Hz
 const testDecibels = [-10, 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]; // in dBHL
@@ -18,23 +20,39 @@ const normalHearingThreshold = 25; // dBHL
 const maxDecibelIndex = testDecibels.length - 1;
 
 type TestState = 'idle' | 'testing' | 'finished';
-type HearingTestRecord = {
-    results: HearingResult[];
-    date: string;
-};
 
 export default function HearingTest() {
+  const [user, setUser] = useState<User | null>(null);
   const [testState, setTestState] = useState<TestState>('idle');
   const [results, setResults] = useState<HearingResult[]>([]);
   const [currentFrequencyIndex, setCurrentFrequencyIndex] = useState(0);
   const [currentDecibelIndex, setCurrentDecibelIndex] = useState(2); // Start at 10 dBHL
   const [currentEar, setCurrentEar] = useState<'left' | 'right'>('right');
-  const [testHistory, setTestHistory] = useLocalStorage<HearingTestRecord[]>("hearingTestHistory", []);
+  const [testHistory, setTestHistory] = useState<HearingTestRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const oscillatorRef = useRef<OscillatorNode | null>(null);
   const gainNodeRef = useRef<GainNode | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+      setIsLoading(false);
+      if (currentUser) {
+        const q = query(collection(db, "hearingTestHistory"), where("userId", "==", currentUser.uid), orderBy("date", "desc"), limit(10));
+        const unsubFirestore = onSnapshot(q, (snapshot) => {
+          const userHistory: HearingTestRecord[] = snapshot.docs.map(doc => doc.data() as HearingTestRecord);
+          setTestHistory(userHistory);
+        });
+        return () => unsubFirestore();
+      } else {
+        setTestHistory([]);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -43,14 +61,16 @@ export default function HearingTest() {
     };
   }, []);
 
-  const finishTest = useCallback(() => {
+  const finishTest = useCallback(async () => {
+    if (!user) return;
     const newRecord: HearingTestRecord = {
+        userId: user.uid,
         results: results,
         date: new Date().toISOString()
     };
-    setTestHistory([newRecord, ...testHistory]);
+    await addDoc(collection(db, "hearingTestHistory"), newRecord);
     setTestState('finished');
-  }, [results, testHistory, setTestHistory]);
+  }, [results, user]);
   
   const playTone = useCallback((frequency: number, decibel: number) => {
     if (!audioContextRef.current) {
@@ -166,15 +186,16 @@ export default function HearingTest() {
 
   const generatePDFReport = () => {
     const doc = new jsPDF();
-    const today = format(new Date(), 'PPpp');
+    const latestTest = testHistory[0] || { date: new Date().toISOString(), results: results };
+    const reportDate = format(new Date(latestTest.date), 'PPpp');
     doc.setFontSize(20);
     doc.text("Hearing Screening Report", 105, 20, { align: "center" });
     doc.setFontSize(12);
-    doc.text(`Date: ${today}`, 15, 30);
-    doc.text("Patient: Anonymous User", 15, 36); 
+    doc.text(`Date: ${reportDate}`, 15, 30);
+    doc.text(`Patient: ${user?.displayName || "Anonymous User"}`, 15, 36); 
 
-    const leftEarResults = results.filter(r => r.ear === 'left');
-    const rightEarResults = results.filter(r => r.ear === 'right');
+    const leftEarResults = latestTest.results.filter(r => r.ear === 'left');
+    const rightEarResults = latestTest.results.filter(r => r.ear === 'right');
 
     const formatResults = (earResults: HearingResult[]) => 
       testFrequencies.map(freq => {
@@ -189,7 +210,7 @@ export default function HearingTest() {
       head: [['Frequency', 'Threshold']],
       body: formatResults(rightEarResults),
       theme: 'grid',
-      headStyles: { fillColor: [231, 48, 48] }, // A red color for right
+      headStyles: { fillColor: [220, 53, 69] }, // A red color for right
     });
     
     doc.setFontSize(10);
@@ -207,7 +228,7 @@ export default function HearingTest() {
       head: [['Frequency', 'Threshold']],
       body: formatResults(leftEarResults),
       theme: 'grid',
-      headStyles: { fillColor: [63, 81, 181] }, // A blue color for left
+      headStyles: { fillColor: [0, 123, 255] }, // A blue color for left
     });
     
     doc.setFontSize(10);
@@ -227,14 +248,28 @@ export default function HearingTest() {
   };
 
   const chartData = testFrequencies.map(freq => {
-    const leftResult = results.find(r => r.ear === 'left' && r.frequency === freq);
-    const rightResult = results.find(r => r.ear === 'right' && r.frequency === freq);
+    const res = testState === 'finished' ? (testHistory[0]?.results || results) : results;
+    const leftResult = res.find(r => r.ear === 'left' && r.frequency === freq);
+    const rightResult = res.find(r => r.ear === 'right' && r.frequency === freq);
     return {
       frequency: freq,
       left: leftResult?.decibel,
       right: rightResult?.decibel,
     };
   });
+  
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+  }
+
+  if (!user) {
+    return (
+      <Card className="text-center p-8">
+        <CardTitle>Please Log In</CardTitle>
+        <CardDescription>You need to be logged in to take the hearing test.</CardDescription>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">

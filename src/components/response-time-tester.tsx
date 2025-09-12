@@ -2,27 +2,49 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import useLocalStorage from '@/hooks/use-local-storage';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Timer, Play, XCircle, CheckCircle, RefreshCw, Zap, Download } from 'lucide-react';
+import { Timer, Play, XCircle, CheckCircle, RefreshCw, Zap, Download, Loader2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { type ResponseTimeResult } from '@/lib/types';
 import { format } from 'date-fns';
 import jsPDF from 'jspdf';
+import { auth, db } from "@/lib/firebase";
+import { collection, addDoc, onSnapshot, query, where, orderBy, limit } from "firebase/firestore";
+import type { User } from "firebase/auth";
 
 type TestStatus = 'idle' | 'waiting' | 'ready' | 'tooSoon' | 'result' | 'finished';
 const TOTAL_ROUNDS = 5;
 
 export default function ResponseTimeTester() {
+  const [user, setUser] = useState<User | null>(null);
   const [status, setStatus] = useState<TestStatus>('idle');
   const [scores, setScores] = useState<number[]>([]);
-  const [average, setAverage] = useState<number>(0);
   const [currentRound, setCurrentRound] = useState(0);
 
-  const [history, setHistory] = useLocalStorage<ResponseTimeResult[]>('responseTimeHistory', []);
+  const [history, setHistory] = useState<ResponseTimeResult[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(0);
+  
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+      setIsLoading(false);
+      if (currentUser) {
+        const q = query(collection(db, "responseTimeHistory"), where("userId", "==", currentUser.uid), orderBy("date", "desc"), limit(10));
+        const unsubFirestore = onSnapshot(q, (snapshot) => {
+          const userHistory: ResponseTimeResult[] = snapshot.docs.map(doc => doc.data() as ResponseTimeResult);
+          setHistory(userHistory);
+        });
+        return () => unsubFirestore();
+      } else {
+        setHistory([]);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   const startWaiting = useCallback(() => {
     setStatus('waiting');
@@ -32,6 +54,28 @@ export default function ResponseTimeTester() {
       startTimeRef.current = Date.now();
     }, waitTime);
   }, []);
+  
+  const finishTest = useCallback(async (finalScores: number[]) => {
+    if (!user) return;
+    const avg = finalScores.reduce((a, b) => a + b, 0) / finalScores.length;
+    const newResult: ResponseTimeResult = { 
+      userId: user.uid,
+      average: avg,
+      scores: finalScores,
+      date: new Date().toISOString()
+    };
+    await addDoc(collection(db, "responseTimeHistory"), newResult);
+    setStatus('finished');
+  }, [user]);
+
+  const nextRound = useCallback(() => {
+    if (currentRound < TOTAL_ROUNDS) {
+      setCurrentRound(prev => prev + 1);
+      startWaiting();
+    } else {
+      finishTest(scores);
+    }
+  }, [currentRound, scores, startWaiting, finishTest]);
 
   const handleClick = () => {
     if (status === 'waiting') {
@@ -45,39 +89,17 @@ export default function ResponseTimeTester() {
     }
   };
 
-  const nextRound = () => {
-    if (currentRound < TOTAL_ROUNDS) {
-      setCurrentRound(prev => prev + 1);
-      startWaiting();
-    } else {
-      const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-      setAverage(avg);
-      const newResult: ResponseTimeResult = { average: avg, scores, date: new Date().toISOString() };
-      setHistory([newResult, ...history]);
-      setStatus('finished');
-    }
-  };
-
   useEffect(() => {
     if (status === 'result' || status === 'tooSoon') {
       const timeout = setTimeout(() => {
         nextRound();
-      }, 2000);
+      }, 2000); // Wait 2 seconds before starting next round
       return () => clearTimeout(timeout);
     }
   }, [status, nextRound]);
-  
-  useEffect(() => {
-    // This effect ensures nextRound is called with the updated scores state
-    if (scores.length > 0 && scores.length === currentRound -1) {
-        nextRound();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scores, currentRound]);
-  
+
   const handleStart = () => {
     setScores([]);
-    setAverage(0);
     setCurrentRound(1);
     startWaiting();
   };
@@ -85,7 +107,6 @@ export default function ResponseTimeTester() {
   const handleRestart = () => {
     setStatus('idle');
     setScores([]);
-    setAverage(0);
     setCurrentRound(0);
   };
   
@@ -101,6 +122,7 @@ export default function ResponseTimeTester() {
     doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
     doc.text(`Date of Test: ${format(new Date(testResult.date), 'PPpp')}`, 15, 40);
+    doc.text(`Patient: ${user?.displayName || 'Anonymous User'}`, 15, 46);
 
     doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
@@ -139,6 +161,19 @@ export default function ResponseTimeTester() {
     doc.save(`HEALIX_Response_Time_Report_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   };
 
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+  }
+
+  if (!user) {
+    return (
+      <Card className="text-center p-8">
+        <CardTitle>Please Log In</CardTitle>
+        <CardDescription>You need to be logged in to take the response time test.</CardDescription>
+      </Card>
+    );
+  }
+
   const renderContent = () => {
     switch (status) {
       case 'waiting':
@@ -169,6 +204,8 @@ export default function ResponseTimeTester() {
           </div>
         );
       case 'finished':
+        const latestResult = history[0];
+        if (!latestResult) return null;
         return (
           <Card className="text-center">
             <CardHeader>
@@ -178,12 +215,12 @@ export default function ResponseTimeTester() {
             <CardContent className="flex flex-col items-center gap-4">
               <div className="p-8 rounded-lg bg-muted/50 w-full">
                 <p className="text-sm text-muted-foreground">Your Average Response Time</p>
-                <p className="text-6xl font-bold font-mono text-primary">{Math.round(average)}<span className="text-2xl ml-2">ms</span></p>
+                <p className="text-6xl font-bold font-mono text-primary">{Math.round(latestResult.average)}<span className="text-2xl ml-2">ms</span></p>
               </div>
               <div className="w-full text-left">
                   <h4 className="font-semibold mb-2">Round Scores:</h4>
                   <ul className="grid grid-cols-5 gap-2 text-center text-sm">
-                      {scores.map((s, i) => (
+                      {latestResult.scores.map((s, i) => (
                           <li key={i} className="p-2 bg-muted rounded-md font-mono">{s} ms</li>
                       ))}
                   </ul>
@@ -246,9 +283,9 @@ export default function ResponseTimeTester() {
                 <div className="space-y-2">
                     <div className="flex justify-between items-center text-sm text-muted-foreground">
                         <span>Round {currentRound} of {TOTAL_ROUNDS}</span>
-                        <span>{Math.round((currentRound / TOTAL_ROUNDS) * 100)}%</span>
+                        <span>{Math.round(((currentRound -1) / TOTAL_ROUNDS) * 100)}%</span>
                     </div>
-                    <Progress value={(currentRound / TOTAL_ROUNDS) * 100} />
+                    <Progress value={((currentRound - 1) / TOTAL_ROUNDS) * 100} />
                 </div>
             </CardContent>
         </Card>

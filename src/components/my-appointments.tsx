@@ -1,15 +1,17 @@
 
 "use client";
 
-import { useState } from "react";
-import useLocalStorage from "@/hooks/use-local-storage";
+import { useState, useEffect } from "react";
+import { auth, db } from "@/lib/firebase";
+import { collection, doc, onSnapshot, query, where, updateDoc, orderBy } from "firebase/firestore";
+import type { User } from "firebase/auth";
 import type { Appointment } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarDays, CalendarCheck, CalendarX, CalendarClock } from "lucide-react";
+import { CalendarDays, CalendarCheck, CalendarX, CalendarClock, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import {
   AlertDialog,
@@ -24,18 +26,53 @@ import {
 } from "@/components/ui/alert-dialog"
 
 export default function MyAppointments() {
-  const [appointments, setAppointments] = useLocalStorage<Appointment[]>("appointments", []);
+  const [user, setUser] = useState<User | null>(null);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleCancelAppointment = (id: string) => {
-    setAppointments(
-      appointments.map(app => 
-        app.id === id ? { ...app, status: "Cancelled" } : app
-      )
-    );
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        setIsLoading(true);
+        const q = query(collection(db, "appointments"), where("userId", "==", currentUser.uid), orderBy("date", "desc"));
+        const unsubFirestore = onSnapshot(q, (snapshot) => {
+          const userAppointments: Appointment[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Appointment));
+          setAppointments(userAppointments);
+          setIsLoading(false);
+        });
+        return () => unsubFirestore();
+      } else {
+        setUser(null);
+        setAppointments([]);
+        setIsLoading(false);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleCancelAppointment = async (id: string) => {
+    const appointmentRef = doc(db, "appointments", id);
+    await updateDoc(appointmentRef, {
+      status: "Cancelled"
+    });
   };
   
   const upcomingAppointments = appointments.filter(a => new Date(a.date) >= new Date() && a.status === 'Confirmed');
   const pastAppointments = appointments.filter(a => new Date(a.date) < new Date() || a.status !== 'Confirmed');
+  
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+  }
+
+  if (!user) {
+    return (
+      <Card className="text-center p-8">
+        <CardTitle>Please Log In</CardTitle>
+        <CardDescription>You need to be logged in to see your appointments.</CardDescription>
+      </Card>
+    );
+  }
 
   return (
     <Tabs defaultValue="upcoming">
@@ -130,7 +167,7 @@ export default function MyAppointments() {
                        <TableCell className="text-right">
                         <Badge variant={app.status === 'Cancelled' ? 'destructive' : 'secondary'}>
                             {app.status === 'Cancelled' ? <CalendarX className="mr-1 h-3 w-3"/> : <CalendarCheck className="mr-1 h-3 w-3"/>}
-                            {app.status}
+                            {app.status === 'Completed' && new Date(app.date) < new Date() ? 'Completed' : app.status}
                         </Badge>
                       </TableCell>
                     </TableRow>

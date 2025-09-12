@@ -2,6 +2,7 @@
 
 export type Prescription = {
   id: string;
+  userId: string;
   name: string;
   dosage: string;
   frequency: string;
@@ -10,6 +11,7 @@ export type Prescription = {
 
 export type PainLog = {
   id: string;
+  userId: string;
   level: number;
   symptoms: string;
   date: string;
@@ -17,6 +19,7 @@ export type PainLog = {
 
 export type JournalEntry = {
   id: string;
+  userId: string;
   content: string;
   date: string;
 };
@@ -65,6 +68,7 @@ export type Doctor = {
 
 export type VitalLog = {
   id: string;
+  userId: string;
   date: string;
   bloodPressure?: { systolic: number; diastolic: number };
   bloodSugar?: number;
@@ -75,6 +79,7 @@ export type VitalLog = {
 
 export type Appointment = {
   id: string;
+  userId: string;
   doctorId: string;
   doctorName: string;
   specialty: string;
@@ -90,17 +95,20 @@ export type HearingResult = {
 };
 
 export type HearingTestRecord = {
+    userId: string;
     results: HearingResult[];
     date: string;
 };
 
 export type EyeTestResult = {
+    userId: string;
     score: string;
     interpretation: string;
     date: string;
 };
 
 export type ResponseTimeResult = {
+    userId: string;
     average: number;
     scores: number[];
     date: string;

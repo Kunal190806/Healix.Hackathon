@@ -2,14 +2,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import useLocalStorage from "@/hooks/use-local-storage";
-import type { VitalLog, Prescription, HearingResult, HearingTestRecord, EyeTestResult, ResponseTimeResult } from "@/lib/types";
+import { auth, db } from "@/lib/firebase";
+import { collection, onSnapshot, query, where, orderBy } from "firebase/firestore";
+import type { User } from "firebase/auth";
+import type { VitalLog, Prescription, HearingTestRecord, EyeTestResult, ResponseTimeResult, Appointment as Appt } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, Legend, ReferenceLine } from 'recharts';
 import { format, subDays, addDays } from "date-fns";
-import { AlertTriangle, Bell, Calendar, Download, HeartPulse, Pill, User, Loader2, Ear, Eye, Info, Timer } from "lucide-react";
+import { AlertTriangle, Bell, Calendar, Download, HeartPulse, Pill, User, Loader2, Ear, Eye, Timer } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -24,43 +26,83 @@ const samplePatient = {
 const normalHearingThreshold = 25;
 
 export default function CaregiverHub() {
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [sampleAppointments] = useLocalStorage<any[]>('appointments', []);
-  const [sampleVitals] = useLocalStorage<VitalLog[]>('vitalLogs', []);
-  const [sampleMedications] = useLocalStorage<Prescription[]>('prescriptions', []);
-  const [hearingTestHistory] = useLocalStorage<HearingTestRecord[]>('hearingTestHistory', []);
-  const [eyeTestHistory] = useLocalStorage<EyeTestResult[]>('eyeTestHistory', []);
-  const [responseTimeHistory] = useLocalStorage<ResponseTimeResult[]>('responseTimeHistory', []);
+
+  const [appointments, setAppointments] = useState<Appt[]>([]);
+  const [vitals, setVitals] = useState<VitalLog[]>([]);
+  const [medications, setMedications] = useState<Prescription[]>([]);
+  const [hearingTestHistory, setHearingTestHistory] = useState<HearingTestRecord[]>([]);
+  const [eyeTestHistory, setEyeTestHistory] = useState<EyeTestResult[]>([]);
+  const [responseTimeHistory, setResponseTimeHistory] = useState<ResponseTimeResult[]>([]);
   
   const [sampleNotifications, setSampleNotifications] = useState<any[]>([]);
   const [adherenceData, setAdherenceData] = useState<any[]>([]);
 
   useEffect(() => {
-    const today = new Date();
-    // These are now driven by localStorage, but we can keep notifications and adherence as sample data.
-    setSampleNotifications([
-        { id: 'n1', type: 'Missed Medication', message: 'Rohan missed his evening dose of Metformin.', date: subDays(today, 1).toISOString(), severity: 'high' },
-        { id: 'n2', type: 'Abnormal Vital', message: 'Blood Pressure reading was high: 145/92 mmHg.', date: subDays(today, 4).toISOString(), severity: 'high' },
-        { id: 'n3', type: 'Appointment Reminder', message: 'Cardiologist appointment in 3 days.', date: today.toISOString(), severity: 'medium' },
-        { id: 'n4', type: 'Low Adherence', message: 'Medication adherence dropped to 75% this week.', date: today.toISOString(), severity: 'medium' },
-    ]);
-    setAdherenceData([
-      { date: format(subDays(today, 6), 'EEE'), taken: 3, total: 4 },
-      { date: format(subDays(today, 5), 'EEE'), taken: 4, total: 4 },
-      { date: format(subDays(today, 4), 'EEE'), taken: 4, total: 4 },
-      { date: format(subDays(today, 3), 'EEE'), taken: 3, total: 4 },
-      { date: format(subDays(today, 2), 'EEE'), taken: 4, total: 4 },
-      { date: format(subDays(today, 1), 'EEE'), taken: 3, total: 4 },
-      { date: format(today, 'EEE'), taken: 1, total: 2 }, // Today
-    ].map(d => ({ ...d, adherence: (d.taken / d.total) * 100 })));
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+      setIsLoading(false);
+      if (currentUser) {
+        // In a real app, you'd fetch data for the patient the caregiver is monitoring.
+        // For this demo, we'll fetch the logged-in user's own data to demonstrate.
+        const patientId = currentUser.uid;
 
-    const timer = setTimeout(() => setIsLoading(false), 500); // Simulate loading
-    return () => clearTimeout(timer);
+        const collectionsToFetch = [
+          { name: "appointments", setter: setAppointments },
+          { name: "vitals", setter: setVitals },
+          { name: "prescriptions", setter: setMedications },
+          { name: "hearingTestHistory", setter: setHearingTestHistory },
+          { name: "eyeTestHistory", setter: setEyeTestHistory },
+          { name: "responseTimeHistory", setter: setResponseTimeHistory },
+        ];
+
+        const unsubscribers = collectionsToFetch.map(({ name, setter }) => {
+          const q = query(collection(db, name), where("userId", "==", patientId), orderBy("date", "desc"));
+          return onSnapshot(q, (snapshot) => {
+            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setter(data as any);
+          });
+        });
+        
+        // Mock data for notifications and adherence as they are not stored in DB
+        const today = new Date();
+        setSampleNotifications([
+            { id: 'n1', type: 'Missed Medication', message: 'Rohan missed his evening dose of Metformin.', date: subDays(today, 1).toISOString(), severity: 'high' },
+            { id: 'n2', type: 'Abnormal Vital', message: 'Blood Pressure reading was high: 145/92 mmHg.', date: subDays(today, 4).toISOString(), severity: 'high' },
+            { id: 'n3', type: 'Appointment Reminder', message: 'Cardiologist appointment in 3 days.', date: today.toISOString(), severity: 'medium' },
+            { id: 'n4', type: 'Low Adherence', message: 'Medication adherence dropped to 75% this week.', date: today.toISOString(), severity: 'medium' },
+        ]);
+        setAdherenceData([
+          { date: format(subDays(today, 6), 'EEE'), taken: 3, total: 4 },
+          { date: format(subDays(today, 5), 'EEE'), taken: 4, total: 4 },
+          { date: format(subDays(today, 4), 'EEE'), taken: 4, total: 4 },
+          { date: format(subDays(today, 3), 'EEE'), taken: 3, total: 4 },
+          { date: format(subDays(today, 2), 'EEE'), taken: 4, total: 4 },
+          { date: format(subDays(today, 1), 'EEE'), taken: 3, total: 4 },
+          { date: format(today, 'EEE'), taken: 1, total: 2 }, // Today
+        ].map(d => ({ ...d, adherence: (d.taken / d.total) * 100 })));
+
+
+        return () => unsubscribers.forEach(unsub => unsub());
+      } else {
+        // Clear all data if logged out
+        setAppointments([]);
+        setVitals([]);
+        setMedications([]);
+        setHearingTestHistory([]);
+        setEyeTestHistory([]);
+        setResponseTimeHistory([]);
+      }
+    });
+    return () => unsubscribe();
   }, []);
 
   const latestHearingTest = hearingTestHistory?.[0];
   const latestEyeTest = eyeTestHistory?.[0];
   const latestResponseTimeTest = responseTimeHistory?.[0];
+  const patientDisplayName = user ? (user.displayName || "Patient") : samplePatient.name;
+
 
   const generatePDF = () => {
     const doc = new jsPDF();
@@ -73,22 +115,24 @@ export default function CaregiverHub() {
 
     doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
-    doc.text(`Patient Name: ${samplePatient.name}`, 15, 45);
-    doc.text(`Patient ID: ${samplePatient.id}`, 15, 51);
+    doc.text(`Patient Name: ${patientDisplayName}`, 15, 45);
+    doc.text(`Patient ID: ${user?.uid.slice(0, 10) || "N/A"}`, 15, 51);
     doc.text(`Export Date: ${format(new Date(), 'PPpp')}`, pageWidth - 15, 45, {align: 'right'});
-
-    autoTable(doc, {
-        startY: 60,
-        head: [['Date & Time', 'Doctor', 'Specialty']],
-        body: sampleAppointments.map(a => [
-            `${format(new Date(a.date), "PP")} at ${a.time}`,
-            a.doctorName,
-            a.specialty
-        ]),
-        headStyles: { fillColor: [63, 81, 181] },
-        didDrawPage: (data) => { finalY = data.cursor?.y ?? 0; }
-    });
     
+    // Appointments
+    if (appointments.length > 0) {
+      autoTable(doc, {
+          startY: 60,
+          head: [['Upcoming Appointments']],
+          body: appointments
+            .filter(a => new Date(a.date) >= new Date() && a.status === 'Confirmed')
+            .map(a => [`${format(new Date(a.date), "PP")} at ${a.time} with ${a.doctorName} (${a.specialty})`]),
+          headStyles: { fillColor: [63, 81, 181] },
+          didDrawPage: (data) => { finalY = data.cursor?.y ?? 0; }
+      });
+    }
+
+    // Eye Test
     if (latestEyeTest) {
         autoTable(doc, {
             head: [['Vision Test Date', 'Score', 'Interpretation']],
@@ -98,6 +142,7 @@ export default function CaregiverHub() {
         });
     }
 
+    // Response Time Test
     if (latestResponseTimeTest) {
         autoTable(doc, {
             head: [['Response Test Date', 'Average', 'Scores']],
@@ -107,126 +152,120 @@ export default function CaregiverHub() {
         });
     }
     
+    // Hearing Test
     if (latestHearingTest) {
         const testFrequencies = [250, 500, 1000, 2000, 4000, 8000];
-        const formatResults = (ear: 'left' | 'right') => 
-          testFrequencies.map(freq => {
-            const result = latestHearingTest.results.find(r => r.ear === ear && r.frequency === freq);
-            return [freq + " Hz", result?.decibel !== null && result?.decibel !== undefined ? `${result?.decibel} dBHL` : '> 120 dBHL'];
-          });
         autoTable(doc, {
             head: [[`Hearing Test (${format(new Date(latestHearingTest.date), 'PP')})`, 'Right Ear', 'Left Ear']],
-            body: testFrequencies.map((freq, index) => {
-                const right = formatResults('right')[index][1];
-                const left = formatResults('left')[index][1];
-                return [`${freq} Hz`, right, left];
+            body: testFrequencies.map((freq) => {
+                const right = latestHearingTest.results.find(r => r.ear === 'right' && r.frequency === freq);
+                const left = latestHearingTest.results.find(r => r.ear === 'left' && r.frequency === freq);
+                return [
+                    `${freq} Hz`,
+                    right?.decibel !== null && right?.decibel !== undefined ? `${right.decibel} dBHL` : '> 120 dBHL',
+                    left?.decibel !== null && left?.decibel !== undefined ? `${left.decibel} dBHL` : '> 120 dBHL'
+                ];
             }),
             headStyles: { fillColor: [63, 81, 181] },
             didDrawPage: (data) => { finalY = data.cursor?.y ?? 0; }
         });
     }
 
-    autoTable(doc, {
-        head: [['Date', 'Metric', 'Value']],
-        body: sampleVitals.flatMap(v => {
-            const entries: [string, string, string][] = [];
-            const d = format(new Date(v.date), 'PP');
-            if (v.bloodPressure) entries.push([d, 'Blood Pressure', `${v.bloodPressure.systolic}/${v.bloodPressure.diastolic} mmHg`]);
-            if (v.bloodSugar) entries.push([d, 'Blood Sugar', `${v.bloodSugar} mg/dL`]);
-            if (v.heartRate) entries.push([d, 'Heart Rate', `${v.heartRate} BPM`]);
-            return entries;
-        }),
-        headStyles: { fillColor: [63, 81, 181] },
-        didDrawPage: (data) => { finalY = data.cursor?.y ?? 0; }
-    });
+    // Vitals
+    if(vitals.length > 0) {
+      autoTable(doc, {
+          head: [['Date', 'Metric', 'Value']],
+          body: vitals.slice(0, 10).flatMap(v => {
+              const entries: [string, string, string][] = [];
+              const d = format(new Date(v.date), 'PP');
+              if (v.bloodPressure) entries.push([d, 'Blood Pressure', `${v.bloodPressure.systolic}/${v.bloodPressure.diastolic} mmHg`]);
+              if (v.bloodSugar) entries.push([d, 'Blood Sugar', `${v.bloodSugar} mg/dL`]);
+              if (v.heartRate) entries.push([d, 'Heart Rate', `${v.heartRate} BPM`]);
+              if (v.weight) entries.push([d, 'Weight', `${v.weight} kg`]);
+              return entries;
+          }),
+          headStyles: { fillColor: [63, 81, 181] },
+          didDrawPage: (data) => { finalY = data.cursor?.y ?? 0; }
+      });
+    }
     
-    autoTable(doc, {
-        head: [['Medication', 'Dosage', 'Frequency', 'Time']],
-        body: sampleMedications.map(m => [m.name, m.dosage, m.frequency, m.time || 'N/A']),
-        headStyles: { fillColor: [63, 81, 181] },
-        didDrawPage: (data) => { finalY = data.cursor?.y ?? 0; }
-    });
+    // Medications
+    if(medications.length > 0) {
+      autoTable(doc, {
+          head: [['Medication', 'Dosage', 'Frequency', 'Time']],
+          body: medications.map(m => [m.name, m.dosage, m.frequency, m.time || 'N/A']),
+          headStyles: { fillColor: [63, 81, 181] },
+          didDrawPage: (data) => { finalY = data.cursor?.y ?? 0; }
+      });
+    }
 
-    doc.save(`HEALIX_Summary_${samplePatient.name}_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    doc.save(`HEALIX_Summary_${patientDisplayName}_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   };
   
   const generateCSV = () => {
-    const headers = [
-        `HEALIX Health Summary`,
-        `Patient ID: ${samplePatient.id}`,
-        `Patient Name: ${samplePatient.name}`,
-        `Export Date: ${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}`
-    ];
+    let csvContent = `HEALIX Health Summary\nPatient Name: ${patientDisplayName}\nExport Date: ${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}\n\n`;
 
-    const sections: {title: string, columns: string[], data: string[][]}[] = [
-        {
-            title: "Upcoming Appointments",
-            columns: ["Date", "Time", "Doctor", "Specialty"],
-            data: sampleAppointments.map(a => [format(new Date(a.date), 'yyyy-MM-dd'), a.time, a.doctorName, a.specialty])
-        },
-        {
-            title: "Vital Signs Log",
-            columns: ["Date", "Blood Pressure (Systolic)", "Blood Pressure (Diastolic)", "Blood Sugar (mg/dL)", "Heart Rate (BPM)"],
-            data: sampleVitals.map(v => [
-                format(new Date(v.date), 'yyyy-MM-dd HH:mm'),
-                v.bloodPressure?.systolic.toString() ?? '',
-                v.bloodPressure?.diastolic.toString() ?? '',
-                v.bloodSugar?.toString() ?? '',
-                v.heartRate?.toString() ?? ''
-            ])
-        },
-        {
-            title: "Medication Adherence",
-            columns: ["Date", "Adherence (%)"],
-            data: adherenceData.map(d => [d.date, d.adherence.toFixed(2)])
-        }
-    ];
-
-    if (latestEyeTest) {
-        sections.push({
-            title: "Vision Test Results",
-            columns: ["Date", "Score", "Interpretation"],
-            data: [[format(new Date(latestEyeTest.date), 'yyyy-MM-dd'), latestEyeTest.score, `"${latestEyeTest.interpretation.replace(/"/g, '""')}"`]]
-        });
-    }
-
-    if (latestResponseTimeTest) {
-        sections.push({
-            title: "Response Time Test Results",
-            columns: ["Date", "Average (ms)", "Scores (ms)"],
-            data: [[format(new Date(latestResponseTimeTest.date), 'yyyy-MM-dd'), Math.round(latestResponseTimeTest.average).toString(), `"${latestResponseTimeTest.scores.join(', ')}"`]]
-        });
-    }
+    const sections: {title: string, columns: string[], data: string[][]}[] = [];
     
-    if (latestHearingTest) {
-        sections.push({
-            title: "Hearing Test Results",
-            columns: ["Date", "Ear", "Frequency (Hz)", "Threshold (dBHL)"],
-            data: latestHearingTest.results.map(r => [
-                format(new Date(latestHearingTest.date), 'yyyy-MM-dd'),
-                r.ear,
-                r.frequency.toString(),
-                r.decibel?.toString() ?? '>120'
-            ])
-        });
-    }
+    if (appointments.length > 0) sections.push({
+        title: "Upcoming Appointments",
+        columns: ["Date", "Time", "Doctor", "Specialty"],
+        data: appointments.filter(a => new Date(a.date) >= new Date() && a.status === 'Confirmed').map(a => [format(new Date(a.date), 'yyyy-MM-dd'), a.time, a.doctorName, a.specialty])
+    });
 
-    let csvContent = headers.join("\n") + "\n\n";
+    if (vitals.length > 0) sections.push({
+        title: "Vital Signs Log",
+        columns: ["Date", "Blood Pressure (Systolic)", "Blood Pressure (Diastolic)", "Blood Sugar (mg/dL)", "Heart Rate (BPM)", "Weight (kg)"],
+        data: vitals.map(v => [
+            format(new Date(v.date), 'yyyy-MM-dd HH:mm'),
+            v.bloodPressure?.systolic.toString() ?? '',
+            v.bloodPressure?.diastolic.toString() ?? '',
+            v.bloodSugar?.toString() ?? '',
+            v.heartRate?.toString() ?? '',
+            v.weight?.toString() ?? ''
+        ])
+    });
+    
+    if (adherenceData.length > 0) sections.push({
+        title: "Medication Adherence (Sample)",
+        columns: ["Date", "Adherence (%)"],
+        data: adherenceData.map(d => [d.date, d.adherence.toFixed(2)])
+    });
+
+    if (latestEyeTest) sections.push({
+        title: "Vision Test Results",
+        columns: ["Date", "Score", "Interpretation"],
+        data: [[format(new Date(latestEyeTest.date), 'yyyy-MM-dd'), latestEyeTest.score, `"${latestEyeTest.interpretation.replace(/"/g, '""')}"`]]
+    });
+
+    if (latestResponseTimeTest) sections.push({
+        title: "Response Time Test Results",
+        columns: ["Date", "Average (ms)", "Scores (ms)"],
+        data: [[format(new Date(latestResponseTimeTest.date), 'yyyy-MM-dd'), Math.round(latestResponseTimeTest.average).toString(), `"${latestResponseTimeTest.scores.join(', ')}"`]]
+    });
+    
+    if (latestHearingTest) sections.push({
+        title: "Hearing Test Results",
+        columns: ["Date", "Ear", "Frequency (Hz)", "Threshold (dBHL)"],
+        data: latestHearingTest.results.map(r => [
+            format(new Date(latestHearingTest.date), 'yyyy-MM-dd'),
+            r.ear,
+            r.frequency.toString(),
+            r.decibel?.toString() ?? '>120'
+        ])
+    });
+
     sections.forEach(section => {
         csvContent += section.title + "\n";
         csvContent += section.columns.join(",") + "\n";
-        section.data.forEach(row => {
-            csvContent += row.join(",") + "\n";
-        });
+        section.data.forEach(row => { csvContent += row.join(",") + "\n"; });
         csvContent += "\n";
     });
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `HEALIX_Summary_${samplePatient.name}_${format(new Date(), 'yyyy-MM-dd')}.csv`);
-    link.style.visibility = 'hidden';
+    link.setAttribute("href", URL.createObjectURL(blob));
+    link.setAttribute("download", `HEALIX_Summary_${patientDisplayName}_${format(new Date(), 'yyyy-MM-dd')}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -256,6 +295,15 @@ export default function CaregiverHub() {
       </div>
     );
   }
+  
+  if (!user) {
+    return (
+        <Card className="text-center p-8">
+            <CardTitle>Please Log In</CardTitle>
+            <CardDescription>You need to be logged in to access the Caregiver Hub.</CardDescription>
+        </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -264,9 +312,9 @@ export default function CaregiverHub() {
                 <div>
                     <CardTitle className="flex items-center gap-2">
                         <User className="h-6 w-6 text-primary"/>
-                        <span>Patient: {samplePatient.name}</span>
+                        <span>Monitoring: {patientDisplayName}</span>
                     </CardTitle>
-                    <CardDescription>{samplePatient.age} years old - {samplePatient.condition}</CardDescription>
+                    <CardDescription>{samplePatient.condition}</CardDescription>
                 </div>
                 <Button onClick={handleDownload}>
                   <Download className="mr-2 h-4 w-4" /> Download Summary
@@ -277,8 +325,8 @@ export default function CaregiverHub() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
              <Card className="lg:col-span-1">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5"/> Recent Notifications</CardTitle>
-                    <CardDescription>Key alerts for Rohan's health.</CardDescription>
+                    <CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5"/> Recent Notifications (Sample)</CardTitle>
+                    <CardDescription>Key alerts for {patientDisplayName}'s health.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                     {sampleNotifications.map(n => (
@@ -297,7 +345,7 @@ export default function CaregiverHub() {
             </Card>
             <Card className="lg:col-span-2">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Pill className="h-5 w-5"/> Medication Adherence (Last 7 Days)</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><Pill className="h-5 w-5"/> Medication Adherence (Sample)</CardTitle>
                     <CardDescription>Percentage of doses taken on time.</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -396,8 +444,8 @@ export default function CaregiverHub() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {sampleAppointments && sampleAppointments.filter(a => new Date(a.date) >= new Date() && a.status === 'Confirmed').length > 0 ? (
-                                sampleAppointments.filter(a => new Date(a.date) >= new Date() && a.status === 'Confirmed').map(a => (
+                            {appointments && appointments.filter(a => new Date(a.date) >= new Date() && a.status === 'Confirmed').length > 0 ? (
+                                appointments.filter(a => new Date(a.date) >= new Date() && a.status === 'Confirmed').map(a => (
                                 <TableRow key={a.id}>
                                     <TableCell>{format(new Date(a.date), "EEE, MMM d")} at {a.time}</TableCell>
                                     <TableCell>{a.doctorName}</TableCell>
@@ -427,12 +475,13 @@ export default function CaregiverHub() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                           {sampleVitals && sampleVitals.length > 0 ? (
-                            sampleVitals.slice(0, 5).flatMap(v => {
+                           {vitals && vitals.length > 0 ? (
+                            vitals.slice(0, 5).flatMap(v => {
                                 const entries: {metric: string; value: string}[] = [];
                                 if (v.bloodPressure) entries.push({metric: 'Blood Pressure', value: `${v.bloodPressure.systolic}/${v.bloodPressure.diastolic} mmHg`});
                                 if (v.bloodSugar) entries.push({metric: 'Blood Sugar', value: `${v.bloodSugar} mg/dL`});
                                 if (v.heartRate) entries.push({metric: 'Heart Rate', value: `${v.heartRate} BPM`});
+                                if (v.weight) entries.push({metric: 'Weight', value: `${v.weight} kg`});
                                 
                                 return entries.map(entry => (
                                      <TableRow key={`${v.id}-${entry.metric}`}>

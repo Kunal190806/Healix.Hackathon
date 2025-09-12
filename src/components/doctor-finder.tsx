@@ -1,13 +1,14 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import useLocalStorage from "@/hooks/use-local-storage";
 import type { Doctor, Appointment } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import { Stethoscope, MapPin, IndianRupee, User, Star, CalendarDays, Clock, CheckCircle } from "lucide-react";
 import Image from "next/image";
@@ -16,6 +17,10 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import dynamic from "next/dynamic";
+import { auth, db } from "@/lib/firebase";
+import { collection, addDoc } from "firebase/firestore";
+import type { User as FirebaseUser } from "firebase/auth";
+
 
 const sampleDoctors: Doctor[] = [
   // Delhi
@@ -66,14 +71,13 @@ const specialties = [...new Set(sampleDoctors.map(d => d.specialty))].sort();
 
 const timeSlots = ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
 
-const AppointmentBookingForm = dynamic(() => Promise.resolve(function AppointmentBookingForm({ doctor }: { doctor: Doctor }) {
-  const [appointments, setAppointments] = useLocalStorage<Appointment[]>("appointments", []);
+const AppointmentBookingForm = dynamic(() => Promise.resolve(function AppointmentBookingForm({ doctor, user }: { doctor: Doctor, user: FirebaseUser | null }) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [isConfirmed, setIsConfirmed] = useState(false);
   const { toast } = useToast();
 
-  const handleBookAppointment = () => {
+  const handleBookAppointment = async () => {
     if (!selectedDate || !selectedTime) {
       toast({
         variant: "destructive",
@@ -82,18 +86,28 @@ const AppointmentBookingForm = dynamic(() => Promise.resolve(function Appointmen
       });
       return;
     }
+    
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Not Logged In",
+        description: "You must be logged in to book an appointment.",
+      });
+      return;
+    }
 
-    const newAppointment: Appointment = {
-      id: crypto.randomUUID(),
+    const newAppointmentData = {
+      userId: user.uid,
       doctorId: doctor.id,
       doctorName: doctor.name,
       specialty: doctor.specialty,
       date: selectedDate.toISOString(),
       time: selectedTime,
-      status: "Confirmed",
+      status: "Confirmed" as const,
     };
+    
+    await addDoc(collection(db, "appointments"), newAppointmentData);
 
-    setAppointments([...appointments, newAppointment]);
     setIsConfirmed(true);
     
     toast({
@@ -148,8 +162,8 @@ const AppointmentBookingForm = dynamic(() => Promise.resolve(function Appointmen
             </Button>
           ))}
         </div>
-        <Button onClick={handleBookAppointment} className="w-full mt-6" disabled={!selectedDate || !selectedTime}>
-          Confirm Booking
+        <Button onClick={handleBookAppointment} className="w-full mt-6" disabled={!selectedDate || !selectedTime || !user}>
+          {user ? 'Confirm Booking' : 'Log in to Book'}
         </Button>
       </div>
     </div>
@@ -159,12 +173,20 @@ const AppointmentBookingForm = dynamic(() => Promise.resolve(function Appointmen
 
 export default function DoctorFinder() {
   const [doctors] = useLocalStorage<Doctor[]>("doctors", sampleDoctors);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
   
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
   const [searchSpecialty, setSearchSpecialty] = useState("");
   const [searchLocation, setSearchLocation] = useState("");
 
   const filteredDoctors = doctors.filter(doctor => {
-    const specialtyMatch = searchSpecialty ? doctor.specialty === searchSpecialty : true;
+    const specialtyMatch = searchSpecialty ? doctor.specialty.toLowerCase().includes(searchSpecialty.toLowerCase()) : true;
     const locationMatch = searchLocation ? doctor.city.toLowerCase().includes(searchLocation.toLowerCase()) : true;
     return specialtyMatch && locationMatch;
   });
@@ -258,7 +280,7 @@ export default function DoctorFinder() {
                     </div>
                 </DialogHeader>
                 <div className="py-4">
-                  <AppointmentBookingForm doctor={doctor} />
+                  <AppointmentBookingForm doctor={doctor} user={user} />
                 </div>
               </DialogContent>
             </Dialog>

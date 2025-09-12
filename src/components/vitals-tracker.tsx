@@ -1,8 +1,10 @@
 
 "use client";
 
-import { useState } from "react";
-import useLocalStorage from "@/hooks/use-local-storage";
+import { useState, useEffect } from "react";
+import { auth, db } from "@/lib/firebase";
+import { collection, addDoc, onSnapshot, query, where, deleteDoc, doc, orderBy } from "firebase/firestore";
+import type { User } from "firebase/auth";
 import type { VitalLog } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -11,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
-import { HeartPulse, Trash2 } from "lucide-react";
+import { HeartPulse, Trash2, Loader2 } from "lucide-react";
 import dynamic from "next/dynamic";
 
 const ResponsiveContainer = dynamic(() => import('recharts').then(mod => mod.ResponsiveContainer), { ssr: false });
@@ -24,8 +26,10 @@ const Tooltip = dynamic(() => import('recharts').then(mod => mod.Tooltip), { ssr
 const Legend = dynamic(() => import('recharts').then(mod => mod.Legend), { ssr: false });
 
 export default function VitalsTracker() {
-  const [logs, setLogs] = useLocalStorage<VitalLog[]>("vitalLogs", []);
-  
+  const [user, setUser] = useState<User | null>(null);
+  const [logs, setLogs] = useState<VitalLog[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   // Form state for all vitals
   const [bloodPressure, setBloodPressure] = useState({ systolic: "", diastolic: "" });
   const [bloodSugar, setBloodSugar] = useState("");
@@ -34,20 +38,54 @@ export default function VitalsTracker() {
   const [notes, setNotes] = useState("");
   
   const [chartMetric, setChartMetric] = useState<keyof Omit<VitalLog, 'id' | 'date' | 'notes'>>('heartRate');
+  
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        setIsLoading(true);
+        const q = query(collection(db, "vitals"), where("userId", "==", currentUser.uid), orderBy("date", "desc"));
+        const unsubFirestore = onSnapshot(q, (snapshot) => {
+          const userLogs: VitalLog[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as VitalLog));
+          setLogs(userLogs);
+          setIsLoading(false);
+        });
+        return () => unsubFirestore();
+      } else {
+        setUser(null);
+        setLogs([]);
+        setIsLoading(false);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
 
-  const handleAddLog = (e: React.FormEvent) => {
+  const handleAddLog = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newLog: VitalLog = {
-      id: crypto.randomUUID(),
+    if (!user) {
+        alert("You must be logged in to add a log.");
+        return;
+    }
+
+    const newLogData = {
+      userId: user.uid,
       date: new Date().toISOString(),
-      bloodPressure: bloodPressure.systolic && bloodPressure.diastolic ? {systolic: Number(bloodPressure.systolic), diastolic: Number(bloodPressure.diastolic)} : undefined,
-      bloodSugar: bloodSugar ? Number(bloodSugar) : undefined,
-      heartRate: heartRate ? Number(heartRate) : undefined,
-      weight: weight ? Number(weight) : undefined,
+      bloodPressure: bloodPressure.systolic && bloodPressure.diastolic ? {systolic: Number(bloodPressure.systolic), diastolic: Number(bloodPressure.diastolic)} : null,
+      bloodSugar: bloodSugar ? Number(bloodSugar) : null,
+      heartRate: heartRate ? Number(heartRate) : null,
+      weight: weight ? Number(weight) : null,
       notes: notes,
     };
-    setLogs([newLog, ...logs]);
+    
+    // Filter out null values
+    const cleanLogData = Object.fromEntries(Object.entries(newLogData).filter(([_, v]) => v != null && v !== ''));
+    if (Object.keys(cleanLogData).length <= 2) { // only userId and date
+        alert("Please enter at least one vital sign.");
+        return;
+    }
+
+    await addDoc(collection(db, "vitals"), cleanLogData);
     
     // Reset form
     setBloodPressure({ systolic: "", diastolic: "" });
@@ -57,8 +95,8 @@ export default function VitalsTracker() {
     setNotes("");
   };
 
-  const handleDeleteLog = (id: string) => {
-    setLogs(logs.filter((log) => log.id !== id));
+  const handleDeleteLog = async (id: string) => {
+    await deleteDoc(doc(db, "vitals", id));
   };
   
   const chartData = logs
@@ -87,11 +125,23 @@ export default function VitalsTracker() {
     if (log.heartRate) entries.push({metric: 'Heart Rate', value: `${log.heartRate} BPM`});
     if (log.weight) entries.push({metric: 'Weight', value: `${log.weight} kg`});
     
-    // Handle case where there's only a note
     if (entries.length === 0 && log.notes) {
         entries.push({metric: 'Note', value: log.notes});
     }
     return entries;
+  }
+  
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+  }
+
+  if (!user) {
+    return (
+      <Card className="text-center p-8">
+        <CardTitle>Please Log In</CardTitle>
+        <CardDescription>You need to be logged in to track your vitals.</CardDescription>
+      </Card>
+    );
   }
 
   return (
@@ -169,9 +219,9 @@ export default function VitalsTracker() {
                                 }}
                             />
                             <Legend />
-                            <Line type="monotone" dataKey="value" name={metricLabels[chartMetric].split(' ')[0]} stroke="hsl(var(--primary))" activeDot={{ r: 8 }} />
+                            <Line type="monotone" dataKey="value" name={metricLabels[chartMetric].split(' ')[0]} stroke="hsl(var(--primary))" activeDot={{ r: 8 }} connectNulls />
                              {chartMetric === 'bloodPressure' && (
-                                <Line type="monotone" dataKey="diastolic" name="Diastolic" stroke="hsl(var(--accent))" />
+                                <Line type="monotone" dataKey="diastolic" name="Diastolic" stroke="hsl(var(--accent))" connectNulls />
                              )}
                         </LineChart>
                     </ResponsiveContainer>

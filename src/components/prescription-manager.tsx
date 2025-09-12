@@ -2,7 +2,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import useLocalStorage from "@/hooks/use-local-storage";
+import { auth, db } from "@/lib/firebase";
+import { collection, addDoc, onSnapshot, query, where, deleteDoc, doc, orderBy } from "firebase/firestore";
+import type { User } from "firebase/auth";
 import type { Prescription } from "@/lib/types";
 import { extractPrescriptionDetails, ExtractPrescriptionDetailsOutput } from "@/ai/flows/extract-prescription-details";
 import { Button } from "@/components/ui/button";
@@ -10,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Trash2, Pill, Camera, Upload, Loader2, Wand2, X } from "lucide-react";
@@ -21,11 +23,13 @@ const DialogContent = dynamic(() => import('@/components/ui/dialog').then(mod =>
   loading: () => <div className="fixed inset-0 bg-black/50 z-50 flex justify-center items-center"><Loader2 className="h-8 w-8 animate-spin text-white" /></div>
 });
 
-
 type ScannedData = ExtractPrescriptionDetailsOutput;
 
 export default function PrescriptionManager() {
-  const [prescriptions, setPrescriptions] = useLocalStorage<Prescription[]>("prescriptions", []);
+  const [user, setUser] = useState<User | null>(null);
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   const [name, setName] = useState("");
   const [dosage, setDosage] = useState("");
   const [frequency, setFrequency] = useState("");
@@ -42,6 +46,27 @@ export default function PrescriptionManager() {
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        setIsLoading(true);
+        const q = query(collection(db, "prescriptions"), where("userId", "==", currentUser.uid), orderBy("name", "asc"));
+        const unsubFirestore = onSnapshot(q, (snapshot) => {
+          const userPrescriptions: Prescription[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Prescription));
+          setPrescriptions(userPrescriptions);
+          setIsLoading(false);
+        });
+        return () => unsubFirestore();
+      } else {
+        setUser(null);
+        setPrescriptions([]);
+        setIsLoading(false);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (isCameraOn) {
@@ -159,26 +184,39 @@ export default function PrescriptionManager() {
     }
   }
 
-  const handleAddPrescription = (e: React.FormEvent) => {
+  const handleAddPrescription = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !dosage || !frequency) return;
-    const newPrescription: Prescription = {
-      id: crypto.randomUUID(),
+    if (!name || !dosage || !frequency || !user) return;
+    const newPrescriptionData = {
+      userId: user.uid,
       name,
       dosage,
       frequency,
       time,
     };
-    setPrescriptions([...prescriptions, newPrescription]);
+    await addDoc(collection(db, "prescriptions"), newPrescriptionData);
     setName("");
     setDosage("");
     setFrequency("");
     setTime("");
   };
 
-  const handleDeletePrescription = (id: string) => {
-    setPrescriptions(prescriptions.filter((p) => p.id !== id));
+  const handleDeletePrescription = async (id: string) => {
+    await deleteDoc(doc(db, "prescriptions", id));
   };
+  
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+  }
+
+  if (!user) {
+    return (
+      <Card className="text-center p-8">
+        <CardTitle>Please Log In</CardTitle>
+        <CardDescription>You need to be logged in to manage your prescriptions.</CardDescription>
+      </Card>
+    );
+  }
 
   return (
     <div className="grid gap-6 lg:grid-cols-5">

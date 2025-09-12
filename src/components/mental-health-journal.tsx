@@ -1,33 +1,71 @@
 "use client";
 
-import { useState } from "react";
-import useLocalStorage from "@/hooks/use-local-storage";
+import { useState, useEffect } from "react";
+import { auth, db } from "@/lib/firebase";
+import { collection, addDoc, onSnapshot, query, where, deleteDoc, doc, orderBy } from "firebase/firestore";
+import type { User } from "firebase/auth";
 import type { JournalEntry } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
-import { BookHeart, Trash2 } from "lucide-react";
+import { BookHeart, Trash2, Loader2 } from "lucide-react";
 
 export default function MentalHealthJournal() {
-  const [entries, setEntries] = useLocalStorage<JournalEntry[]>("journalEntries", []);
+  const [user, setUser] = useState<User | null>(null);
+  const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [newEntry, setNewEntry] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleSaveEntry = (e: React.FormEvent) => {
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        setIsLoading(true);
+        const q = query(collection(db, "journalEntries"), where("userId", "==", currentUser.uid), orderBy("date", "desc"));
+        const unsubFirestore = onSnapshot(q, (snapshot) => {
+          const userEntries: JournalEntry[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JournalEntry));
+          setEntries(userEntries);
+          setIsLoading(false);
+        });
+        return () => unsubFirestore();
+      } else {
+        setUser(null);
+        setEntries([]);
+        setIsLoading(false);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleSaveEntry = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newEntry.trim()) return;
-    const entry: JournalEntry = {
-      id: crypto.randomUUID(),
+    if (!newEntry.trim() || !user) return;
+    const entryData = {
+      userId: user.uid,
       content: newEntry,
       date: new Date().toISOString(),
     };
-    setEntries([entry, ...entries]);
+    await addDoc(collection(db, "journalEntries"), entryData);
     setNewEntry("");
   };
   
-  const handleDeleteEntry = (id: string) => {
-    setEntries(entries.filter((entry) => entry.id !== id));
+  const handleDeleteEntry = async (id: string) => {
+    await deleteDoc(doc(db, "journalEntries", id));
   };
+  
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+  }
+
+  if (!user) {
+    return (
+      <Card className="text-center p-8">
+        <CardTitle>Please Log In</CardTitle>
+        <CardDescription>You need to be logged in to use the journal.</CardDescription>
+      </Card>
+    );
+  }
 
   return (
     <div className="grid gap-6 lg:grid-cols-5">
