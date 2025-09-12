@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect } from 'react';
@@ -123,7 +124,7 @@ export default function Home() {
   useEffect(() => {
     // This effect handles redirection based on user role.
     if (!isLoading && user && userProfile) {
-      if (userProfile.role === 'caregiver' && pathname !== '/caregiver-hub') {
+      if (userProfile.role === 'caregiver' && pathname !== '/caregiver-hub' && pathname !== '/') {
         router.replace('/caregiver-hub');
       }
       // Future roles can be handled here, e.g., doctors
@@ -182,7 +183,7 @@ export default function Home() {
   
   // If the user is a caregiver, they will be redirected by the useEffect. 
   // We show a loading state to prevent the patient dashboard from flashing.
-  if (userProfile?.role === 'caregiver') {
+  if (userProfile?.role === 'caregiver' && pathname !== '/caregiver-hub' && pathname === '/') {
     return (
       <div className="flex items-center justify-center h-[80vh]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
