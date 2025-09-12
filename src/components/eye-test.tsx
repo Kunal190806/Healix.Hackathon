@@ -63,6 +63,8 @@ export default function EyeTest() {
         const unsubFirestore = onSnapshot(q, (snapshot) => {
           const userHistory: EyeTestResult[] = snapshot.docs.map(doc => doc.data() as EyeTestResult);
           setTestHistory(userHistory);
+        }, (error) => {
+          console.error("Error fetching eyeTestHistory:", error);
         });
         return () => unsubFirestore();
       } else {

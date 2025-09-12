@@ -47,6 +47,8 @@ export default function HearingTest() {
         const unsubFirestore = onSnapshot(q, (snapshot) => {
           const userHistory: HearingTestRecord[] = snapshot.docs.map(doc => doc.data() as HearingTestRecord);
           setTestHistory(userHistory);
+        }, (error) => {
+          console.error("Error fetching hearingTestHistory:", error);
         });
         return () => unsubFirestore();
       } else {

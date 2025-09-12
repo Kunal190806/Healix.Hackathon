@@ -38,6 +38,8 @@ export default function ResponseTimeTester() {
         const unsubFirestore = onSnapshot(q, (snapshot) => {
           const userHistory: ResponseTimeResult[] = snapshot.docs.map(doc => doc.data() as ResponseTimeResult);
           setHistory(userHistory);
+        }, (error) => {
+          console.error("Error fetching responseTimeHistory:", error);
         });
         return () => unsubFirestore();
       } else {
