@@ -19,7 +19,7 @@ export default function ProfileDisplay() {
   const { toast } = useToast();
 
   const handleGenerateCode = async () => {
-    if (!user) return;
+    if (!user || userProfile?.role !== 'patient') return;
     setIsGeneratingCode(true);
     try {
       const code = Math.floor(1000 + Math.random() * 9000).toString();

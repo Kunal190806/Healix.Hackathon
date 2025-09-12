@@ -69,14 +69,13 @@ export default function ResponseTimeTester() {
   }, [user]);
 
   const nextRound = useCallback(() => {
-      if (scores.length < TOTAL_ROUNDS) {
-        setCurrentRound(prev => prev + 1);
-        startWaiting();
-      } else {
-        finishTest(scores);
-      }
+    if (scores.length < TOTAL_ROUNDS) {
+      setCurrentRound(prev => prev + 1);
+      startWaiting();
+    } else {
+      finishTest(scores);
+    }
   }, [scores, startWaiting, finishTest]);
-
 
   const handleClick = () => {
     if (status === 'waiting') {
@@ -85,13 +84,7 @@ export default function ResponseTimeTester() {
     } else if (status === 'ready') {
       const endTime = Date.now();
       const score = endTime - startTimeRef.current;
-      setScores(prevScores => {
-        const newScores = [...prevScores, score];
-        if (newScores.length >= TOTAL_ROUNDS) {
-          finishTest(newScores);
-        }
-        return newScores;
-      });
+      setScores(prevScores => [...prevScores, score]);
       setStatus('result');
     }
   };
@@ -99,13 +92,15 @@ export default function ResponseTimeTester() {
   useEffect(() => {
     if (status === 'result' || status === 'tooSoon') {
       const timeout = setTimeout(() => {
-          if (scores.length < TOTAL_ROUNDS) {
-            nextRound();
-          }
+        if (scores.length < TOTAL_ROUNDS) {
+          startWaiting();
+        } else {
+          finishTest(scores);
+        }
       }, 2000); // Wait 2 seconds before starting next round
       return () => clearTimeout(timeout);
     }
-  }, [status, nextRound, scores.length]);
+  }, [status, scores, startWaiting, finishTest]);
 
   const handleStart = () => {
     setScores([]);
@@ -320,7 +315,7 @@ export default function ResponseTimeTester() {
             <CardContent className="pt-6">
                 <div className="space-y-2">
                     <div className="flex justify-between items-center text-sm text-muted-foreground">
-                        <span>Round {currentRound} of {TOTAL_ROUNDS}</span>
+                        <span>Round {scores.length + 1} of {TOTAL_ROUNDS}</span>
                         <span>{Math.round(progressPercentage)}% Complete</span>
                     </div>
                     <Progress value={progressPercentage} />

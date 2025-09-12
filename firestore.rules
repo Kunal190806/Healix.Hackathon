@@ -2,18 +2,28 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can read and update their own profile, and anyone can create a user profile during sign-up.
-    match /users/{userId} {
-      allow read, update: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null;
+
+    // Helper function to check if the user is the owner of the document.
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
     }
 
-    // For all other collections, this single rule applies.
-    // It allows a user full access (read, list, write) to documents
-    // only if the document's `userId` field matches their own `uid`.
+    // Users can be created by anyone (for sign-up), but only the user themselves
+    // can read or update their own profile. No one can delete a user profile.
+    match /users/{userId} {
+      allow read, update: if isOwner(userId);
+      allow create: if request.auth != null;
+      allow delete: if false;
+    }
+
+    // For any other collection (appointments, vitals, prescriptions, etc.),
+    // the user must be authenticated and the 'userId' field in the document
+    // must match their own UID. This allows them to create, read, update,
+    // and delete their own data.
+    // This single rule covers all collections by using a wildcard.
     match /{collection}/{docId} {
-       allow read, write: if request.auth != null && request.auth.uid == request.resource.data.userId;
-       allow list: if request.auth != null && request.query.resource.data.userId == request.auth.uid;
+      allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
     }
   }
 }
