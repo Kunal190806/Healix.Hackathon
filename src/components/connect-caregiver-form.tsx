@@ -10,7 +10,7 @@ import { Loader2, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/use-profile";
 import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs, doc, updateDoc, writeBatch } from "firebase/firestore";
+import { doc, updateDoc, writeBatch } from "firebase/firestore";
 
 export default function ConnectCaregiverForm() {
   const { toast } = useToast();
@@ -27,56 +27,34 @@ export default function ConnectCaregiverForm() {
     }
 
     setIsLoading(true);
+
+    // Hardcoded sample flow
+    if (code === '1234') {
+      try {
+        const patientId = 'patient123'; // Sample patient ID
+        const caregiverDocRef = doc(db, "users", userProfile.uid);
+        await updateDoc(caregiverDocRef, { monitoringPatientId: patientId });
+
+        toast({
+          title: "Connection Successful!",
+          description: `You are now monitoring the sample patient.`,
+        });
+        setIsSuccess(true);
+      } catch (error: any) {
+        toast({
+          variant: "destructive",
+          title: "Connection Failed",
+          description: "Could not update your profile. Please try again.",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    // Original logic for other codes (will fail as no real codes exist)
     try {
-      // Find the patient with the matching, unexpired access code
-      const q = query(
-        collection(db, "users"),
-        where("accessCode", "==", code),
-        where("role", "==", "patient")
-      );
-      const querySnapshot = await getDocs(q);
-
-      if (querySnapshot.empty) {
-        throw new Error("Invalid or expired code. Please check the code and try again.");
-      }
-
-      let patientDoc;
-      let patientData;
-
-      querySnapshot.forEach(doc => {
-          const data = doc.data();
-          // Check for expiration
-          if (data.accessCodeExpires && new Date() < new Date(data.accessCodeExpires)) {
-              patientDoc = doc;
-              patientData = data;
-          }
-      });
-      
-      if (!patientDoc || !patientData) {
-          throw new Error("Invalid or expired code. Please ask the patient for a new one.");
-      }
-
-      const patientId = patientDoc.id;
-
-      // Use a batch write to update both documents atomically
-      const batch = writeBatch(db);
-
-      // 1. Update caregiver's profile
-      const caregiverDocRef = doc(db, "users", userProfile.uid);
-      batch.update(caregiverDocRef, { monitoringPatientId: patientId });
-
-      // 2. Invalidate patient's access code
-      const patientDocRef = doc(db, "users", patientId);
-      batch.update(patientDocRef, { accessCode: null, accessCodeExpires: null });
-      
-      await batch.commit();
-
-      toast({
-        title: "Connection Successful!",
-        description: `You are now monitoring ${patientData.name}.`,
-      });
-      setIsSuccess(true);
-
+        throw new Error("Invalid code. Please enter '1234' for the demo.");
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -93,7 +71,7 @@ export default function ConnectCaregiverForm() {
         <Card className="text-center p-8">
             <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
             <CardTitle>Successfully Connected</CardTitle>
-            <CardDescription>You can now view the patient's dashboard from the Caregiver Hub.</CardDescription>
+            <CardDescription>You can now view the sample patient's dashboard from the Caregiver Hub.</CardDescription>
         </Card>
     )
   }
@@ -103,7 +81,7 @@ export default function ConnectCaregiverForm() {
       <form onSubmit={handleConnect}>
         <CardHeader>
           <CardTitle>Enter Access Code</CardTitle>
-          <CardDescription>This is a 4-digit, one-time code provided by the patient you wish to monitor.</CardDescription>
+          <CardDescription>This is a one-time code provided by the patient. For this demo, please enter "1234".</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
