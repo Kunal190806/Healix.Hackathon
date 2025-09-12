@@ -3,9 +3,10 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Siren, Clock, MapPin, Phone } from "lucide-react";
+import { Button } from "./ui/button";
 
 const statusUpdates = [
   { status: "Dispatched", time: 1, progress: 25 },
@@ -54,8 +55,8 @@ export default function AmbulanceStatus() {
                 <Image
                     src="https://picsum.photos/seed/map/1200/800"
                     alt="Map showing ambulance route"
-                    layout="fill"
-                    objectFit="cover"
+                    fill
+                    style={{objectFit: 'cover'}}
                     data-ai-hint="map"
                 />
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
