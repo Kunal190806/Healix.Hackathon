@@ -104,7 +104,7 @@ export default function VitalsTracker() {
 
     return () => {
       unsubVitals();
-      unHearing();
+      unsubHearing();
       unsubEye();
       unsubResponse();
     };
@@ -184,10 +184,12 @@ export default function VitalsTracker() {
         {/* Add New Log */}
         <Dialog>
           <DialogTrigger asChild>
-            <Card className="flex flex-col items-center justify-center text-center cursor-pointer hover:bg-muted/50 transition-colors">
-              <PlusCircle className="h-12 w-12 text-muted-foreground mb-2" />
-              <h3 className="font-semibold text-muted-foreground">Log Manual Vitals</h3>
-            </Card>
+             <button className="w-full h-full">
+                <Card className="flex flex-col items-center justify-center text-center cursor-pointer hover:bg-muted/50 transition-colors h-full">
+                <PlusCircle className="h-12 w-12 text-muted-foreground mb-2" />
+                <h3 className="font-semibold text-muted-foreground">Log Manual Vitals</h3>
+                </Card>
+            </button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
@@ -198,12 +200,12 @@ export default function VitalsTracker() {
             <p className="text-center text-muted-foreground py-8">Manual entry form would go here.</p>
           </DialogContent>
         </Dialog>
-         <Card className="flex flex-col items-center justify-center text-center cursor-pointer hover:bg-muted/50 transition-colors" asChild>
-             <Link href="/connect-devices">
+         <Link href="/connect-devices" className="w-full h-full">
+            <Card className="flex flex-col items-center justify-center text-center cursor-pointer hover:bg-muted/50 transition-colors h-full">
                 <Watch className="h-12 w-12 text-muted-foreground mb-2" />
                 <h3 className="font-semibold text-muted-foreground">Connect a Device</h3>
-             </Link>
-        </Card>
+            </Card>
+        </Link>
       </div>
     </div>
   );
