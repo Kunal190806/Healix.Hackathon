@@ -69,13 +69,13 @@ export default function ResponseTimeTester() {
   }, [user]);
 
   const nextRound = useCallback(() => {
-    if (currentRound < TOTAL_ROUNDS) {
+    if (scores.length < TOTAL_ROUNDS) {
       setCurrentRound(prev => prev + 1);
       startWaiting();
     } else {
       finishTest(scores);
     }
-  }, [currentRound, scores, startWaiting, finishTest]);
+  }, [scores, startWaiting, finishTest]);
 
   const handleClick = () => {
     if (status === 'waiting') {
@@ -302,6 +302,8 @@ export default function ResponseTimeTester() {
     }
   };
 
+  const progressPercentage = (scores.length / TOTAL_ROUNDS) * 100;
+
   return (
     <div className="space-y-6">
       {status !== 'idle' && status !== 'finished' && (
@@ -310,9 +312,9 @@ export default function ResponseTimeTester() {
                 <div className="space-y-2">
                     <div className="flex justify-between items-center text-sm text-muted-foreground">
                         <span>Round {currentRound} of {TOTAL_ROUNDS}</span>
-                        <span>{Math.round(((currentRound -1) / TOTAL_ROUNDS) * 100)}%</span>
+                        <span>{Math.round(progressPercentage)}%</span>
                     </div>
-                    <Progress value={((currentRound - 1) / TOTAL_ROUNDS) * 100} />
+                    <Progress value={progressPercentage} />
                 </div>
             </CardContent>
         </Card>
