@@ -2,9 +2,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { auth, db } from "@/lib/firebase";
-import { collection, onSnapshot, query, where, orderBy, doc, getDocs, updateDoc, writeBatch } from "firebase/firestore";
-import type { User } from "firebase/auth";
 import type { UserProfile, VitalLog, Prescription, HearingTestRecord, EyeTestResult, ResponseTimeResult, Appointment as Appt } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,176 +11,94 @@ import { format, subDays, addDays } from "date-fns";
 import { AlertTriangle, Bell, Calendar, Download, HeartPulse, Pill, User, Loader2, Ear, Eye, Timer, Link, ShieldCheck } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth.tsx";
-import { useProfile } from "@/hooks/use-profile.tsx";
-
 
 const normalHearingThreshold = 25;
 
-function LinkPatientForm({ caregiverId }: { caregiverId: string }) {
-    const [patientEmail, setPatientEmail] = useState('');
-    const [accessCode, setAccessCode] = useState('');
-    const [isLinking, setIsLinking] = useState(false);
-    const { toast } = useToast();
+const samplePatientProfile: UserProfile = {
+  uid: 'patient123',
+  name: 'Rohan Sharma',
+  email: 'rohan.sharma@example.com',
+  role: 'patient',
+  createdAt: new Date().toISOString(),
+};
 
-    const handleLinkPatient = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!patientEmail || !accessCode) {
-            toast({ variant: 'destructive', title: 'Missing Information', description: 'Please enter both patient email and access code.' });
-            return;
-        }
-        setIsLinking(true);
+const sampleAppointments: Appt[] = [
+    { id: 'appt1', userId: 'patient123', doctorId: 'd1', doctorName: 'Dr. Priya Sharma', specialty: 'Cardiology', date: addDays(new Date(), 3).toISOString(), time: '10:00 AM', status: 'Confirmed' },
+    { id: 'appt2', userId: 'patient123', doctorId: 'd2', doctorName: 'Dr. Amit Joshi', specialty: 'Neurology', date: addDays(new Date(), 10).toISOString(), time: '02:00 PM', status: 'Confirmed' },
+];
 
-        try {
-            // Find patient by email
-            const usersRef = collection(db, "users");
-            const q = query(usersRef, where("email", "==", patientEmail), where("role", "==", "patient"));
-            const querySnapshot = await getDocs(q);
+const sampleVitals: VitalLog[] = [
+    { id: 'v1', userId: 'patient123', date: subDays(new Date(), 1).toISOString(), bloodPressure: { systolic: 125, diastolic: 82 }, heartRate: 78 },
+    { id: 'v2', userId: 'patient123', date: subDays(new Date(), 2).toISOString(), bloodPressure: { systolic: 128, diastolic: 85 }, bloodSugar: 105 },
+    { id: 'v3', userId: 'patient123', date: subDays(new Date(), 3).toISOString(), heartRate: 72, weight: 75.5 },
+    { id: 'v4', userId: 'patient123', date: subDays(new Date(), 4).toISOString(), bloodPressure: { systolic: 130, diastolic: 88 }, bloodSugar: 110 },
+    { id: 'v5', userId: 'patient123', date: subDays(new Date(), 5).toISOString(), heartRate: 80, weight: 75 },
+];
 
-            if (querySnapshot.empty) {
-                throw new Error("No patient found with that email address.");
-            }
+const sampleMedications: Prescription[] = [
+    { id: 'med1', userId: 'patient123', name: 'Metformin', dosage: '500mg', frequency: 'Twice a day', time: 'Morning, Evening' },
+    { id: 'med2', userId: 'patient123', name: 'Lisinopril', dosage: '10mg', frequency: 'Once a day', time: 'Morning' },
+];
 
-            const patientDoc = querySnapshot.docs[0];
-            const patientData = patientDoc.data() as UserProfile;
+const sampleHearingHistory: HearingTestRecord[] = [{
+    userId: 'patient123',
+    date: subDays(new Date(), 7).toISOString(),
+    results: [
+        { frequency: 250, decibel: 15, ear: 'right' }, { frequency: 500, decibel: 10, ear: 'right' },
+        { frequency: 1000, decibel: 20, ear: 'right' }, { frequency: 2000, decibel: 25, ear: 'right' },
+        { frequency: 4000, decibel: 30, ear: 'right' }, { frequency: 8000, decibel: 35, ear: 'right' },
+        { frequency: 250, decibel: 10, ear: 'left' }, { frequency: 500, decibel: 5, ear: 'left' },
+        { frequency: 1000, decibel: 15, ear: 'left' }, { frequency: 2000, decibel: 20, ear: 'left' },
+        { frequency: 4000, decibel: 25, ear: 'left' }, { frequency: 8000, decibel: 30, ear: 'left' },
+    ]
+}];
 
-            // Verify access code
-            if (!patientData.accessCode || patientData.accessCode !== accessCode) {
-                throw new Error("The access code is incorrect.");
-            }
-            if (!patientData.accessCodeExpires || new Date() > new Date(patientData.accessCodeExpires)) {
-                throw new Error("The access code has expired. Please ask the patient to generate a new one.");
-            }
+const sampleEyeHistory: EyeTestResult[] = [{
+    userId: 'patient123',
+    date: subDays(new Date(), 14).toISOString(),
+    score: '20/30',
+    interpretation: "Your estimated visual acuity is 20/30. You may experience some difficulty with distance vision. It is advisable to consult an optometrist."
+}];
 
-            // Link successful, update both profiles in a batch
-            const batch = writeBatch(db);
-            const caregiverRef = doc(db, "users", caregiverId);
-            batch.update(caregiverRef, { monitoringPatientId: patientData.uid });
-            
-            const patientRef = doc(db, "users", patientData.uid);
-            batch.update(patientRef, { accessCode: null, accessCodeExpires: null });
-
-            await batch.commit();
-
-            toast({ title: 'Success!', description: `You are now monitoring ${patientData.name}.` });
-
-        } catch (error: any) {
-            console.error("Failed to link patient:", error);
-            toast({ variant: 'destructive', title: 'Linking Failed', description: error.message || 'An unknown error occurred.' });
-        } finally {
-            setIsLinking(false);
-        }
-    };
-
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Link className="h-5 w-5" /> Link to a Patient</CardTitle>
-                <CardDescription>Enter the patient's email and the 4-digit code they shared with you.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <form onSubmit={handleLinkPatient} className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="patient-email">Patient's Email</Label>
-                        <Input id="patient-email" type="email" value={patientEmail} onChange={(e) => setPatientEmail(e.target.value)} placeholder="patient@example.com" required />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="access-code">4-Digit Access Code</Label>
-                        <Input id="access-code" value={accessCode} onChange={(e) => setAccessCode(e.target.value)} placeholder="1234" required maxLength={4} />
-                    </div>
-                    <Button type="submit" className="w-full" disabled={isLinking}>
-                        {isLinking ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
-                        Link and Monitor
-                    </Button>
-                </form>
-            </CardContent>
-        </Card>
-    );
-}
+const sampleResponseTimeHistory: ResponseTimeResult[] = [{
+    userId: 'patient123',
+    date: subDays(new Date(), 5).toISOString(),
+    average: 285,
+    scores: [280, 295, 270, 300, 280]
+}];
 
 export default function CaregiverHub() {
-  const { user, isLoading: isAuthLoading } = useAuth();
-  const { userProfile, isLoading: isProfileLoading } = useProfile();
-  const [patientProfile, setPatientProfile] = useState<UserProfile | null>(null);
+  const [patientProfile, setPatientProfile] = useState<UserProfile | null>(samplePatientProfile);
   
-  const [appointments, setAppointments] = useState<Appt[]>([]);
-  const [vitals, setVitals] = useState<VitalLog[]>([]);
-  const [medications, setMedications] = useState<Prescription[]>([]);
-  const [hearingTestHistory, setHearingTestHistory] = useState<HearingTestRecord[]>([]);
-  const [eyeTestHistory, setEyeTestHistory] = useState<EyeTestResult[]>([]);
-  const [responseTimeHistory, setResponseTimeHistory] = useState<ResponseTimeResult[]>([]);
+  const [appointments, setAppointments] = useState<Appt[]>(sampleAppointments);
+  const [vitals, setVitals] = useState<VitalLog[]>(sampleVitals);
+  const [medications, setMedications] = useState<Prescription[]>(sampleMedications);
+  const [hearingTestHistory, setHearingTestHistory] = useState<HearingTestRecord[]>(sampleHearingHistory);
+  const [eyeTestHistory, setEyeTestHistory] = useState<EyeTestResult[]>(sampleEyeHistory);
+  const [responseTimeHistory, setResponseTimeHistory] = useState<ResponseTimeResult[]>(sampleResponseTimeHistory);
   
   const [sampleNotifications, setSampleNotifications] = useState<any[]>([]);
   const [adherenceData, setAdherenceData] = useState<any[]>([]);
 
-  const isLoading = isAuthLoading || isProfileLoading;
-
   useEffect(() => {
-    if (isLoading || !userProfile) {
-        return;
-    }
-    if (userProfile?.role === 'caregiver' && userProfile.monitoringPatientId) {
-        const patientId = userProfile.monitoringPatientId;
-        
-        // Subscribe to patient's profile
-        const unsubPatientProfile = onSnapshot(doc(db, 'users', patientId), (doc) => {
-            setPatientProfile(doc.data() as UserProfile);
-        });
-
-        // Fetch all patient data
-        const collectionsToFetch = [
-          { name: "appointments", setter: setAppointments },
-          { name: "vitals", setter: setVitals },
-          { name: "prescriptions", setter: setMedications },
-          { name: "hearingTestHistory", setter: setHearingTestHistory },
-          { name: "eyeTestHistory", setter: setEyeTestHistory },
-          { name: "responseTimeHistory", setter: setResponseTimeHistory },
-        ];
-
-        const unsubscribers = collectionsToFetch.map(({ name, setter }) => {
-          const q = query(collection(db, name), where("userId", "==", patientId), orderBy("date", "desc"));
-          return onSnapshot(q, (snapshot) => {
-            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setter(data as any);
-          });
-        });
-        
-        // Mock data for notifications and adherence as they are not stored in DB
-        const today = new Date();
-        setSampleNotifications([
-            { id: 'n1', type: 'Missed Medication', message: `Patient missed evening dose of Metformin.`, date: subDays(today, 1).toISOString(), severity: 'high' },
-            { id: 'n2', type: 'Abnormal Vital', message: 'Blood Pressure reading was high: 145/92 mmHg.', date: subDays(today, 4).toISOString(), severity: 'high' },
-            { id: 'n3', type: 'Appointment Reminder', message: 'Cardiologist appointment in 3 days.', date: today.toISOString(), severity: 'medium' },
-            { id: 'n4', type: 'Low Adherence', message: 'Medication adherence dropped to 75% this week.', date: today.toISOString(), severity: 'medium' },
-        ]);
-        setAdherenceData([
-          { date: format(subDays(today, 6), 'EEE'), taken: 3, total: 4 },
-          { date: format(subDays(today, 5), 'EEE'), taken: 4, total: 4 },
-          { date: format(subDays(today, 4), 'EEE'), taken: 4, total: 4 },
-          { date: format(subDays(today, 3), 'EEE'), taken: 3, total: 4 },
-          { date: format(subDays(today, 2), 'EEE'), taken: 4, total: 4 },
-          { date: format(subDays(today, 1), 'EEE'), taken: 3, total: 4 },
-          { date: format(today, 'EEE'), taken: 1, total: 2 }, // Today
-        ].map(d => ({ ...d, adherence: (d.taken / d.total) * 100 })));
-
-        return () => {
-            unsubPatientProfile();
-            unsubscribers.forEach(unsub => unsub());
-        };
-      } else {
-        // Clear all data if not monitoring
-        setPatientProfile(null);
-        setAppointments([]);
-        setVitals([]);
-        setMedications([]);
-        setHearingTestHistory([]);
-        setEyeTestHistory([]);
-        setResponseTimeHistory([]);
-      }
-  }, [userProfile, isLoading]);
+    // Mock data for notifications and adherence as they are not stored in DB
+    const today = new Date();
+    setSampleNotifications([
+        { id: 'n1', type: 'Missed Medication', message: `Patient missed evening dose of Metformin.`, date: subDays(today, 1).toISOString(), severity: 'high' },
+        { id: 'n2', type: 'Abnormal Vital', message: 'Blood Pressure reading was high: 145/92 mmHg.', date: subDays(today, 4).toISOString(), severity: 'high' },
+        { id: 'n3', type: 'Appointment Reminder', message: 'Cardiologist appointment in 3 days.', date: today.toISOString(), severity: 'medium' },
+        { id: 'n4', type: 'Low Adherence', message: 'Medication adherence dropped to 75% this week.', date: today.toISOString(), severity: 'medium' },
+    ]);
+    setAdherenceData([
+      { date: format(subDays(today, 6), 'EEE'), taken: 3, total: 4 },
+      { date: format(subDays(today, 5), 'EEE'), taken: 4, total: 4 },
+      { date: format(subDays(today, 4), 'EEE'), taken: 4, total: 4 },
+      { date: format(subDays(today, 3), 'EEE'), taken: 3, total: 4 },
+      { date: format(subDays(today, 2), 'EEE'), taken: 4, total: 4 },
+      { date: format(subDays(today, 1), 'EEE'), taken: 3, total: 4 },
+      { date: format(today, 'EEE'), taken: 1, total: 2 }, // Today
+    ].map(d => ({ ...d, adherence: (d.taken / d.total) * 100 })));
+  }, []);
 
   const latestHearingTest = hearingTestHistory?.[0];
   const latestEyeTest = eyeTestHistory?.[0];
@@ -371,38 +286,6 @@ export default function CaregiverHub() {
       right: rightResult?.decibel,
     };
   });
-
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-4 text-muted-foreground">Loading Caregiver Hub...</span>
-      </div>
-    );
-  }
-  
-  if (!user || !userProfile) {
-    return (
-        <Card className="text-center p-8">
-            <CardTitle>Please Log In</CardTitle>
-            <CardDescription>You need to be logged in to access the Caregiver Hub.</CardDescription>
-        </Card>
-    );
-  }
-
-  if (userProfile.role !== 'caregiver') {
-     return (
-        <Card className="text-center p-8">
-            <CardTitle>Access Denied</CardTitle>
-            <CardDescription>This page is for caregivers only.</CardDescription>
-        </Card>
-    );
-  }
-  
-  if (!userProfile.monitoringPatientId) {
-    return <LinkPatientForm caregiverId={user.uid} />;
-  }
 
   return (
     <div className="space-y-6">
