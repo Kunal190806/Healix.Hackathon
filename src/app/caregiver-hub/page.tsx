@@ -1,3 +1,4 @@
+
 import CaregiverHub from "@/components/caregiver-hub";
 
 export default function CaregiverHubPage() {

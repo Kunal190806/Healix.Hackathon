@@ -15,8 +15,8 @@ import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
 import { Inter, Exo_2 } from 'next/font/google';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useAuth, AuthProvider } from '@/hooks/use-auth';
-import { ProfileProvider } from '@/hooks/use-profile';
+import { useAuth, AuthProvider } from '@/hooks/use-auth.tsx';
+import { ProfileProvider } from '@/hooks/use-profile.tsx';
 
 
 const inter = Inter({
