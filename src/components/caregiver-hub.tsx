@@ -119,25 +119,22 @@ export default function CaregiverHub() {
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
-      setUser(currentUser);
-      if (!currentUser) {
+      if (currentUser) {
+        setUser(currentUser);
+        const unsubProfile = onSnapshot(doc(db, 'users', currentUser.uid), (doc) => {
+          const profile = doc.data() as UserProfile;
+          setUserProfile(profile);
           setIsLoading(false);
-          setUserProfile(null);
+        });
+        return () => unsubProfile();
+      } else {
+        setUser(null);
+        setUserProfile(null);
+        setIsLoading(false);
       }
     });
     return () => unsubscribe();
   }, []);
-
-  useEffect(() => {
-    if (user) {
-      const unsubProfile = onSnapshot(doc(db, 'users', user.uid), (doc) => {
-        const profile = doc.data() as UserProfile;
-        setUserProfile(profile);
-        setIsLoading(false);
-      });
-      return () => unsubProfile();
-    }
-  }, [user]);
 
   useEffect(() => {
     if (userProfile?.role === 'caregiver' && userProfile.monitoringPatientId) {
@@ -406,10 +403,6 @@ export default function CaregiverHub() {
     );
   }
 
-  if (userProfile.role === 'caregiver' && !userProfile.monitoringPatientId) {
-    return <LinkPatientForm caregiverId={user.uid} />;
-  }
-  
   if (userProfile.role !== 'caregiver') {
      return (
         <Card className="text-center p-8">
@@ -417,6 +410,10 @@ export default function CaregiverHub() {
             <CardDescription>This page is for caregivers only.</CardDescription>
         </Card>
     );
+  }
+  
+  if (!userProfile.monitoringPatientId) {
+    return <LinkPatientForm caregiverId={user.uid} />;
   }
 
   return (

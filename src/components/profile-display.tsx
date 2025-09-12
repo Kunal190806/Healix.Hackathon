@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { auth, db } from "@/lib/firebase";
-import { doc, onSnapshot, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, onSnapshot, updateDoc } from "firebase/firestore";
 import type { User } from "firebase/auth";
 import type { UserProfile } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -11,8 +11,6 @@ import { Loader2, UserCircle, ShieldCheck, Share2, KeyRound } from "lucide-react
 import { Badge } from "@/components/ui/badge";
 import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
 
 export default function ProfileDisplay() {
   const [user, setUser] = useState<User | null>(null);
@@ -23,20 +21,21 @@ export default function ProfileDisplay() {
 
   useEffect(() => {
     const authUnsubscribe = auth.onAuthStateChanged((currentUser) => {
-      setUser(currentUser);
-      setIsLoading(!currentUser);
-
       if (currentUser) {
+        setUser(currentUser);
         const userDocRef = doc(db, "users", currentUser.uid);
         const firestoreUnsubscribe = onSnapshot(userDocRef, 
           (doc) => {
             if (doc.exists()) {
               setUserProfile(doc.data() as UserProfile);
+            } else {
+              setUserProfile(null);
             }
             setIsLoading(false);
           },
           (error) => {
             console.error("Error fetching user profile:", error);
+            setUserProfile(null);
             setIsLoading(false);
           }
         );
@@ -138,7 +137,7 @@ export default function ProfileDisplay() {
               </Badge>
             ) : (
               <Badge variant="outline" className="w-fit">
-                Role not found
+                Role Not Set
               </Badge>
             )}
           </div>
