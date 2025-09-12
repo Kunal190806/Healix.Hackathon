@@ -105,15 +105,15 @@ export default function EyeTest() {
 
   const finishTest = useCallback(async () => {
     setTestState('finished');
-    if (!user) return;
     const score = finalScore;
     const newResult: EyeTestResult = {
-        userId: user.uid,
+        userId: user!.uid,
         score: score,
         interpretation: getInterpretation(score),
         date: new Date().toISOString()
     };
     setFinalResult(newResult);
+    if (!user) return;
     await addDoc(collection(db, "eyeTestHistory"), newResult);
   }, [finalScore, getInterpretation, user]);
 
@@ -297,7 +297,7 @@ export default function EyeTest() {
                 </div>
               </div>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="justify-center">
               <Button size="lg" onClick={handleStartTest}>
                 <Play className="mr-2 h-5 w-5" /> Start Test
               </Button>
