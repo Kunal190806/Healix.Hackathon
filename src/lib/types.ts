@@ -1,7 +1,7 @@
 
 
 export type UserProfile = {
-  uid: string;
+  userId: string;
   name: string;
   email: string;
   createdAt: string;

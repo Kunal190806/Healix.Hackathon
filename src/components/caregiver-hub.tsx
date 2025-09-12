@@ -8,10 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, Legend, ReferenceLine } from 'recharts';
 import { format, subDays, addDays } from "date-fns";
-import { AlertTriangle, Bell, Calendar, Download, HeartPulse, Pill, User, Loader2, Ear, Eye, Timer, Link2, Mail } from "lucide-react";
+import { AlertTriangle, Bell, Calendar, Download, HeartPulse, Pill, User, Loader2, Ear, Eye, Timer, Link2, Mail, Phone } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { useProfile } from "@/hooks/use-profile";
 import Link from "next/link";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Label } from "./ui/label";
@@ -21,7 +20,7 @@ import { Textarea } from "./ui/textarea";
 const normalHearingThreshold = 25;
 
 const samplePatientProfile: UserProfile = {
-  uid: 'patient123',
+  userId: 'patient123',
   name: 'Rohan Sharma',
   email: 'rohan.sharma@example.com',
   createdAt: new Date().toISOString(),
@@ -134,33 +133,74 @@ function SendEmailDialog({ patientName }: { patientName: string }) {
     )
 }
 
-export default function CaregiverHub() {
-  const { userProfile, isLoading: isProfileLoading } = useProfile();
+function SendSmsDialog({ patientName }: { patientName: string }) {
+    const [phone, setPhone] = useState('');
+    const [message, setMessage] = useState(`Hi ${patientName}, a friendly reminder from your caregiver.`);
 
-  const [patientProfile, setPatientProfile] = useState<UserProfile | null>(null);
-  const [appointments, setAppointments] = useState<Appt[]>([]);
-  const [vitals, setVitals] = useState<VitalLog[]>([]);
-  const [medications, setMedications] = useState<Prescription[]>([]);
-  const [hearingTestHistory, setHearingTestHistory] = useState<HearingTestRecord[]>([]);
-  const [eyeTestHistory, setEyeTestHistory] = useState<EyeTestResult[]>([]);
-  const [responseTimeHistory, setResponseTimeHistory] = useState<ResponseTimeResult[]>([]);
+    const handleSendSms = () => {
+        const smsLink = `sms:${phone}?&body=${encodeURIComponent(message)}`;
+        window.open(smsLink, '_blank');
+    }
+    
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button variant="outline">
+                    <Phone className="mr-2 h-4 w-4" /> Send SMS
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Send SMS to {patientName}</DialogTitle>
+                    <DialogDescription>
+                        Craft a message and send a reminder. This will open your default messaging application.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="phone-number">Patient's Phone Number</Label>
+                        <Input 
+                          id="phone-number" 
+                          type="tel" 
+                          placeholder="e.g., +911234567890" 
+                          value={phone} 
+                          onChange={(e) => setPhone(e.target.value)} 
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="sms-message">Message</Label>
+                        <Textarea 
+                          id="sms-message" 
+                          rows={4} 
+                          value={message} 
+                          onChange={(e) => setMessage(e.target.value)} 
+                        />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button onClick={handleSendSms} disabled={!phone || !message}>Open Messaging App</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
+export default function CaregiverHub() {
+  const [patientProfile] = useState<UserProfile | null>(samplePatientProfile);
+  const [appointments] = useState<Appt[]>(sampleAppointments);
+  const [vitals] = useState<VitalLog[]>(sampleVitals);
+  const [medications] = useState<Prescription[]>(sampleMedications);
+  const [hearingTestHistory] = useState<HearingTestRecord[]>(sampleHearingHistory);
+  const [eyeTestHistory] = useState<EyeTestResult[]>(sampleEyeHistory);
+  const [responseTimeHistory] = useState<ResponseTimeResult[]>(sampleResponseTimeHistory);
   
   const [sampleNotifications, setSampleNotifications] = useState<any[]>([]);
   const [adherenceData, setAdherenceData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate loading sample data directly
     setIsLoading(true);
     const timer = setTimeout(() => {
-        setPatientProfile(samplePatientProfile);
-        setAppointments(sampleAppointments);
-        setVitals(sampleVitals);
-        setMedications(sampleMedications);
-        setHearingTestHistory(sampleHearingHistory);
-        setEyeTestHistory(sampleEyeHistory);
-        setResponseTimeHistory(sampleResponseTimeHistory);
-
         const today = new Date();
         setSampleNotifications([
             { id: 'n1', type: 'Missed Medication', message: `Patient missed evening dose of Metformin.`, date: subDays(today, 1).toISOString(), severity: 'high' },
@@ -179,7 +219,7 @@ export default function CaregiverHub() {
         ].map(d => ({ ...d, adherence: (d.taken / d.total) * 100 })));
         
         setIsLoading(false);
-      }, 1000); // Simulate network delay
+      }, 500); // Simulate network delay
 
       return () => clearTimeout(timer);
   }, []);
@@ -200,7 +240,7 @@ export default function CaregiverHub() {
     doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
     doc.text(`Patient Name: ${patientDisplayName}`, 15, 45);
-    doc.text(`Patient ID: ${patientProfile?.uid.slice(0, 10) || "N/A"}`, 15, 51);
+    doc.text(`Patient ID: ${patientProfile?.userId.slice(0, 10) || "N/A"}`, 15, 51);
     doc.text(`Export Date: ${format(new Date(), 'PPpp')}`, pageWidth - 15, 45, {align: 'right'});
     
     // Appointments
@@ -382,7 +422,7 @@ export default function CaregiverHub() {
     };
   });
   
-  if (isLoading || isProfileLoading) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center h-[80vh]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -404,6 +444,7 @@ export default function CaregiverHub() {
                 </div>
                 <div className="flex gap-2">
                    <SendEmailDialog patientName={patientDisplayName} />
+                   <SendSmsDialog patientName={patientDisplayName} />
                    <Button onClick={handleDownload}>
                       <Download className="mr-2 h-4 w-4" /> Download Summary
                    </Button>
@@ -584,6 +625,7 @@ export default function CaregiverHub() {
                                <TableRow>
                                    <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">No vitals logged yet.</TableCell>
                                </TableRow>
+
                            )}
                         </TableBody>
                     </Table>
@@ -593,9 +635,3 @@ export default function CaregiverHub() {
     </div>
   );
 }
-
-
-    
-    
-
-    

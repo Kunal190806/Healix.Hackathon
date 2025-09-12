@@ -41,7 +41,7 @@ export default function SignUpForm() {
       await updateProfile(user, { displayName: name });
       
       const userProfileData = {
-        uid: user.uid,
+        userId: user.uid,
         name: name,
         email: email,
         createdAt: new Date().toISOString()
