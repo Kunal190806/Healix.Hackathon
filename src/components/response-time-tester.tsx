@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Timer, Play, XCircle, CheckCircle, RefreshCw, Zap, Download, Loader2, BookClock } from 'lucide-react';
+import { Timer, Play, XCircle, CheckCircle, RefreshCw, Zap, Download, Loader2, History } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { type ResponseTimeResult } from '@/lib/types';
 import { format } from 'date-fns';
@@ -330,7 +330,7 @@ export default function ResponseTimeTester() {
          <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <BookClock className="h-5 w-5" />
+              <History className="h-5 w-5" />
               Test History
             </CardTitle>
             <CardDescription>Your most recent response time test results.</CardDescription>
@@ -360,3 +360,5 @@ export default function ResponseTimeTester() {
     </div>
   );
 }
+
+    

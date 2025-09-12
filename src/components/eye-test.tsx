@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Eye, Play, Info, Check, X, RefreshCw, Download, Loader2, BookClock } from 'lucide-react';
+import { Eye, Play, Info, Check, X, RefreshCw, Download, Loader2, History } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { format } from 'date-fns';
 import type { EyeTestResult } from '@/lib/types';
@@ -316,7 +316,7 @@ export default function EyeTest() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <BookClock className="h-5 w-5" />
+              <History className="h-5 w-5" />
               Test History
             </CardTitle>
             <CardDescription>Your most recent vision test results.</CardDescription>
@@ -346,3 +346,5 @@ export default function EyeTest() {
     </div>
   );
 }
+
+    

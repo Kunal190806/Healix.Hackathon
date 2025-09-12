@@ -4,7 +4,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Ear, Play, Download, Volume2, CheckCircle, Info, XCircle, RefreshCw, Loader2, BookClock } from 'lucide-react';
+import { Ear, Play, Download, Volume2, CheckCircle, Info, XCircle, RefreshCw, Loader2, History } from 'lucide-react';
 import type { HearingResult, HearingTestRecord } from '@/lib/types';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -398,7 +398,7 @@ export default function HearingTest() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <BookClock className="h-5 w-5" />
+                <History className="h-5 w-5" />
                 Test History
               </CardTitle>
               <CardDescription>Your most recent hearing test results.</CardDescription>
@@ -437,3 +437,5 @@ export default function HearingTest() {
     </div>
   );
 }
+
+    
