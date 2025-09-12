@@ -136,18 +136,28 @@ export default function VitalsTracker() {
   useEffect(() => {
     if (!user) return;
 
+    let active = true;
     setIsLoading(true);
 
     const createListener = <T,>(collectionName: string, setter: (data: T | null) => void) => {
-      const q = query(collection(db, collectionName), where("userId", "==", user.uid), orderBy("date", "desc"), limit(1));
+      const q = query(
+        collection(db, collectionName),
+        where("userId", "==", user.uid),
+        orderBy("date", "desc"),
+        limit(1)
+      );
       return onSnapshot(q, (snapshot) => {
+        if (!active) return;
         if (!snapshot.empty) {
           setter(snapshot.docs[0].data() as T);
         } else {
           setter(null);
         }
+        setIsLoading(false); // Set loading to false after the first result comes in
       }, (error) => {
+        if (!active) return;
         console.error(`Error fetching ${collectionName}:`, error);
+        setIsLoading(false);
       });
     };
     
@@ -157,11 +167,8 @@ export default function VitalsTracker() {
     unsubs.push(createListener<EyeTestResult>('eyeTestHistory', setLatestEyeTest));
     unsubs.push(createListener<ResponseTimeResult>('responseTimeHistory', setLatestResponseTimeTest));
     
-    // Once all listeners are set up, we can consider it "loaded"
-    // A more robust solution might use Promise.all if the first fetch was manual
-    setIsLoading(false);
-
     return () => {
+      active = false;
       unsubs.forEach(unsub => unsub());
     };
   }, [user]);
@@ -232,7 +239,7 @@ export default function VitalsTracker() {
         <MetricCard 
           icon={<Ear className="w-6 h-6 text-blue-500" />} 
           title="Hearing Test" 
-          value="Normal"
+          value={latestHearingTest ? (latestHearingTest.results.some(r => r.decibel && r.decibel > 25) ? "Check" : "Normal") : "--"}
           description={latestHearingTest ? `Tested on ${format(new Date(latestHearingTest.date), 'MMM d')}` : "No data yet"}
           href="/hearing-test"
         />
@@ -260,5 +267,7 @@ export default function VitalsTracker() {
     </div>
   );
 }
+
+    
 
     
