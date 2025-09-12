@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { auth, db } from "@/lib/firebase";
-import { collection, onSnapshot, query, where, orderBy, limit, addDoc } from "firebase/firestore";
+import { collection, onSnapshot, query, where, orderBy, limit, addDoc, getDocs } from "firebase/firestore";
 import type { User } from "firebase/auth";
 import type { VitalLog, HearingTestRecord, EyeTestResult, ResponseTimeResult } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -114,7 +114,7 @@ function AddVitalsDialog({ user }: { user: User }) {
 export default function VitalsTracker() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [latestVitals, setLatestVitals] = useState<Partial<VitalLog>>({});
+  const [latestVitals, setLatestVitals] = useState<Partial<VitalLog> | null>(null);
   const [latestHearingTest, setLatestHearingTest] = useState<HearingTestRecord | null>(null);
   const [latestEyeTest, setLatestEyeTest] = useState<EyeTestResult | null>(null);
   const [latestResponseTimeTest, setLatestResponseTimeTest] = useState<ResponseTimeResult | null>(null);
@@ -124,7 +124,7 @@ export default function VitalsTracker() {
       setUser(currentUser);
       if (!currentUser) {
         setIsLoading(false);
-        setLatestVitals({});
+        setLatestVitals(null);
         setLatestHearingTest(null);
         setLatestEyeTest(null);
         setLatestResponseTimeTest(null);
@@ -136,49 +136,63 @@ export default function VitalsTracker() {
   useEffect(() => {
     if (!user) return;
 
-    let active = true;
     setIsLoading(true);
 
-    const collectionsToFetch = ['vitals', 'hearingTestHistory', 'eyeTestHistory', 'responseTimeHistory'];
-    let loadedCount = 0;
-
-    const checkAllLoaded = () => {
-        loadedCount++;
-        if (loadedCount === collectionsToFetch.length) {
-            setIsLoading(false);
-        }
-    };
-    
-    const createListener = <T,>(collectionName: string, setter: (data: T | null) => void) => {
+    const createListener = <T extends { date: string }>(
+      collectionName: string,
+      setter: (data: T | null) => void
+    ) => {
       const q = query(
         collection(db, collectionName),
         where("userId", "==", user.uid),
         orderBy("date", "desc"),
         limit(1)
       );
-      return onSnapshot(q, (snapshot) => {
-        if (!active) return;
+
+      // Initial fetch
+      getDocs(q).then(snapshot => {
+        if (!snapshot.empty) {
+          setter(snapshot.docs[0].data() as T);
+        }
+      });
+      
+      // Real-time listener
+      const unsubscribe = onSnapshot(q, (snapshot) => {
         if (!snapshot.empty) {
           setter(snapshot.docs[0].data() as T);
         } else {
           setter(null);
         }
-        checkAllLoaded();
       }, (error) => {
-        if (!active) return;
         console.error(`Error fetching ${collectionName}:`, error);
-        checkAllLoaded();
       });
+
+      return unsubscribe;
     };
     
-    const unsubs: (() => void)[] = [];
-    unsubs.push(createListener<VitalLog>('vitals', setLatestVitals));
-    unsubs.push(createListener<HearingTestRecord>('hearingTestHistory', setLatestHearingTest));
-    unsubs.push(createListener<EyeTestResult>('eyeTestHistory', setLatestEyeTest));
-    unsubs.push(createListener<ResponseTimeResult>('responseTimeHistory', setLatestResponseTimeTest));
+    const collections = [
+        { name: 'vitals', setter: setLatestVitals },
+        { name: 'hearingTestHistory', setter: setLatestHearingTest },
+        { name: 'eyeTestHistory', setter: setLatestEyeTest },
+        { name: 'responseTimeHistory', setter: setLatestResponseTimeTest }
+    ];
+
+    // Initial load for all collections
+    Promise.all(collections.map(c => {
+        const q = query(collection(db, c.name), where("userId", "==", user.uid), orderBy("date", "desc"), limit(1));
+        return getDocs(q).then(snapshot => {
+            if (!snapshot.empty) {
+                c.setter(snapshot.docs[0].data() as any);
+            }
+        });
+    })).then(() => {
+        setIsLoading(false);
+    });
+
+    // Set up real-time listeners
+    const unsubs = collections.map(c => createListener(c.name, c.setter as any));
     
     return () => {
-      active = false;
       unsubs.forEach(unsub => unsub());
     };
   }, [user]);
@@ -277,5 +291,7 @@ export default function VitalsTracker() {
     </div>
   );
 }
+
+    
 
     
