@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, HeartPulse, Stethoscope, Handshake, Dumbbell, Loader2 } from "lucide-react";
+import { User, HeartPulse, Stethoscope, Handshake, Dumbbell, Loader2, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { auth } from "@/lib/firebase";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
@@ -78,8 +78,9 @@ export default function SignUpForm() {
 
   return (
     <Tabs defaultValue="patient" className="w-full">
-      <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
+      <TabsList className="grid w-full grid-cols-3 md:grid-cols-6">
         <TabsTrigger value="patient"><User className="mr-2 h-4 w-4" />Patient</TabsTrigger>
+        <TabsTrigger value="caregiver"><ShieldCheck className="mr-2 h-4 w-4" />Caregiver</TabsTrigger>
         <TabsTrigger value="doctor"><Stethoscope className="mr-2 h-4 w-4" />Doctor</TabsTrigger>
         <TabsTrigger value="donor"><Handshake className="mr-2 h-4 w-4" />Donor</TabsTrigger>
         <TabsTrigger value="trainer"><Dumbbell className="mr-2 h-4 w-4" />Trainer</TabsTrigger>
@@ -165,6 +166,18 @@ export default function SignUpForm() {
                 )}
               </Button>
             </form>
+          </CardContent>
+        </Card>
+      </TabsContent>
+      
+      <TabsContent value="caregiver" className="mt-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Caregiver Registration</CardTitle>
+            <CardDescription>Create an account to monitor and support a loved one.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-center text-muted-foreground">This feature is coming soon.</p>
           </CardContent>
         </Card>
       </TabsContent>
