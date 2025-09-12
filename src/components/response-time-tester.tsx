@@ -144,8 +144,35 @@ export default function ResponseTimeTester() {
         doc.text(`Round ${index + 1}: ${score} ms`, 15, 110 + (index * 8));
     });
 
+    let finalY = 110 + (testResult.scores.length * 8);
+
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("Methods to Improve Response Time:", 15, finalY + 10);
+    
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    const improvementTips = [
+        ['Stay Active:', 'Regular physical exercise can improve blood flow to the brain and enhance cognitive function.'],
+        ['Get Enough Sleep:', 'Aim for 7-9 hours of quality sleep per night. Sleep is crucial for memory consolidation and brain health.'],
+        ['Eat a Healthy Diet:', 'A diet rich in antioxidants, omega-3s, and vitamins (like berries, fish, and leafy greens) supports brain function.'],
+        ['Practice Mindfulness:', 'Meditation and mindfulness can reduce stress and improve focus and attention.'],
+        ['Engage Your Brain:', 'Challenge your mind with puzzles, learning a new skill, or playing strategy games.']
+    ];
+    
+    let tipY = finalY + 18;
+    improvementTips.forEach(tip => {
+        doc.setFont('helvetica', 'bold');
+        doc.text(tip[0], 20, tipY);
+        doc.setFont('helvetica', 'normal');
+        const tipText = doc.splitTextToSize(tip[1], 160);
+        doc.text(tipText, 50, tipY);
+        tipY += (tipText.length * 5) + 4;
+    });
+
+    finalY = tipY;
+    
     doc.setDrawColor(200); // Light gray
-    const finalY = 110 + (testResult.scores.length * 8);
     doc.line(15, finalY + 5, 195, finalY + 5);
 
     doc.setFontSize(14);
@@ -294,3 +321,5 @@ export default function ResponseTimeTester() {
     </div>
   );
 }
+
+    

@@ -145,11 +145,29 @@ export default function CaregiverHub() {
 
     // Response Time Test
     if (latestResponseTimeTest) {
+        let tableBody: any[][] = [
+          [format(new Date(latestResponseTimeTest.date), 'PP'), `${Math.round(latestResponseTimeTest.average)} ms`, latestResponseTimeTest.scores.join(', ')+' ms']
+        ];
         autoTable(doc, {
             head: [['Response Test Date', 'Average', 'Scores']],
-            body: [[format(new Date(latestResponseTimeTest.date), 'PP'), `${Math.round(latestResponseTimeTest.average)} ms`, latestResponseTimeTest.scores.join(', ')+' ms']],
+            body: tableBody,
             headStyles: { fillColor: [63, 81, 181] },
             didDrawPage: (data) => { finalY = data.cursor?.y ?? 0; }
+        });
+
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        autoTable(doc, {
+          head: [['Methods to Improve Response Time']],
+          body: [
+            ['Stay Active: Regular physical exercise can improve blood flow to the brain and enhance cognitive function.'],
+            ['Get Enough Sleep: Aim for 7-9 hours of quality sleep per night for memory consolidation and brain health.'],
+            ['Eat a Healthy Diet: A diet rich in antioxidants and omega-3s supports brain function.'],
+            ['Practice Mindfulness: Meditation can reduce stress and improve focus and attention.'],
+            ['Engage Your Brain: Challenge your mind with puzzles, learning new skills, or playing strategy games.']
+          ],
+          headStyles: { fillColor: [63, 81, 181] },
+          didDrawPage: (data) => { finalY = data.cursor?.y ?? 0; }
         });
     }
     
@@ -486,5 +504,7 @@ export default function CaregiverHub() {
     </div>
   );
 }
+
+    
 
     
