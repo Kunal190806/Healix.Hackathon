@@ -13,6 +13,8 @@ import { useEffect, useState } from 'react';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
 import { Inter, Exo_2 } from 'next/font/google';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -25,12 +27,7 @@ const exo2 = Exo_2({
   variable: '--font-logo',
 });
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  const pathname = usePathname();
+function UserNav() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -52,7 +49,71 @@ export default function RootLayout({
       console.error('Logout failed:', error);
     }
   };
+  
+  if(isLoading) {
+    return null;
+  }
 
+  if (user) {
+    return (
+       <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'} />
+              <AvatarFallback>{user.displayName?.charAt(0) || 'U'}</AvatarFallback>
+            </Avatar>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56" align="end" forceMount>
+          <DropdownMenuLabel className="font-normal">
+            <div className="flex flex-col space-y-1">
+              <p className="text-sm font-medium leading-none">{user.displayName || 'User'}</p>
+              <p className="text-xs leading-none text-muted-foreground">
+                {user.email}
+              </p>
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
+            <DropdownMenuItem asChild>
+              <Link href="/profile">
+                <UserCircle className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Log out</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    )
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <Button variant="ghost" asChild>
+        <Link href="/login">Log in</Link>
+      </Button>
+      <Button asChild>
+        <Link href="/signup">Sign up</Link>
+      </Button>
+    </div>
+  )
+
+}
+
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  const pathname = usePathname();
+  
   const menuItems = [
     { href: '/', label: 'Dashboard', icon: Home },
     { href: '/profile', label: 'Profile', icon: UserCircle },
@@ -101,63 +162,19 @@ export default function RootLayout({
                 ))}
               </SidebarMenu>
             </SidebarContent>
-            <SidebarContent className='mt-auto'>
-              <SidebarMenu>
-                {!isLoading && (
-                  user ? (
-                    <SidebarMenuItem>
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start"
-                        onClick={handleLogout}
-                      >
-                        <LogOut className="mr-2 h-4 w-4" />
-                        Logout
-                      </Button>
-                    </SidebarMenuItem>
-                  ) : (
-                    <>
-                      <SidebarMenuItem>
-                        <Button
-                          variant="ghost"
-                          className="w-full justify-start"
-                          asChild
-                        >
-                          <Link href="/login">
-                            <LogIn className="mr-2 h-4 w-4" />
-                            Login
-                          </Link>
-                        </Button>
-                      </SidebarMenuItem>
-                      <SidebarMenuItem>
-                        <Button
-                          variant="default"
-                          className="w-full justify-start"
-                          asChild
-                        >
-                          <Link href="/signup">
-                            <UserPlus className="mr-2 h-4 w-4" />
-                            Sign Up
-                          </Link>
-                        </Button>
-                      </SidebarMenuItem>
-                    </>
-                  )
-                )}
-              </SidebarMenu>
-            </SidebarContent>
           </Sidebar>
           <SidebarInset>
-            <header className="flex items-center justify-between mb-4 p-4 sm:p-6 lg:p-8 lg:pb-0">
-                <div className="flex items-center gap-2 md:hidden">
-                    <span className="text-lg font-logo font-bold">HEALIX</span>
-                </div>
-                 <div className="flex items-center gap-2 ml-auto">
+            <header className="flex items-center justify-between mb-4 p-4 sm:p-6 lg:p-8 lg:pb-0 h-16 border-b">
+                <div className="flex items-center gap-2">
                     <div className="md:hidden">
                       <SidebarTrigger>
                           <PanelLeft />
                       </SidebarTrigger>
                     </div>
+                    <span className="text-lg font-logo font-bold md:hidden">HEALIX</span>
+                </div>
+                 <div className="flex items-center gap-4 ml-auto">
+                    <UserNav />
                  </div>
             </header>
             <main className="min-h-screen p-4 sm:p-6 lg:p-8 pt-0 lg:pt-8">
