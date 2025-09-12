@@ -1,3 +1,4 @@
+
 // lib/firebase.ts
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
@@ -5,7 +6,7 @@ import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyCKuykOGu445JC9dXF7TkDiD_02C-sq3Xg",
+  apiKey: "AIzaSyAwaZ_8AZwLrglCkuRleZjZCJqMp0vJS3I",
   authDomain: "healix-8rutd.firebaseapp.com",
   projectId: "healix-8rutd",
   storageBucket: "healix-8rutd.appspot.com",
