@@ -8,13 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useProfile } from "@/hooks/use-profile";
+import { useProfile } from "@/hooks/use-profile.tsx";
 import { db } from "@/lib/firebase";
-import { doc, updateDoc, writeBatch } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
 
 export default function ConnectCaregiverForm() {
   const { toast } = useToast();
-  const { userProfile } = useProfile();
+  const { userProfile, isLoading: isProfileLoading } = useProfile();
   const [code, setCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -22,49 +22,60 @@ export default function ConnectCaregiverForm() {
   const handleConnect = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!code.trim() || !userProfile) {
-      toast({ variant: "destructive", title: "Validation Error", description: "Please enter the 4-digit code." });
+      toast({ variant: "destructive", title: "Validation Error", description: "Please enter the access code." });
       return;
     }
 
     setIsLoading(true);
 
-    // Hardcoded sample flow
+    // Hardcoded sample flow for demo purposes
     if (code === '1234') {
       try {
-        const patientId = 'patient123'; // Sample patient ID
+        const patientId = 'patient123'; // The ID of the sample patient
         const caregiverDocRef = doc(db, "users", userProfile.uid);
-        await updateDoc(caregiverDocRef, { monitoringPatientId: patientId });
+        
+        await updateDoc(caregiverDocRef, {
+          monitoringPatientId: patientId,
+        });
 
         toast({
           title: "Connection Successful!",
-          description: `You are now monitoring the sample patient.`,
+          description: `You are now monitoring the sample patient's dashboard.`,
         });
         setIsSuccess(true);
+
       } catch (error: any) {
+        console.error("Failed to update profile for demo:", error);
         toast({
           variant: "destructive",
           title: "Connection Failed",
-          description: "Could not update your profile. Please try again.",
+          description: "Could not update your profile to connect to the sample patient. Please try again.",
         });
       } finally {
         setIsLoading(false);
       }
-      return;
+      return; // Stop execution after handling the demo code
     }
 
-    // Original logic for other codes (will fail as no real codes exist)
-    try {
-        throw new Error("Invalid code. Please enter '1234' for the demo.");
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Connection Failed",
-        description: error.message || "An unexpected error occurred. Please try again.",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    // Original logic for real codes would go here.
+    // For now, we'll just show an error for any other code.
+    setTimeout(() => {
+        toast({
+            variant: "destructive",
+            title: "Connection Failed",
+            description: "Invalid code. For this demo, please use '1234'.",
+        });
+        setIsLoading(false);
+    }, 1000);
   };
+
+  if (isProfileLoading) {
+      return (
+        <div className="flex justify-center items-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      )
+  }
 
   if (isSuccess) {
     return (
@@ -90,7 +101,6 @@ export default function ConnectCaregiverForm() {
               id="access-code"
               type="text"
               inputMode="numeric"
-              pattern="[0-9]{4}"
               maxLength={4}
               placeholder="1234"
               value={code}

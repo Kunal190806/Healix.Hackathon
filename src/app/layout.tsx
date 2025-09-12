@@ -119,6 +119,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     { href: '/support-groups', label: 'Support Groups', icon: Users },
     { href: '/blood-donors', label: 'Blood Donors', icon: Droplets },
     { href: '/fitness', label: 'Inclusive Fitness', icon: Dumbbell },
+    { href: '/caregiver-hub', label: 'Caregiver Hub', icon: ShieldCheck },
   ];
   
   const caregiverMenuItems = [
