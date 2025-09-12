@@ -2,18 +2,18 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Users can read/write their own user profile, and any authenticated user can create one.
+    // Users can read and update their own profile, and anyone can create a user profile during sign-up.
     match /users/{userId} {
-      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+      allow read, update: if request.auth != null && request.auth.uid == userId;
       allow create: if request.auth != null;
     }
 
-    // For any other collection, allow full access if the document's userId
-    // matches the authenticated user's uid.
-    // This covers collections like appointments, vitals, prescriptions, etc.
-    match /{document=**} {
-      allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;
+    // For all other collections, this single rule applies.
+    // It allows a user full access (read, list, write) to documents
+    // only if the document's `userId` field matches their own `uid`.
+    match /{collection}/{docId} {
+       allow read, write: if request.auth != null && request.auth.uid == request.resource.data.userId;
+       allow list: if request.auth != null && request.query.resource.data.userId == request.auth.uid;
     }
   }
 }
