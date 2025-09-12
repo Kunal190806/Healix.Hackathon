@@ -4,7 +4,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Ear, Play, Download, Volume2, AlertCircle, CheckCircle, Info } from 'lucide-react';
+import { Ear, Play, Download, Volume2, AlertCircle, CheckCircle, Info, XCircle } from 'lucide-react';
 import type { HearingResult } from '@/lib/types';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -135,22 +135,6 @@ export default function HearingTest() {
     }
   }, [testState, currentDecibelIndex, currentFrequencyIndex, playTone, nextStep, currentEar]);
 
-  useEffect(() => {
-    if (testState === 'testing') {
-      const handleKeyPress = (event: KeyboardEvent) => {
-        if (event.code === 'Space') {
-          event.preventDefault();
-          handleHeard();
-        }
-      };
-      window.addEventListener('keydown', handleKeyPress);
-      return () => {
-        window.removeEventListener('keydown', handleKeyPress);
-      };
-    }
-  }, [testState, handleHeard]);
-
-
   const getInterpretation = (ear: 'left' | 'right') => {
     const earResults = results.filter(r => r.ear === ear && r.decibel !== null).map(r => r.decibel as number);
     if (earResults.length === 0) return "Incomplete test for this ear.";
@@ -193,14 +177,17 @@ export default function HearingTest() {
     });
     
     doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
     doc.text("Interpretation:", 15, (doc as any).lastAutoTable.finalY + 10);
     doc.setFont('helvetica', 'normal');
     doc.text(getInterpretation('right'), 15, (doc as any).lastAutoTable.finalY + 16, { maxWidth: 180 });
 
+    const rightEarY = (doc as any).lastAutoTable.finalY;
+
     doc.setFontSize(14);
-    doc.text("Left Ear Results", 15, (doc as any).lastAutoTable.finalY + 30);
+    doc.text("Left Ear Results", 15, rightEarY + 30);
     autoTable(doc, {
-      startY: (doc as any).lastAutoTable.finalY + 35,
+      startY: rightEarY + 35,
       head: [['Frequency', 'Threshold']],
       body: formatResults(leftEarResults),
       theme: 'grid',
@@ -260,7 +247,7 @@ export default function HearingTest() {
                         <span className="text-primary font-bold text-2xl">3</span>
                         <div>
                             <h4 className="font-semibold">Listen for the Tone</h4>
-                            <p className="text-sm text-muted-foreground">Click the "I Hear the Tone" button as soon as you hear a sound, no matter how faint.</p>
+                            <p className="text-sm text-muted-foreground">You will hear a faint tone. Click the button that matches your experience.</p>
                         </div>
                    </div>
                 </CardContent>
@@ -283,16 +270,18 @@ export default function HearingTest() {
                 <CardContent className="flex flex-col items-center justify-center space-y-6 py-16">
                     <Volume2 className="h-24 w-24 text-primary animate-pulse" />
                     <div className="text-center">
-                      <p className="font-semibold text-xl">Listen for the faint tone.</p>
-                      <p className="text-muted-foreground">Click the button below (or press Spacebar) as soon as you hear it.</p>
+                      <p className="font-semibold text-xl">Did you hear the tone?</p>
+                      <p className="text-muted-foreground">Click the appropriate button below.</p>
                     </div>
-                    <Button size="lg" onClick={handleHeard} className="w-64 h-16 text-lg">
-                      <CheckCircle className="mr-3 h-6 w-6"/>
-                      I Hear the Tone
-                    </Button>
-                    <div className="text-center text-muted-foreground text-sm space-y-1">
-                      <p>If you don't hear anything after a few moments...</p>
-                      <Button variant="link" onClick={handleNotHeard} className="h-auto p-0">Click here to continue</Button>
+                    <div className="flex gap-4">
+                        <Button size="lg" onClick={handleHeard} className="w-48 h-16 text-lg bg-green-600 hover:bg-green-700">
+                          <CheckCircle className="mr-3 h-6 w-6"/>
+                          Heard It
+                        </Button>
+                        <Button size="lg" onClick={handleNotHeard} className="w-48 h-16 text-lg" variant="destructive">
+                           <XCircle className="mr-3 h-6 w-6"/>
+                           Didn't Hear
+                        </Button>
                     </div>
                 </CardContent>
             </Card>
@@ -311,11 +300,17 @@ export default function HearingTest() {
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="frequency" type="category" allowDuplicatedCategory={false} label={{ value: 'Frequency (Hz)', position: 'bottom', offset: 0 }}/>
                                 <YAxis reversed domain={[-10, 120]} label={{ value: 'Hearing Level (dBHL)', angle: -90, position: 'insideLeft' }}/>
-                                <Tooltip />
+                                <Tooltip 
+                                  formatter={(value: number | null) => value === null ? '>120 dBHL' : `${value} dBHL`}
+                                  contentStyle={{
+                                    backgroundColor: 'hsl(var(--background))',
+                                    border: '1px solid hsl(var(--border))'
+                                  }}
+                                />
                                 <Legend verticalAlign="top" wrapperStyle={{paddingBottom: '10px'}}/>
                                 <ReferenceLine y={normalHearingThreshold} label={{value: "Normal Hearing Range", position: "insideTopLeft", fill: 'hsl(var(--muted-foreground))', fontSize: 12}} stroke="hsl(var(--primary))" strokeDasharray="3 3" />
                                 <Line type="monotone" dataKey="right" name="Right Ear" stroke="hsl(var(--destructive))" strokeWidth={2} connectNulls />
-                                <Line type="monotone" dataKey="left" name="hsl(210 40% 50%)" stroke="hsl(var(--ring))" strokeWidth={2} connectNulls/>
+                                <Line type="monotone" dataKey="left" name="Left Ear" stroke="hsl(var(--ring))" strokeWidth={2} connectNulls/>
                             </LineChart>
                         </ResponsiveContainer>
                     </div>
