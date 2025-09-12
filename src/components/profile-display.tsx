@@ -98,19 +98,6 @@ export default function ProfileDisplay() {
             <span className="text-sm font-medium text-muted-foreground">Email Address</span>
             <span className="text-lg font-semibold">{user.email}</span>
           </div>
-          <div className="flex flex-col space-y-1">
-            <span className="text-sm font-medium text-muted-foreground">Registered As</span>
-            {userProfile?.role ? (
-              <Badge variant="secondary" className="w-fit text-base px-3 py-1">
-                {getRoleIcon(userProfile.role)}
-                <span className="capitalize">{userProfile.role}</span>
-              </Badge>
-            ) : (
-              <Badge variant="outline" className="w-fit">
-                Role Not Set
-              </Badge>
-            )}
-          </div>
         </CardContent>
       </Card>
       
