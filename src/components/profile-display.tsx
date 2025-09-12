@@ -1,11 +1,11 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { useAuth } from "@/hooks/use-auth.tsx";
-import { useProfile } from "@/hooks/use-profile.tsx";
+import { useAuth } from "@/hooks/use-auth";
+import { useProfile } from "@/hooks/use-profile";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Loader2, UserCircle, ShieldCheck, Share2, KeyRound } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -62,8 +62,8 @@ export default function ProfileDisplay() {
   if (!user || !userProfile) {
     return (
       <Card className="text-center p-8">
-        <CardTitle>Please Log In</CardTitle>
-        <CardDescription>You need to be logged in to view your profile.</CardDescription>
+        <CardTitle>Error Loading Profile</CardTitle>
+        <CardDescription>Could not load your profile data. Please try logging in again.</CardDescription>
       </Card>
     );
   }

@@ -4,7 +4,7 @@
 import { useState, useEffect, createContext, useContext } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { useAuth } from '@/hooks/use-auth.tsx';
+import { useAuth } from '@/hooks/use-auth';
 import type { UserProfile } from '@/lib/types';
 
 interface ProfileContextType {

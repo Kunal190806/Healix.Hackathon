@@ -2,14 +2,14 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { UtensilsCrossed, Pill, BookHeart, Users, Droplets, Dumbbell, ArrowRight, Hospital, Stethoscope, HeartPulse, ShieldCheck, CalendarDays, Ear, Eye, Timer, LogIn, UserPlus } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth.tsx';
-import { useProfile } from '@/hooks/use-profile.tsx';
+import { useAuth } from '@/hooks/use-auth';
+import { useProfile } from '@/hooks/use-profile';
 
 const modules = [
   {
@@ -114,23 +114,32 @@ const modules = [
 
 export default function Home() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, isLoading: isAuthLoading } = useAuth();
   const { userProfile, isLoading: isProfileLoading } = useProfile();
   
+  const isLoading = isAuthLoading || isProfileLoading;
+
   useEffect(() => {
-    if (!isAuthLoading && !isProfileLoading && user && userProfile) {
-      if (userProfile.role === 'caregiver') {
+    // This effect handles redirection based on user role.
+    if (!isLoading && user && userProfile) {
+      if (userProfile.role === 'caregiver' && pathname !== '/caregiver-hub') {
         router.replace('/caregiver-hub');
       }
-      // Add other role-based redirects here
+      // Future roles can be handled here, e.g., doctors
       // else if (userProfile.role === 'doctor') {
       //   router.replace('/doctor-dashboard');
       // }
+    } else if (!isLoading && !user) {
+      // If not loading and not logged in, and not on a public page, redirect to login
+      const publicPages = ['/login', '/signup'];
+      if (!publicPages.includes(pathname)) {
+        router.replace('/login');
+      }
     }
-  }, [user, userProfile, isAuthLoading, isProfileLoading, router]);
-
-  const isLoading = isAuthLoading || isProfileLoading;
+  }, [user, userProfile, isLoading, router, pathname]);
   
+  // Show a global loading screen while auth/profile is being determined
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[80vh]">
@@ -139,6 +148,7 @@ export default function Home() {
     );
   }
 
+  // If not logged in, show the public landing page.
   if (!user) {
     return (
        <div className="flex flex-col items-center justify-center text-center py-16 h-[80vh]">
@@ -170,8 +180,9 @@ export default function Home() {
     )
   }
   
+  // If the user is a caregiver, they will be redirected by the useEffect. 
+  // We show a loading state to prevent the patient dashboard from flashing.
   if (userProfile?.role === 'caregiver') {
-    // Show a loading/redirecting state while caregiver is being redirected
     return (
       <div className="flex items-center justify-center h-[80vh]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -179,8 +190,8 @@ export default function Home() {
       </div>
     );
   }
-
-  // Patient Dashboard
+  
+  // If the user is a patient (or any other role that lands on the main dashboard)
   return (
     <div className="flex flex-col gap-8">
       <div>

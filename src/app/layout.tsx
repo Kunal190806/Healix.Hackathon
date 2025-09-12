@@ -15,8 +15,8 @@ import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
 import { Inter, Exo_2 } from 'next/font/google';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useAuth, AuthProvider } from '@/hooks/use-auth.tsx';
-import { ProfileProvider } from '@/hooks/use-profile.tsx';
+import { useAuth, AuthProvider } from '@/hooks/use-auth';
+import { ProfileProvider } from '@/hooks/use-profile';
 
 
 const inter = Inter({
@@ -98,46 +98,6 @@ function UserNav() {
   )
 
 }
-
-
-const AuthGuard = ({ children }: { children: React.ReactNode }) => {
-  const { user, isLoading } = useAuth();
-  const router = useRouter();
-  const pathname = usePathname();
-
-  const isPublicPage = pathname === '/login' || pathname === '/signup';
-
-  useEffect(() => {
-    if (!isLoading && !user && !isPublicPage) {
-      router.push('/login');
-    }
-  }, [user, isLoading, isPublicPage, router, pathname]);
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </div>
-    );
-  }
-  
-  // Prevent flicker on public pages
-  if (isPublicPage && !user) {
-    return <>{children}</>;
-  }
-
-  if (!user && !isPublicPage) {
-    // This will be shown briefly before redirection
-    return (
-       <div className="flex items-center justify-center h-screen">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  return <>{children}</>;
-};
-
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -231,9 +191,7 @@ export default function RootLayout({
       <body className={cn(inter.variable, exo2.variable, "font-body antialiased")}>
         <AuthProvider>
           <ProfileProvider>
-            <AuthGuard>
-              <AppLayout>{children}</AppLayout>
-            </AuthGuard>
+            <AppLayout>{children}</AppLayout>
           </ProfileProvider>
         </AuthProvider>
         <Toaster />
