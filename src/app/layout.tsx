@@ -68,15 +68,6 @@ function UserNav() {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuGroup>
-            <DropdownMenuItem asChild>
-              <Link href="/profile">
-                <UserCircle className="mr-2 h-4 w-4" />
-                <span>Profile</span>
-              </Link>
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-          <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" />
             <span>Log out</span>
@@ -103,9 +94,8 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { userProfile } = useProfile();
   
-  const patientMenuItems = [
+  const menuItems = [
     { href: '/', label: 'Dashboard', icon: Home },
-    { href: '/profile', label: 'Profile', icon: UserCircle },
     { href: '/hospitals', label: 'Find a Hospital', icon: Hospital },
     { href: '/doctors', label: 'Find a Doctor', icon: Stethoscope },
     { href: '/appointments', label: 'My Appointments', icon: CalendarDays },
@@ -121,14 +111,6 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     { href: '/fitness', label: 'Inclusive Fitness', icon: Dumbbell },
     { href: '/caregiver-hub', label: 'Caregiver Hub', icon: ShieldCheck },
   ];
-  
-  const caregiverMenuItems = [
-    { href: '/caregiver-hub', label: 'Caregiver Hub', icon: ShieldCheck },
-    { href: '/profile', label: 'Profile', icon: UserCircle },
-    { href: '/connect-caregiver', label: 'Connect to Patient', icon: LinkIcon },
-  ];
-
-  const menuItems = userProfile?.role === 'caregiver' ? caregiverMenuItems : patientMenuItems;
   
   const isAuthPage = pathname === '/login' || pathname === '/signup';
 

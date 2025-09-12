@@ -1,17 +1,10 @@
 
 
-
 export type UserProfile = {
   uid: string;
   name: string;
   email: string;
-  role: 'patient' | 'caregiver' | 'doctor' | 'hospital' | 'donor' | 'trainer';
   createdAt: string;
-  // For caregivers
-  monitoringPatientId?: string;
-  // For patients
-  accessCode?: string;
-  accessCodeExpires?: string; // ISO string
 }
 
 export type Prescription = {

@@ -122,16 +122,7 @@ export default function Home() {
   const isLoading = isAuthLoading || isProfileLoading;
 
   useEffect(() => {
-    // This effect handles redirection based on user role.
-    if (!isLoading && user && userProfile) {
-      if (userProfile.role === 'caregiver' && pathname !== '/caregiver-hub' && pathname !== '/') {
-        router.replace('/caregiver-hub');
-      }
-      // Future roles can be handled here, e.g., doctors
-      // else if (userProfile.role === 'doctor') {
-      //   router.replace('/doctor-dashboard');
-      // }
-    } else if (!isLoading && !user) {
+    if (!isLoading && !user) {
       // If not loading and not logged in, and not on a public page, redirect to login
       const publicPages = ['/login', '/signup'];
       if (!publicPages.includes(pathname)) {
@@ -181,18 +172,6 @@ export default function Home() {
     )
   }
   
-  // If the user is a caregiver, they will be redirected by the useEffect. 
-  // We show a loading state to prevent the patient dashboard from flashing.
-  if (userProfile?.role === 'caregiver' && pathname !== '/caregiver-hub' && pathname === '/') {
-    return (
-      <div className="flex items-center justify-center h-[80vh]">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-4 text-muted-foreground">Redirecting to your Caregiver Hub...</p>
-      </div>
-    );
-  }
-  
-  // If the user is a patient (or any other role that lands on the main dashboard)
   return (
     <div className="flex flex-col gap-8">
       <div>
