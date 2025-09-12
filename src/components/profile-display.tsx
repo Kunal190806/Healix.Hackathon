@@ -2,10 +2,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { auth, db } from "@/lib/firebase";
-import { doc, onSnapshot, updateDoc } from "firebase/firestore";
-import type { User } from "firebase/auth";
-import type { UserProfile } from "@/lib/types";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/hooks/use-auth.tsx";
+import { useProfile } from "@/hooks/use-profile.tsx";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Loader2, UserCircle, ShieldCheck, Share2, KeyRound } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -13,42 +13,10 @@ import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
 
 export default function ProfileDisplay() {
-  const [user, setUser] = useState<User | null>(null);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const { userProfile, isLoading: isProfileLoading } = useProfile();
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const { toast } = useToast();
-
-  useEffect(() => {
-    const authUnsubscribe = auth.onAuthStateChanged((currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-        const userDocRef = doc(db, "users", currentUser.uid);
-        const firestoreUnsubscribe = onSnapshot(userDocRef, 
-          (doc) => {
-            if (doc.exists()) {
-              setUserProfile(doc.data() as UserProfile);
-            } else {
-              setUserProfile(null);
-            }
-            setIsLoading(false);
-          },
-          (error) => {
-            console.error("Error fetching user profile:", error);
-            setUserProfile(null);
-            setIsLoading(false);
-          }
-        );
-        return () => firestoreUnsubscribe();
-      } else {
-        setUser(null);
-        setUserProfile(null);
-        setIsLoading(false);
-      }
-    });
-
-    return () => authUnsubscribe();
-  }, []);
 
   const handleGenerateCode = async () => {
     if (!user) return;
@@ -79,6 +47,8 @@ export default function ProfileDisplay() {
       setIsGeneratingCode(false);
     }
   };
+
+  const isLoading = isAuthLoading || isProfileLoading;
 
   if (isLoading) {
     return (

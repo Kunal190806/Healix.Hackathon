@@ -1,14 +1,15 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { UtensilsCrossed, Pill, BookHeart, Users, Droplets, Dumbbell, ArrowRight, Hospital, Stethoscope, HeartPulse, ShieldCheck, CalendarDays, Ear, Eye, Timer, LogIn, UserPlus } from 'lucide-react';
-import { auth } from '@/lib/firebase';
-import type { User } from 'firebase/auth';
 import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth.tsx';
+import { useProfile } from '@/hooks/use-profile.tsx';
 
 const modules = [
   {
@@ -112,23 +113,27 @@ const modules = [
 ];
 
 export default function Home() {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
+  const router = useRouter();
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const { userProfile, isLoading: isProfileLoading } = useProfile();
+  
   useEffect(() => {
-    // Listen for authentication state changes
-    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
-      setUser(currentUser);
-      setIsLoading(false);
-    });
+    if (!isAuthLoading && !isProfileLoading && user && userProfile) {
+      if (userProfile.role === 'caregiver') {
+        router.replace('/caregiver-hub');
+      }
+      // Add other role-based redirects here
+      // else if (userProfile.role === 'doctor') {
+      //   router.replace('/doctor-dashboard');
+      // }
+    }
+  }, [user, userProfile, isAuthLoading, isProfileLoading, router]);
 
-    // Cleanup subscription on unmount
-    return () => unsubscribe();
-  }, []);
+  const isLoading = isAuthLoading || isProfileLoading;
   
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-[60vh]">
+      <div className="flex items-center justify-center h-[80vh]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
@@ -136,7 +141,7 @@ export default function Home() {
 
   if (!user) {
     return (
-       <div className="flex flex-col items-center justify-center text-center py-16">
+       <div className="flex flex-col items-center justify-center text-center py-16 h-[80vh]">
         <div className="relative w-24 h-24 mb-4">
             <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping"></div>
             <div className="relative flex items-center justify-center w-full h-full bg-primary rounded-full">
@@ -164,7 +169,18 @@ export default function Home() {
       </div>
     )
   }
+  
+  if (userProfile?.role === 'caregiver') {
+    // Show a loading/redirecting state while caregiver is being redirected
+    return (
+      <div className="flex items-center justify-center h-[80vh]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="ml-4 text-muted-foreground">Redirecting to your Caregiver Hub...</p>
+      </div>
+    );
+  }
 
+  // Patient Dashboard
   return (
     <div className="flex flex-col gap-8">
       <div>
