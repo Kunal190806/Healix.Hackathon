@@ -21,11 +21,13 @@ export default function SignUpForm() {
   const [patientName, setPatientName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [caregiverName, setCaregiverName] = useState('');
+  const [caregiverEmail, setCaregiverEmail] = useState('');
+  const [caregiverPassword, setCaregiverPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handlePatientSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!patientName.trim() || !email.trim() || !password.trim()) {
+  const handleSignUp = async (name: string, email: string, password: string, role: string) => {
+    if (!name.trim() || !email.trim() || !password.trim()) {
        toast({
         variant: "destructive",
         title: "Validation Error",
@@ -40,11 +42,14 @@ export default function SignUpForm() {
       const user = userCredential.user;
 
       // Update the user's profile with their name
-      await updateProfile(user, { displayName: patientName });
+      await updateProfile(user, { displayName: name });
+      
+      // In a real app, you'd also save the role to Firestore here.
+      // await setDoc(doc(db, "users", user.uid), { role: role });
 
       toast({
         title: "Account Created!",
-        description: `Welcome to HEALIX, ${patientName}. You are now being redirected.`,
+        description: `Welcome to HEALIX, ${name}. You are now being redirected.`,
       });
       router.push('/');
 
@@ -74,6 +79,16 @@ export default function SignUpForm() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handlePatientSignUp = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSignUp(patientName, email, password, 'patient');
+  };
+  
+  const handleCaregiverSignUp = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSignUp(caregiverName, caregiverEmail, caregiverPassword, 'caregiver');
   };
 
   return (
@@ -177,7 +192,57 @@ export default function SignUpForm() {
             <CardDescription>Create an account to monitor and support a loved one.</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-center text-muted-foreground">This feature is coming soon.</p>
+             <form onSubmit={handleCaregiverSignUp} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="caregiver-name">Full Name</Label>
+                <Input 
+                  id="caregiver-name" 
+                  placeholder="e.g., Anita Desai" 
+                  value={caregiverName}
+                  onChange={(e) => setCaregiverName(e.target.value)}
+                  required 
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="caregiver-email">Email</Label>
+                  <Input 
+                    id="caregiver-email" 
+                    type="email"
+                    placeholder="e.g., anita.desai@example.com" 
+                    value={caregiverEmail}
+                    onChange={(e) => setCaregiverEmail(e.target.value)}
+                    required 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="caregiver-password">Password</Label>
+                  <Input 
+                    id="caregiver-password" 
+                    type="password" 
+                    value={caregiverPassword}
+                    onChange={(e) => setCaregiverPassword(e.target.value)}
+                    placeholder="Must be at least 6 characters"
+                    required 
+                  />
+                </div>
+              </div>
+               <div className="space-y-2 pt-4">
+                <Label htmlFor="patient-id">Patient's Unique ID or Email (Optional)</Label>
+                <Input id="patient-id" placeholder="Enter the ID to link to a patient account" />
+                <p className="text-xs text-muted-foreground">The patient can find their ID in their profile. You can link accounts later.</p>
+              </div>
+              <Button type="submit" className="w-full !mt-6" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating Account...
+                  </>
+                ) : (
+                  'Create Caregiver Account'
+                )}
+              </Button>
+            </form>
           </CardContent>
         </Card>
       </TabsContent>
