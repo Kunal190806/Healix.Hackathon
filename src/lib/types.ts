@@ -82,3 +82,8 @@ export type Appointment = {
   status: "Confirmed" | "Cancelled" | "Completed";
 };
 
+export type HearingResult = {
+  frequency: number;
+  decibel: number | null;
+  ear: 'left' | 'right';
+};
