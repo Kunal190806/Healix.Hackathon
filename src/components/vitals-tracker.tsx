@@ -139,6 +139,16 @@ export default function VitalsTracker() {
     let active = true;
     setIsLoading(true);
 
+    const collectionsToFetch = ['vitals', 'hearingTestHistory', 'eyeTestHistory', 'responseTimeHistory'];
+    let loadedCount = 0;
+
+    const checkAllLoaded = () => {
+        loadedCount++;
+        if (loadedCount === collectionsToFetch.length) {
+            setIsLoading(false);
+        }
+    };
+    
     const createListener = <T,>(collectionName: string, setter: (data: T | null) => void) => {
       const q = query(
         collection(db, collectionName),
@@ -153,11 +163,11 @@ export default function VitalsTracker() {
         } else {
           setter(null);
         }
-        setIsLoading(false); // Set loading to false after the first result comes in
+        checkAllLoaded();
       }, (error) => {
         if (!active) return;
         console.error(`Error fetching ${collectionName}:`, error);
-        setIsLoading(false);
+        checkAllLoaded();
       });
     };
     
@@ -267,7 +277,5 @@ export default function VitalsTracker() {
     </div>
   );
 }
-
-    
 
     
