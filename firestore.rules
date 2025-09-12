@@ -1,16 +1,14 @@
+
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can read and update their own profile, and create it.
-    match /users/{userId} {
-      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null;
-    }
 
-    // For all other collections, allow full access if the document's userId
-    // matches the requesting user's UID.
-    match /{collection}/{docId} {
-      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+    // WARNING: These rules are insecure and are for development purposes only.
+    // They allow any user to read and write to any part of your database.
+    // You should secure your data before deploying to production.
+    match /{document=**} {
+      allow read, write: if true;
     }
   }
 }
