@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Timer, Play, XCircle, CheckCircle, RefreshCw, Zap, Download, Loader2 } from 'lucide-react';
+import { Timer, Play, XCircle, CheckCircle, RefreshCw, Zap, Download, Loader2, BookClock } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { type ResponseTimeResult } from '@/lib/types';
 import { format } from 'date-fns';
@@ -12,6 +12,7 @@ import jsPDF from 'jspdf';
 import { auth, db } from "@/lib/firebase";
 import { collection, addDoc, onSnapshot, query, where, orderBy, limit } from "firebase/firestore";
 import type { User } from "firebase/auth";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 
 type TestStatus = 'idle' | 'waiting' | 'ready' | 'tooSoon' | 'result' | 'finished';
 const TOTAL_ROUNDS = 5;
@@ -33,7 +34,7 @@ export default function ResponseTimeTester() {
       setUser(currentUser);
       setIsLoading(false);
       if (currentUser) {
-        const q = query(collection(db, "responseTimeHistory"), where("userId", "==", currentUser.uid), orderBy("date", "desc"), limit(10));
+        const q = query(collection(db, "responseTimeHistory"), where("userId", "==", currentUser.uid), orderBy("date", "desc"), limit(5));
         const unsubFirestore = onSnapshot(q, (snapshot) => {
           const userHistory: ResponseTimeResult[] = snapshot.docs.map(doc => doc.data() as ResponseTimeResult);
           setHistory(userHistory);
@@ -324,8 +325,38 @@ export default function ResponseTimeTester() {
         </Card>
       )}
       {renderContent()}
+
+      {history.length > 0 && (
+         <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BookClock className="h-5 w-5" />
+              Test History
+            </CardTitle>
+            <CardDescription>Your most recent response time test results.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Average Time</TableHead>
+                  <TableHead>Individual Scores</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {history.map((result, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{format(new Date(result.date), 'PP')}</TableCell>
+                    <TableCell className="font-semibold">{Math.round(result.average)} ms</TableCell>
+                    <TableCell>{result.scores.join('ms, ')}ms</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
-
-    

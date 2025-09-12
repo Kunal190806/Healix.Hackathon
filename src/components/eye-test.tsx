@@ -6,13 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Eye, Play, Info, Check, X, RefreshCw, Download, Loader2 } from 'lucide-react';
+import { Eye, Play, Info, Check, X, RefreshCw, Download, Loader2, BookClock } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { format } from 'date-fns';
 import type { EyeTestResult } from '@/lib/types';
 import { auth, db } from "@/lib/firebase";
 import { collection, addDoc, onSnapshot, query, where, orderBy, limit } from "firebase/firestore";
 import type { User } from "firebase/auth";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 
 // Snellen chart letters - avoiding letters that can be confused (O, G, C)
 const snellenLetters = ['C', 'D', 'E', 'F', 'H', 'K', 'N', 'P', 'R', 'T', 'V', 'Z'];
@@ -310,8 +311,38 @@ export default function EyeTest() {
   return (
     <div className="space-y-6">
       {renderContent()}
+
+      {testHistory.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BookClock className="h-5 w-5" />
+              Test History
+            </CardTitle>
+            <CardDescription>Your most recent vision test results.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Score</TableHead>
+                  <TableHead>Interpretation</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {testHistory.map((result, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{format(new Date(result.date), 'PP')}</TableCell>
+                    <TableCell className="font-semibold">{result.score}</TableCell>
+                    <TableCell>{result.interpretation}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
-
-    

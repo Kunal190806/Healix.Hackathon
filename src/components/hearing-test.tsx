@@ -4,7 +4,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Ear, Play, Download, Volume2, CheckCircle, Info, XCircle, RefreshCw, Loader2 } from 'lucide-react';
+import { Ear, Play, Download, Volume2, CheckCircle, Info, XCircle, RefreshCw, Loader2, BookClock } from 'lucide-react';
 import type { HearingResult, HearingTestRecord } from '@/lib/types';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -13,6 +13,7 @@ import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tool
 import { auth, db } from "@/lib/firebase";
 import { collection, addDoc, onSnapshot, query, where, orderBy, limit } from "firebase/firestore";
 import type { User } from "firebase/auth";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 
 const testFrequencies = [250, 500, 1000, 2000, 4000, 8000]; // in Hz
 const testDecibels = [-10, 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]; // in dBHL
@@ -42,7 +43,7 @@ export default function HearingTest() {
       setUser(currentUser);
       setIsLoading(false);
       if (currentUser) {
-        const q = query(collection(db, "hearingTestHistory"), where("userId", "==", currentUser.uid), orderBy("date", "desc"), limit(10));
+        const q = query(collection(db, "hearingTestHistory"), where("userId", "==", currentUser.uid), orderBy("date", "desc"), limit(5));
         const unsubFirestore = onSnapshot(q, (snapshot) => {
           const userHistory: HearingTestRecord[] = snapshot.docs.map(doc => doc.data() as HearingTestRecord);
           setTestHistory(userHistory);
@@ -298,7 +299,7 @@ export default function HearingTest() {
                             <p className="text-sm text-muted-foreground">For accurate results, use headphones and ensure they are on the correct ears (Left/Right).</p>
                         </div>
                    </div>
-                   <div className="flex items-start gap-4 p-4 rounded-lg bg-muted_50">
+                   <div className="flex items-start gap-4 p-4 rounded-lg bg-muted/50">
                         <span className="text-primary font-bold text-2xl">3</span>
                         <div>
                             <h4 className="font-semibold">Listen for the Tone</h4>
@@ -392,8 +393,47 @@ export default function HearingTest() {
                 </CardFooter>
             </Card>
         )}
+
+        {testHistory.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookClock className="h-5 w-5" />
+                Test History
+              </CardTitle>
+              <CardDescription>Your most recent hearing test results.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {testHistory.map((record, index) => (
+                <div key={index} className="mb-4 last:mb-0 p-4 border rounded-lg">
+                  <h4 className="font-semibold">{format(new Date(record.date), 'PP')}</h4>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Frequency</TableHead>
+                        <TableHead>Left Ear</TableHead>
+                        <TableHead>Right Ear</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {testFrequencies.map(freq => {
+                        const left = record.results.find(r => r.ear === 'left' && r.frequency === freq);
+                        const right = record.results.find(r => r.ear === 'right' && r.frequency === freq);
+                        return (
+                          <TableRow key={freq}>
+                            <TableCell>{freq} Hz</TableCell>
+                            <TableCell>{left?.decibel !== null && left?.decibel !== undefined ? `${left.decibel} dBHL` : '> 120'}</TableCell>
+                            <TableCell>{right?.decibel !== null && right?.decibel !== undefined ? `${right.decibel} dBHL` : '> 120'}</TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
     </div>
   );
 }
-
-    
