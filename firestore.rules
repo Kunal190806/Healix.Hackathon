@@ -3,17 +3,18 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Applies to ALL collections
     match /{collection}/{docId} {
-      
-      // Read (get, list) allowed if the doc belongs to the user
+
+      // ✅ Read (get + list) allowed only if the doc belongs to the logged-in user
       allow read: if request.auth != null
                   && request.auth.uid == resource.data.userId;
 
-      // Create allowed if the new doc's userId matches the user's UID
+      // ✅ Create allowed if the new document's userId matches the logged-in user
       allow create: if request.auth != null
                     && request.auth.uid == request.resource.data.userId;
 
-      // Update/Delete allowed if the doc belongs to the user
+      // ✅ Update/Delete allowed only if the existing doc belongs to the logged-in user
       allow update, delete: if request.auth != null
                             && request.auth.uid == resource.data.userId;
     }

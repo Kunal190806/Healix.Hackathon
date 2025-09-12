@@ -83,6 +83,7 @@ export type VitalLog = {
   bloodSugar?: number;
   heartRate?: number;
   weight?: number;
+  bodyTemperature?: number;
   notes?: string;
 };
 
@@ -129,5 +130,3 @@ export type DeviceVitals = {
     sleep: { hours: number; minutes: number };
     steps: number;
 };
-
-    
