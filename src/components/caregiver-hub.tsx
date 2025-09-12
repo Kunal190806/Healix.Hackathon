@@ -68,36 +68,51 @@ const sampleResponseTimeHistory: ResponseTimeResult[] = [{
 }];
 
 export default function CaregiverHub() {
-  const [patientProfile, setPatientProfile] = useState<UserProfile | null>(samplePatientProfile);
-  
-  const [appointments, setAppointments] = useState<Appt[]>(sampleAppointments);
-  const [vitals, setVitals] = useState<VitalLog[]>(sampleVitals);
-  const [medications, setMedications] = useState<Prescription[]>(sampleMedications);
-  const [hearingTestHistory, setHearingTestHistory] = useState<HearingTestRecord[]>(sampleHearingHistory);
-  const [eyeTestHistory, setEyeTestHistory] = useState<EyeTestResult[]>(sampleEyeHistory);
-  const [responseTimeHistory, setResponseTimeHistory] = useState<ResponseTimeResult[]>(sampleResponseTimeHistory);
+  const [patientProfile, setPatientProfile] = useState<UserProfile | null>(null);
+  const [appointments, setAppointments] = useState<Appt[]>([]);
+  const [vitals, setVitals] = useState<VitalLog[]>([]);
+  const [medications, setMedications] = useState<Prescription[]>([]);
+  const [hearingTestHistory, setHearingTestHistory] = useState<HearingTestRecord[]>([]);
+  const [eyeTestHistory, setEyeTestHistory] = useState<EyeTestResult[]>([]);
+  const [responseTimeHistory, setResponseTimeHistory] = useState<ResponseTimeResult[]>([]);
   
   const [sampleNotifications, setSampleNotifications] = useState<any[]>([]);
   const [adherenceData, setAdherenceData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Mock data for notifications and adherence as they are not stored in DB
-    const today = new Date();
-    setSampleNotifications([
-        { id: 'n1', type: 'Missed Medication', message: `Patient missed evening dose of Metformin.`, date: subDays(today, 1).toISOString(), severity: 'high' },
-        { id: 'n2', type: 'Abnormal Vital', message: 'Blood Pressure reading was high: 145/92 mmHg.', date: subDays(today, 4).toISOString(), severity: 'high' },
-        { id: 'n3', type: 'Appointment Reminder', message: 'Cardiologist appointment in 3 days.', date: today.toISOString(), severity: 'medium' },
-        { id: 'n4', type: 'Low Adherence', message: 'Medication adherence dropped to 75% this week.', date: today.toISOString(), severity: 'medium' },
-    ]);
-    setAdherenceData([
-      { date: format(subDays(today, 6), 'EEE'), taken: 3, total: 4 },
-      { date: format(subDays(today, 5), 'EEE'), taken: 4, total: 4 },
-      { date: format(subDays(today, 4), 'EEE'), taken: 4, total: 4 },
-      { date: format(subDays(today, 3), 'EEE'), taken: 3, total: 4 },
-      { date: format(subDays(today, 2), 'EEE'), taken: 4, total: 4 },
-      { date: format(subDays(today, 1), 'EEE'), taken: 3, total: 4 },
-      { date: format(today, 'EEE'), taken: 1, total: 2 }, // Today
-    ].map(d => ({ ...d, adherence: (d.taken / d.total) * 100 })));
+    // Simulate loading data
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      setPatientProfile(samplePatientProfile);
+      setAppointments(sampleAppointments);
+      setVitals(sampleVitals);
+      setMedications(sampleMedications);
+      setHearingTestHistory(sampleHearingHistory);
+      setEyeTestHistory(sampleEyeHistory);
+      setResponseTimeHistory(sampleResponseTimeHistory);
+
+      const today = new Date();
+      setSampleNotifications([
+          { id: 'n1', type: 'Missed Medication', message: `Patient missed evening dose of Metformin.`, date: subDays(today, 1).toISOString(), severity: 'high' },
+          { id: 'n2', type: 'Abnormal Vital', message: 'Blood Pressure reading was high: 145/92 mmHg.', date: subDays(today, 4).toISOString(), severity: 'high' },
+          { id: 'n3', type: 'Appointment Reminder', message: 'Cardiologist appointment in 3 days.', date: today.toISOString(), severity: 'medium' },
+          { id: 'n4', type: 'Low Adherence', message: 'Medication adherence dropped to 75% this week.', date: today.toISOString(), severity: 'medium' },
+      ]);
+      setAdherenceData([
+        { date: format(subDays(today, 6), 'EEE'), taken: 3, total: 4 },
+        { date: format(subDays(today, 5), 'EEE'), taken: 4, total: 4 },
+        { date: format(subDays(today, 4), 'EEE'), taken: 4, total: 4 },
+        { date: format(subDays(today, 3), 'EEE'), taken: 3, total: 4 },
+        { date: format(subDays(today, 2), 'EEE'), taken: 4, total: 4 },
+        { date: format(subDays(today, 1), 'EEE'), taken: 3, total: 4 },
+        { date: format(today, 'EEE'), taken: 1, total: 2 }, // Today
+      ].map(d => ({ ...d, adherence: (d.taken / d.total) * 100 })));
+      
+      setIsLoading(false);
+    }, 1000); // Simulate network delay
+
+    return () => clearTimeout(timer);
   }, []);
 
   const latestHearingTest = hearingTestHistory?.[0];
@@ -108,7 +123,6 @@ export default function CaregiverHub() {
   const generatePDF = () => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
-    let finalY = 0;
 
     doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
@@ -129,7 +143,6 @@ export default function CaregiverHub() {
             .filter(a => new Date(a.date) >= new Date() && a.status === 'Confirmed')
             .map(a => [`${format(new Date(a.date), "PP")} at ${a.time} with ${a.doctorName} (${a.specialty})`]),
           headStyles: { fillColor: [63, 81, 181] },
-          didDrawPage: (data) => { finalY = data.cursor?.y ?? 0; }
       });
     }
 
@@ -139,7 +152,6 @@ export default function CaregiverHub() {
             head: [['Vision Test Date', 'Score', 'Interpretation']],
             body: [[format(new Date(latestEyeTest.date), 'PP'), latestEyeTest.score, latestEyeTest.interpretation]],
             headStyles: { fillColor: [63, 81, 181] },
-            didDrawPage: (data) => { finalY = data.cursor?.y ?? 0; }
         });
     }
 
@@ -152,7 +164,6 @@ export default function CaregiverHub() {
             head: [['Response Test Date', 'Average', 'Scores']],
             body: tableBody,
             headStyles: { fillColor: [63, 81, 181] },
-            didDrawPage: (data) => { finalY = data.cursor?.y ?? 0; }
         });
 
         doc.setFontSize(12);
@@ -167,7 +178,6 @@ export default function CaregiverHub() {
             ['Engage Your Brain: Challenge your mind with puzzles, learning new skills, or playing strategy games.']
           ],
           headStyles: { fillColor: [63, 81, 181] },
-          didDrawPage: (data) => { finalY = data.cursor?.y ?? 0; }
         });
     }
     
@@ -186,7 +196,6 @@ export default function CaregiverHub() {
                 ];
             }),
             headStyles: { fillColor: [63, 81, 181] },
-            didDrawPage: (data) => { finalY = data.cursor?.y ?? 0; }
         });
     }
 
@@ -204,7 +213,6 @@ export default function CaregiverHub() {
               return entries;
           }),
           headStyles: { fillColor: [63, 81, 181] },
-          didDrawPage: (data) => { finalY = data.cursor?.y ?? 0; }
       });
     }
     
@@ -214,7 +222,6 @@ export default function CaregiverHub() {
           head: [['Medication', 'Dosage', 'Frequency', 'Time']],
           body: medications.map(m => [m.name, m.dosage, m.frequency, m.time || 'N/A']),
           headStyles: { fillColor: [63, 81, 181] },
-          didDrawPage: (data) => { finalY = data.cursor?.y ?? 0; }
       });
     }
 
@@ -304,6 +311,15 @@ export default function CaregiverHub() {
       right: rightResult?.decibel,
     };
   });
+  
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-[80vh]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="ml-4 text-muted-foreground">Loading Patient Dashboard...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -504,7 +520,3 @@ export default function CaregiverHub() {
     </div>
   );
 }
-
-    
-
-    

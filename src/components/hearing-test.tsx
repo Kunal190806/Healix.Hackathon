@@ -30,6 +30,7 @@ export default function HearingTest() {
   const [currentEar, setCurrentEar] = useState<'left' | 'right'>('right');
   const [testHistory, setTestHistory] = useState<HearingTestRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [finalRecord, setFinalRecord] = useState<HearingTestRecord | null>(null);
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const oscillatorRef = useRef<OscillatorNode | null>(null);
@@ -69,6 +70,7 @@ export default function HearingTest() {
         results: finalResults,
         date: new Date().toISOString()
     };
+    setFinalRecord(newRecord);
     await addDoc(collection(db, "hearingTestHistory"), newRecord);
   }, [user]);
   
@@ -116,6 +118,7 @@ export default function HearingTest() {
     setCurrentFrequencyIndex(0);
     setCurrentDecibelIndex(2);
     setCurrentEar('right');
+    setFinalRecord(null);
     setTestState('testing');
     timeoutRef.current = setTimeout(() => playTone(testFrequencies[0], testDecibels[2]), 500);
   };
@@ -249,7 +252,7 @@ export default function HearingTest() {
   };
 
   const chartData = testFrequencies.map(freq => {
-    const res = (testState === 'finished' && testHistory.length > 0) ? testHistory[0].results : results;
+    const res = finalRecord?.results ?? [];
     const leftResult = res.find(r => r.ear === 'left' && r.frequency === freq);
     const rightResult = res.find(r => r.ear === 'right' && r.frequency === freq);
     return {
@@ -346,38 +349,44 @@ export default function HearingTest() {
                     <CardDescription>Review your results below. This is a screening, not a medical diagnosis.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="h-[400px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={chartData} margin={{ top: 5, right: 30, left: -10, bottom: 20 }}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="frequency" type="category" allowDuplicatedCategory={false} label={{ value: 'Frequency (Hz)', position: 'bottom', offset: 0 }}/>
-                                <YAxis reversed domain={[-10, 120]} label={{ value: 'Hearing Level (dBHL)', angle: -90, position: 'insideLeft' }}/>
-                                <Tooltip 
-                                  formatter={(value: number | null) => value === null ? '>120 dBHL' : `${value} dBHL`}
-                                  contentStyle={{
-                                    backgroundColor: 'hsl(var(--background))',
-                                    border: '1px solid hsl(var(--border))'
-                                  }}
-                                />
-                                <Legend verticalAlign="top" wrapperStyle={{paddingBottom: '10px'}}/>
-                                <ReferenceLine y={normalHearingThreshold} label={{value: "Normal Hearing Range", position: "insideTopLeft", fill: 'hsl(var(--muted-foreground))', fontSize: 12}} stroke="hsl(var(--primary))" strokeDasharray="3 3" />
-                                <Line type="monotone" dataKey="right" name="Right Ear" stroke="hsl(var(--destructive))" strokeWidth={2} connectNulls />
-                                <Line type="monotone" dataKey="left" name="Left Ear" stroke="hsl(var(--ring))" strokeWidth={2} connectNulls/>
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </div>
-                    <div className="mt-6 p-4 rounded-lg bg-muted/50 border">
-                        <h4 className="font-semibold flex items-center gap-2 mb-2"><Info className="h-5 w-5 text-primary"/>Disclaimer</h4>
-                        <p className="text-sm text-muted-foreground">
-                            This hearing screening is intended for informational purposes only and is not a substitute for a professional medical diagnosis. Results can be affected by your environment and equipment. Please consult a qualified audiologist or healthcare provider for a comprehensive hearing evaluation.
-                        </p>
-                    </div>
+                   {finalRecord ? (
+                     <>
+                        <div className="h-[400px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={chartData} margin={{ top: 5, right: 30, left: -10, bottom: 20 }}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis dataKey="frequency" type="category" allowDuplicatedCategory={false} label={{ value: 'Frequency (Hz)', position: 'bottom', offset: 0 }}/>
+                                    <YAxis reversed domain={[-10, 120]} label={{ value: 'Hearing Level (dBHL)', angle: -90, position: 'insideLeft' }}/>
+                                    <Tooltip 
+                                    formatter={(value: number | null) => value === null ? '>120 dBHL' : `${value} dBHL`}
+                                    contentStyle={{
+                                        backgroundColor: 'hsl(var(--background))',
+                                        border: '1px solid hsl(var(--border))'
+                                    }}
+                                    />
+                                    <Legend verticalAlign="top" wrapperStyle={{paddingBottom: '10px'}}/>
+                                    <ReferenceLine y={normalHearingThreshold} label={{value: "Normal Hearing Range", position: "insideTopLeft", fill: 'hsl(var(--muted-foreground))', fontSize: 12}} stroke="hsl(var(--primary))" strokeDasharray="3 3" />
+                                    <Line type="monotone" dataKey="right" name="Right Ear" stroke="hsl(var(--destructive))" strokeWidth={2} connectNulls />
+                                    <Line type="monotone" dataKey="left" name="Left Ear" stroke="hsl(var(--ring))" strokeWidth={2} connectNulls/>
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
+                        <div className="mt-6 p-4 rounded-lg bg-muted/50 border">
+                            <h4 className="font-semibold flex items-center gap-2 mb-2"><Info className="h-5 w-5 text-primary"/>Disclaimer</h4>
+                            <p className="text-sm text-muted-foreground">
+                                This hearing screening is intended for informational purposes only and is not a substitute for a professional medical diagnosis. Results can be affected by your environment and equipment. Please consult a qualified audiologist or healthcare provider for a comprehensive hearing evaluation.
+                            </p>
+                        </div>
+                     </>
+                   ) : (
+                     <div className="h-[400px] flex justify-center items-center"><Loader2 className="h-8 w-8 animate-spin" /></div>
+                   )}
                 </CardContent>
                  <CardFooter className="flex-col sm:flex-row justify-center gap-4">
                     <Button onClick={handleStartTest} variant="outline">
                         <RefreshCw className="mr-2 h-4 w-4" /> Retake Test
                     </Button>
-                    <Button onClick={() => generatePDFReport({ userId: user.uid, date: new Date().toISOString(), results })}>
+                    <Button onClick={() => finalRecord && generatePDFReport(finalRecord)} disabled={!finalRecord}>
                         <Download className="mr-2 h-4 w-4" /> Download PDF Report
                     </Button>
                 </CardFooter>
@@ -386,5 +395,3 @@ export default function HearingTest() {
     </div>
   );
 }
-
-    

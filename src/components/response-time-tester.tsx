@@ -56,7 +56,7 @@ export default function ResponseTimeTester() {
   }, []);
   
   const finishTest = useCallback(async (finalScores: number[]) => {
-    if (!user) return;
+    if (!user || finalScores.length < TOTAL_ROUNDS) return;
     const avg = finalScores.reduce((a, b) => a + b, 0) / finalScores.length;
     const newResult: ResponseTimeResult = { 
       userId: user.uid,
@@ -69,13 +69,14 @@ export default function ResponseTimeTester() {
   }, [user]);
 
   const nextRound = useCallback(() => {
-    if (scores.length < TOTAL_ROUNDS) {
-      setCurrentRound(prev => prev + 1);
-      startWaiting();
-    } else {
-      finishTest(scores);
-    }
+      if (scores.length < TOTAL_ROUNDS) {
+        setCurrentRound(prev => prev + 1);
+        startWaiting();
+      } else {
+        finishTest(scores);
+      }
   }, [scores, startWaiting, finishTest]);
+
 
   const handleClick = () => {
     if (status === 'waiting') {
@@ -84,7 +85,13 @@ export default function ResponseTimeTester() {
     } else if (status === 'ready') {
       const endTime = Date.now();
       const score = endTime - startTimeRef.current;
-      setScores(prevScores => [...prevScores, score]);
+      setScores(prevScores => {
+        const newScores = [...prevScores, score];
+        if (newScores.length >= TOTAL_ROUNDS) {
+          finishTest(newScores);
+        }
+        return newScores;
+      });
       setStatus('result');
     }
   };
@@ -92,11 +99,13 @@ export default function ResponseTimeTester() {
   useEffect(() => {
     if (status === 'result' || status === 'tooSoon') {
       const timeout = setTimeout(() => {
-        nextRound();
+          if (scores.length < TOTAL_ROUNDS) {
+            nextRound();
+          }
       }, 2000); // Wait 2 seconds before starting next round
       return () => clearTimeout(timeout);
     }
-  }, [status, nextRound]);
+  }, [status, nextRound, scores.length]);
 
   const handleStart = () => {
     setScores([]);
@@ -312,7 +321,7 @@ export default function ResponseTimeTester() {
                 <div className="space-y-2">
                     <div className="flex justify-between items-center text-sm text-muted-foreground">
                         <span>Round {currentRound} of {TOTAL_ROUNDS}</span>
-                        <span>{Math.round(progressPercentage)}%</span>
+                        <span>{Math.round(progressPercentage)}% Complete</span>
                     </div>
                     <Progress value={progressPercentage} />
                 </div>
@@ -323,5 +332,3 @@ export default function ResponseTimeTester() {
     </div>
   );
 }
-
-    

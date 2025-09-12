@@ -49,6 +49,7 @@ export default function EyeTest() {
   const [currentLetters, setCurrentLetters] = useState('');
   const [testHistory, setTestHistory] = useState<EyeTestResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [finalResult, setFinalResult] = useState<EyeTestResult | null>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -83,6 +84,7 @@ export default function EyeTest() {
     setCurrentLineIndex(0);
     setUserInput('');
     setLastCorrectLine(null);
+    setFinalResult(null);
   };
   
   const finalScore = useMemo(() => lastCorrectLine !== null ? chartLines[lastCorrectLine].score : 'Below 20/200', [lastCorrectLine]);
@@ -111,6 +113,7 @@ export default function EyeTest() {
         interpretation: getInterpretation(score),
         date: new Date().toISOString()
     };
+    setFinalResult(newResult);
     await addDoc(collection(db, "eyeTestHistory"), newResult);
   }, [finalScore, getInterpretation, user]);
 
@@ -229,12 +232,9 @@ export default function EyeTest() {
           </Card>
         );
       case 'finished':
-        const result: EyeTestResult = {
-          userId: user.uid,
-          score: finalScore,
-          interpretation: getInterpretation(finalScore),
-          date: new Date().toISOString()
-        };
+        if (!finalResult) {
+            return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+        }
         return (
           <Card className="text-center">
             <CardHeader>
@@ -245,10 +245,10 @@ export default function EyeTest() {
               <div className="p-8 rounded-lg bg-muted/50 w-full">
                 <p className="text-sm text-muted-foreground">Your Score</p>
                 <p className="text-6xl font-bold text-primary">
-                  {result.score}
+                  {finalResult.score}
                 </p>
               </div>
-              <p className="max-w-prose">{result.interpretation}</p>
+              <p className="max-w-prose">{finalResult.interpretation}</p>
               <div className="mt-4 p-4 rounded-lg bg-muted/50 border">
                 <h4 className="font-semibold flex items-center justify-center gap-2 mb-2"><Info className="h-5 w-5 text-primary"/>Disclaimer</h4>
                 <p className="text-sm text-muted-foreground max-w-prose">
@@ -260,7 +260,7 @@ export default function EyeTest() {
               <Button onClick={handleRestart} variant="outline">
                 <RefreshCw className="mr-2 h-4 w-4" /> Take Test Again
               </Button>
-              <Button onClick={() => generatePDFReport(result)}>
+              <Button onClick={() => generatePDFReport(finalResult)}>
                 <Download className="mr-2 h-4 w-4" /> Download PDF Report
               </Button>
             </CardFooter>
@@ -313,5 +313,3 @@ export default function EyeTest() {
     </div>
   );
 }
-
-    
