@@ -10,7 +10,7 @@ const firebaseConfig = {
   projectId: "healix-8rutd",
   storageBucket: "healix-8rutd.appspot.com",
   messagingSenderId: "1032994992983",
-  appId: "1:1032994992983:web:0b4b29d5b7826359a34b28"
+  appId: "1:1032994992983:web:0b4b29d5b7826359a34b28",
 };
 
 
