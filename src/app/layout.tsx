@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { Home, Pill, Droplets, Users, UtensilsCrossed, BookHeart, Dumbbell, PanelLeft, Hospital, UserPlus, Stethoscope, HeartPulse, ShieldCheck, CalendarDays, LogOut, Ear, Eye, Timer, LogIn, UserCircle, Loader2, Link as LinkIcon, Search, TestTube, MessagesSquare, Watch, Siren, PhoneCall, TowerControl, ClipboardPlus } from 'lucide-react';
+import { Home, Pill, Droplets, Users, UtensilsCrossed, BookHeart, Dumbbell, PanelLeft, Hospital, UserPlus, Stethoscope, HeartPulse, ShieldCheck, CalendarDays, LogOut, Ear, Eye, Timer, LogIn, UserCircle, Loader2, Link as LinkIcon, Search, TestTube, MessagesSquare, Watch, Siren, PhoneCall, TowerControl, ClipboardPlus, ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Toaster } from '@/components/ui/toaster';
@@ -118,11 +118,15 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     { href: '/blood-donors', label: 'Blood Donors', icon: Droplets },
     { href: '/fitness', label: 'Inclusive Fitness', icon: Dumbbell },
   ];
+
+  const prescriptionItems = [
+    { href: '/prescriptions', label: 'Manage Prescriptions', icon: ClipboardPlus },
+    { href: '/order-medicines', label: 'Order Medicines', icon: ShoppingCart },
+  ];
   
   const topLevelItems = [
     { href: '/vitals-tracker', label: 'Vitals Tracker', icon: HeartPulse },
     { href: '/meal-planner', label: 'AI Meal Planner', icon: UtensilsCrossed },
-    { href: '/prescriptions', label: 'Prescriptions', icon: Pill },
   ];
 
   const bottomLevelItems = [
@@ -184,6 +188,33 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                   <AccordionContent className="pb-1">
                     <SidebarMenu className="ml-5 border-l border-border pl-3">
                       {findMyItems.map((item) => (
+                        <SidebarMenuItem key={item.href}>
+                          <Button
+                            variant={pathname === item.href ? 'secondary' : 'ghost'}
+                            className="w-full justify-start h-8"
+                            asChild
+                          >
+                            <Link href={item.href}>
+                              <item.icon className="mr-2 h-4 w-4" />
+                              {item.label}
+                            </Link>
+                          </Button>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="prescriptions" className="border-none">
+                  <AccordionTrigger className="hover:no-underline text-muted-foreground hover:text-foreground [&[data-state=open]]:text-foreground font-semibold text-sm py-2 px-3 rounded-md hover:bg-muted/50 w-full justify-start">
+                    <div className="flex items-center">
+                       <Pill className="mr-2 h-4 w-4" />
+                       Prescriptions
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-1">
+                    <SidebarMenu className="ml-5 border-l border-border pl-3">
+                      {prescriptionItems.map((item) => (
                         <SidebarMenuItem key={item.href}>
                           <Button
                             variant={pathname === item.href ? 'secondary' : 'ghost'}

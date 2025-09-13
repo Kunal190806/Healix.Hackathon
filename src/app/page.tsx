@@ -6,7 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { UtensilsCrossed, Pill, BookHeart, Users, Droplets, Dumbbell, ArrowRight, Hospital, Stethoscope, HeartPulse, ShieldCheck, CalendarDays, Ear, Eye, Timer, LogIn, UserPlus, Watch, Siren } from 'lucide-react';
+import { UtensilsCrossed, Pill, BookHeart, Users, Droplets, Dumbbell, ArrowRight, Hospital, Stethoscope, HeartPulse, ShieldCheck, CalendarDays, Ear, Eye, Timer, LogIn, UserPlus, Watch, Siren, ShoppingCart } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useProfile } from '@/hooks/use-profile';
@@ -53,6 +53,13 @@ const modules = [
     icon: Pill,
     href: "/prescriptions",
     color: "text-blue-500",
+  },
+  {
+    title: "Order Medicines",
+    description: "Upload a prescription or manually add items to order from pharmacies.",
+    icon: ShoppingCart,
+    href: "/order-medicines",
+    color: "text-sky-500",
   },
   {
     title: "Vitals Tracker",
