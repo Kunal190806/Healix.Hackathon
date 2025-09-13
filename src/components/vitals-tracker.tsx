@@ -151,6 +151,7 @@ export default function VitalsTracker() {
       setter: (data: T | null) => void,
       loadingKey: keyof typeof loadingStates
     ) => {
+      setLoadingStates(prev => ({...prev, [loadingKey]: true}));
       const q = query(
         collection(db, collectionName),
         where("userId", "==", user.uid),
@@ -282,3 +283,5 @@ export default function VitalsTracker() {
     </div>
   );
 }
+
+    
