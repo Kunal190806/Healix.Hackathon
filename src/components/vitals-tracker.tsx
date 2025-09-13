@@ -210,12 +210,6 @@ export default function VitalsTracker() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold font-headline tracking-tight text-primary">Vitals Dashboard</h1>
-          <p className="text-muted-foreground mt-2">
-            An overview of your key health metrics, synced from your devices and manual entries.
-          </p>
-        </div>
         <Dialog>
           <DialogTrigger asChild>
              <Button><PlusCircle className="mr-2 h-4 w-4" /> Log Vitals</Button>
@@ -283,5 +277,3 @@ export default function VitalsTracker() {
     </div>
   );
 }
-
-    
