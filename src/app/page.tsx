@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect } from 'react';
@@ -61,20 +60,6 @@ const modules = [
     icon: HeartPulse,
     href: "/vitals-tracker",
     color: "text-red-500",
-  },
-   {
-    title: "Hearing Test",
-    description: "Test your hearing across different frequencies and generate a report.",
-    icon: Ear,
-    href: "/hearing-test",
-    color: "text-sky-500",
-  },
-  {
-    title: "Eye Test",
-    description: "A simple screening to get an idea of your vision.",
-    icon: Eye,
-    href: "/eye-test",
-    color: "text-emerald-500",
   },
   {
     title: "Response Time Test",

@@ -209,7 +209,7 @@ export default function VitalsTracker() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+       <div className="flex justify-between items-center">
         <Dialog>
           <DialogTrigger asChild>
              <Button><PlusCircle className="mr-2 h-4 w-4" /> Log Vitals</Button>
@@ -217,7 +217,6 @@ export default function VitalsTracker() {
           <AddVitalsDialog user={user} />
         </Dialog>
       </div>
-
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {/* Device Synced Vitals */}
         <MetricCard icon={<HeartPulse className="w-6 h-6 text-red-500" />} title="Heart Rate" value={sampleDeviceData.heartRate} unit="BPM" description="From Google Fit" />
@@ -227,13 +226,6 @@ export default function VitalsTracker() {
         <MetricCard icon={<Moon className="w-6 h-6 text-indigo-500" />} title="Sleep" value={`${sampleDeviceData.sleep.hours}h ${sampleDeviceData.sleep.minutes}m`} description="Last night's sleep" />
         
         {/* Manually Entered or Lab Vitals */}
-        <MetricCard 
-          icon={<HeartPulse className="w-6 h-6 text-red-400" />} 
-          title="Blood Pressure" 
-          value={latestVitals?.bloodPressure ? `${latestVitals.bloodPressure.systolic}/${latestVitals.bloodPressure.diastolic}` : '--'} 
-          unit="mmHg" 
-          description={latestVitals?.date ? `Last on ${format(new Date(latestVitals.date), 'MMM d')}` : "No data yet"}
-        />
         <MetricCard 
           icon={<Thermometer className="w-6 h-6 text-amber-500" />} 
           title="Body Temp" 
@@ -251,20 +243,6 @@ export default function VitalsTracker() {
           description={latestResponseTimeTest ? `Tested on ${format(new Date(latestResponseTimeTest.date), 'MMM d')}` : "No data yet"}
           href="/response-time"
         />
-        <MetricCard 
-          icon={<Eye className="w-6 h-6 text-emerald-500" />} 
-          title="Vision Test" 
-          value={latestEyeTest?.score ?? '--'}
-          description={latestEyeTest ? `Tested on ${format(new Date(latestEyeTest.date), 'MMM d')}` : "No data yet"}
-          href="/eye-test"
-        />
-        <MetricCard 
-          icon={<Ear className="w-6 h-6 text-blue-500" />} 
-          title="Hearing Test" 
-          value={latestHearingTest ? (latestHearingTest.results.some(r => r.decibel && r.decibel > 25) ? "Check" : "Normal") : "--"}
-          description={latestHearingTest ? `Tested on ${format(new Date(latestHearingTest.date), 'MMM d')}` : "No data yet"}
-          href="/hearing-test"
-        />
         
         <Link href="/connect-devices" className="w-full h-full col-span-1 lg:col-span-2">
           <Card className="flex flex-col items-center justify-center text-center cursor-pointer hover:bg-muted/50 transition-colors h-full">
@@ -277,5 +255,3 @@ export default function VitalsTracker() {
     </div>
   );
 }
-
-    

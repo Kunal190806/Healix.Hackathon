@@ -109,8 +109,6 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   ];
 
   const testItems = [
-    { href: '/hearing-test', label: 'Hearing Test', icon: Ear },
-    { href: '/eye-test', label: 'Eye Test', icon: Eye },
     { href: '/response-time', label: 'Response Time Test', icon: Timer },
   ];
 
@@ -352,5 +350,3 @@ export default function RootLayout({
     </html>
   );
 }
-
-    
