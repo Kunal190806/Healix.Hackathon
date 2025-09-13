@@ -362,7 +362,7 @@ export default function CaregiverHub() {
     });
     
     if (adherenceData.length > 0) sections.push({
-        title: "Medication Adherence (Sample)",
+        title: "Medication Adherence",
         columns: ["Date", "Adherence (%)"],
         data: adherenceData.map(d => [d.date, d.adherence.toFixed(2)])
     });
@@ -438,7 +438,7 @@ export default function CaregiverHub() {
                 <div>
                     <CardTitle className="flex items-center gap-2">
                         <User className="h-6 w-6 text-primary"/>
-                        <span>Monitoring Sample Patient: {patientDisplayName}</span>
+                        <span>Monitoring Patient: {patientDisplayName}</span>
                     </CardTitle>
                     {patientProfile && <CardDescription>Managing profile for {patientProfile.email}</CardDescription>}
                 </div>
@@ -455,7 +455,7 @@ export default function CaregiverHub() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
              <Card className="lg:col-span-1">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5"/> Recent Notifications (Sample)</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5"/> Recent Notifications</CardTitle>
                     <CardDescription>Key alerts for {patientDisplayName}'s health.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -475,7 +475,7 @@ export default function CaregiverHub() {
             </Card>
             <Card className="lg:col-span-2">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Pill className="h-5 w-5"/> Medication Adherence (Sample)</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><Pill className="h-5 w-5"/> Medication Adherence</CardTitle>
                     <CardDescription>Percentage of doses taken on time.</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -635,3 +635,5 @@ export default function CaregiverHub() {
     </div>
   );
 }
+
+    
