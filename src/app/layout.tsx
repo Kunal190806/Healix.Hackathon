@@ -18,6 +18,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth, AuthProvider } from '@/hooks/use-auth.tsx';
 import { ProfileProvider, useProfile } from '@/hooks/use-profile.tsx';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { ThemeProvider, useTheme } from '@/hooks/use-theme';
+import { ThemeToggleButton } from '@/components/theme-toggle-button';
 
 
 const inter = Inter({
@@ -346,6 +348,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                     <span className="text-lg font-logo font-bold md:hidden">HEALIX</span>
                 </div>
                   <div className="flex items-center gap-4 ml-auto">
+                    <ThemeToggleButton />
                     <UserNav />
                   </div>
             </header>
@@ -362,6 +365,27 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
+function AppWithTheme({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  const { theme } = useTheme();
+
+  return (
+      <html lang="en" className={theme} suppressHydrationWarning>
+        <body className={cn(inter.variable, exo2.variable, "font-body antialiased")}>
+          <AuthProvider>
+            <ProfileProvider>
+              <AppLayout>{children}</AppLayout>
+            </ProfileProvider>
+          </AuthProvider>
+          <Toaster />
+        </body>
+      </html>
+  );
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -369,15 +393,8 @@ export default function RootLayout({
 }>) {
   
   return (
-    <html lang="en" className="dark">
-      <body className={cn(inter.variable, exo2.variable, "font-body antialiased")}>
-        <AuthProvider>
-          <ProfileProvider>
-            <AppLayout>{children}</AppLayout>
-          </ProfileProvider>
-        </AuthProvider>
-        <Toaster />
-      </body>
-    </html>
+    <ThemeProvider>
+      <AppWithTheme>{children}</AppWithTheme>
+    </ThemeProvider>
   );
 }
