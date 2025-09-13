@@ -174,7 +174,7 @@ export default function VitalsTracker() {
     };
     
     const unsubs = [
-      createListener<VitalLog>( 'vitals', setLatestVitals, 'vitals'),
+      createListener<VitalLog>('vitals', setLatestVitals, 'vitals'),
       createListener<HearingTestRecord>('hearingTestHistory', setLatestHearingTest, 'hearing'),
       createListener<EyeTestResult>('eyeTestHistory', setLatestEyeTest, 'eye'),
       createListener<ResponseTimeResult>('responseTimeHistory', setLatestResponseTimeTest, 'response')
@@ -208,9 +208,24 @@ export default function VitalsTracker() {
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold font-headline tracking-tight text-primary">Vitals Dashboard</h1>
+          <p className="text-muted-foreground mt-2">
+            An overview of your key health metrics, synced from your devices and manual entries.
+          </p>
+        </div>
+        <Dialog>
+          <DialogTrigger asChild>
+             <Button><PlusCircle className="mr-2 h-4 w-4" /> Log Vitals</Button>
+          </DialogTrigger>
+          <AddVitalsDialog user={user} />
+        </Dialog>
+      </div>
+
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {/* Device Synced Vitals */}
-        <MetricCard icon={<HeartPulse className="w-6 h-6 text-red-500" />} title="Heart Rate" value={sampleDeviceData.heartRate} unit="BPM" description="From Google Fit" href="/vitals-tracker/history" />
+        <MetricCard icon={<HeartPulse className="w-6 h-6 text-red-500" />} title="Heart Rate" value={sampleDeviceData.heartRate} unit="BPM" description="From Google Fit" />
         <MetricCard icon={<Droplets className="w-6 h-6 text-sky-500" />} title="Blood Oxygen" value={sampleDeviceData.bloodOxygen} unit="%" description="From Google Fit" />
         <MetricCard icon={<Footprints className="w-6 h-6 text-green-500" />} title="Steps Today" value={sampleDeviceData.steps.toLocaleString()} description="From Google Fit" />
         <MetricCard icon={<Flame className="w-6 h-6 text-orange-500" />} title="Calories Burned" value={sampleDeviceData.calories.toLocaleString()} unit="kcal" description="From Google Fit" />
@@ -255,24 +270,12 @@ export default function VitalsTracker() {
           description={latestHearingTest ? `Tested on ${format(new Date(latestHearingTest.date), 'MMM d')}` : "No data yet"}
           href="/hearing-test"
         />
-
-        {/* Add New Log */}
-        <Dialog>
-          <DialogTrigger asChild>
-            <button className="w-full h-full">
-              <Card className="flex flex-col items-center justify-center text-center cursor-pointer hover:bg-muted/50 transition-colors h-full">
-                  <PlusCircle className="h-12 w-12 text-muted-foreground mb-2" />
-                  <h3 className="font-semibold text-muted-foreground">Log Manual Vitals</h3>
-              </Card>
-            </button>
-          </DialogTrigger>
-          <AddVitalsDialog user={user} />
-        </Dialog>
-
-        <Link href="/connect-devices" className="w-full h-full">
+        
+        <Link href="/connect-devices" className="w-full h-full col-span-2">
           <Card className="flex flex-col items-center justify-center text-center cursor-pointer hover:bg-muted/50 transition-colors h-full">
               <Watch className="h-12 w-12 text-muted-foreground mb-2" />
               <h3 className="font-semibold text-muted-foreground">Connect a Device</h3>
+              <p className="text-sm text-muted-foreground/80">Sync with Google Fit</p>
           </Card>
         </Link>
       </div>
