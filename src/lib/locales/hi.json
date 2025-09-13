@@ -1,120 +1,120 @@
 
 {
     "sidebar": {
-        "dashboard": "tableau de bord",
-        "vitalsTracker": "Vitals Tracker",
-        "mealPlanner": "AI Meal Planner",
+        "dashboard": "डैशबोर्ड",
+        "vitalsTracker": "स्वास्थ्य संकेतक ट्रैकर",
+        "mealPlanner": "एआई भोजन योजनाकार",
         "findMy": {
-            "title": "Find My",
-            "hospital": "Find a Hospital",
-            "doctor": "Find a Doctor",
-            "appointments": "My Appointments"
+            "title": "खोजें",
+            "hospital": "अस्पताल खोजें",
+            "doctor": "डॉक्टर खोजें",
+            "appointments": "मेरी नियुक्तियाँ"
         },
         "prescriptions": {
-            "title": "Prescriptions",
-            "manage": "Manage Prescriptions",
-            "order": "Order Medicines"
+            "title": "नुस्खे",
+            "manage": "नुस्खे प्रबंधित करें",
+            "order": "दवाइयाँ ऑर्डर करें"
         },
         "tests": {
-            "title": "Tests",
-            "responseTime": "Response Time Test"
+            "title": "परीक्षण",
+            "responseTime": "प्रतिक्रिया समय परीक्षण"
         },
         "forums": {
-            "title": "Forums",
-            "journal": "Mental Health Journal",
-            "supportGroups": "Support Groups",
-            "bloodDonors": "Blood Donors",
-            "fitness": "Inclusive Fitness"
+            "title": "मंच",
+            "journal": "मानसिक स्वास्थ्य जर्नल",
+            "supportGroups": "सहायता समूह",
+            "bloodDonors": "रक्त दाता",
+            "fitness": "समावेशी फिटनेस"
         },
         "emergency": {
-            "title": "Emergency",
-            "callAmbulance": "Call Ambulance",
-            "ambulanceStatus": "Ambulance Status",
-            "broadcast": "Emergency Broadcast",
-            "preArrival": "Pre-Arrival Info"
+            "title": "आपातकालीन",
+            "callAmbulance": "एम्बुलेंस बुलाएँ",
+            "ambulanceStatus": "एम्बुलेंस स्थिति",
+            "broadcast": "आपातकालीन प्रसारण",
+            "preArrival": "आगमन-पूर्व सूचना"
         },
-        "connectDevices": "Connect Devices",
-        "caregiverHub": "Caregiver Hub"
+        "connectDevices": "डिवाइस कनेक्ट करें",
+        "caregiverHub": "देखभालकर्ता हब"
     },
     "header": {
-        "logout": "Log out"
+        "logout": "लॉग आउट"
     },
     "auth": {
-        "login": "Log in",
-        "signup": "Sign up"
+        "login": "लॉग इन करें",
+        "signup": "साइन अप करें"
     },
     "userNav": {
-        "email": "Email"
+        "email": "ईमेल"
     },
     "dashboard": {
-        "welcome": "Welcome, {name}",
-        "description": "Your all-in-one platform for a healthier, more connected life.",
-        "welcomeGuest": "Welcome to HEALIX",
-        "descriptionGuest": "Your all-in-one platform for a healthier, more connected life. Please sign in or create an account to access your personalized health dashboard.",
-        "login": "Log In",
-        "signup": "Sign Up",
+        "welcome": "नमस्ते, {name}",
+        "description": "एक स्वस्थ, अधिक जुड़े जीवन के लिए आपका ऑल-इन-वन प्लेटफॉर्म।",
+        "welcomeGuest": "HEALIX में आपका स्वागत है",
+        "descriptionGuest": "एक स्वस्थ, अधिक जुड़े जीवन के लिए आपका ऑल-in-one प्लेटफॉर्म। अपने व्यक्तिगत स्वास्थ्य डैशबोर्ड तक पहुँचने के लिए कृपया साइन इन करें या एक खाता बनाएँ।",
+        "login": "लॉग इन करें",
+        "signup": "साइन अप करें",
         "modules": {
             "emergency": {
-                "title": "Emergency Hub",
-                "description": "Access ambulance, broadcast, and hospital notification services."
+                "title": "आपातकालीन हब",
+                "description": "एम्बुलेंस, प्रसारण और अस्पताल अधिसूचना सेवाओं तक पहुँचें।"
             },
             "findHospital": {
-                "title": "Find a Hospital",
-                "description": "Search for specialist hospitals based on your condition and location."
+                "title": "अस्पताल खोजें",
+                "description": "अपनी स्थिति और स्थान के आधार पर विशेषज्ञ अस्पतालों की खोज करें।"
             },
             "findDoctor": {
-                "title": "Find a Doctor",
-                "description": "Search for doctors by specialization, location, and more."
+                "title": "डॉक्टर खोजें",
+                "description": "विशेषज्ञता, स्थान और अधिक के आधार पर डॉक्टरों की खोज करें।"
             },
             "myAppointments": {
-                "title": "My Appointments",
-                "description": "View and manage your upcoming and past doctor consultations."
+                "title": "मेरी नियुक्तियाँ",
+                "description": "अपनी आगामी और पिछली डॉक्टर परामर्श देखें और प्रबंधित करें।"
             },
             "mealPlanner": {
-                "title": "AI Meal Planner",
-                "description": "Get personalized meal suggestions based on your dietary needs and preferences."
+                "title": "एआई भोजन योजनाकार",
+                "description": "अपनी आहार संबंधी आवश्यकताओं और वरीयताओं के आधार पर व्यक्तिगत भोजन सुझाव प्राप्त करें।"
             },
             "prescriptionManager": {
-                "title": "Prescription Manager",
-                "description": "Track your medications and set reminders to stay on top of your health."
+                "title": "नुस्खा प्रबंधक",
+                "description": "अपनी दवाइयों को ट्रैक करें और अपने स्वास्थ्य के शीर्ष पर रहने के लिए अनुस्marak सेट करें।"
             },
             "orderMedicines": {
-                "title": "Order Medicines",
-                "description": "Upload a prescription or manually add items to order from pharmacies."
+                "title": "दवाइयाँ ऑर्डर करें",
+                "description": "फार्मेसियों से ऑर्डर करने के लिए एक नुस्खा अपलोड करें या मैन्युअल रूप से आइटम जोड़ें।"
             },
             "vitalsTracker": {
-                "title": "Vitals Tracker",
-                "description": "Log and monitor key health metrics like blood pressure, sugar levels, and more."
+                "title": "स्वास्थ्य संकेतक ट्रैकर",
+                "description": "रक्तचाप, शर्करा स्तर, और अधिक जैसे प्रमुख स्वास्थ्य मेट्रिक्स लॉग और मॉनिटर करें।"
             },
             "responseTime": {
-                "title": "Response Time Test",
-                "description": "Measure your reaction time with this simple cognitive test."
+                "title": "प्रतिक्रिया समय परीक्षण",
+                "description": "इस सरल संज्ञानात्मक परीक्षण के साथ अपनी प्रतिक्रिया समय को मापें।"
             },
             "connectDevices": {
-                "title": "Connect Devices",
-                "description": "Sync your smart watch or health band to automatically track your vitals."
+                "title": "डिवाइस कनेक्ट करें",
+                "description": "अपने स्वास्थ्य संकेतकों को स्वचालित रूप से ट्रैक करने کے लिए अपनी स्मार्ट घड़ी या स्वास्थ्य बैंड को सिंक करें।"
             },
             "journal": {
-                "title": "Mental Health Journal",
-                "description": "Record your thoughts and emotions to gain insights into your mental well-being."
+                "title": "मानसिक स्वास्थ्य जर्नल",
+                "description": "अपनी मानसिक भलाई में अंतर्दृष्टि प्राप्त करने के लिए अपने विचारों और भावनाओं को रिकॉर्ड करें।"
             },
             "supportGroups": {
-                "title": "Peer-Support Groups",
-                "description": "Connect with others in anonymous, judgment-free discussion communities."
+                "title": "सहकर्मी-सहायता समूह",
+                "description": "गुمنाम, निर्णय-मुक्त चर्चा समुदायों में दूसरों के ساتھ जुड़ें।"
             },
             "bloodDonors": {
-                "title": "Blood Donor Connector",
-                "description": "Find or register as a blood donor to help save lives in your community."
+                "title": "रक्त दाता कनेक्टर",
+                "description": "अपने समुदाय में जीवन बचाने में मदद करने के लिए एक रक्त दाता के रूप में खोजें یا رجسٹر ہوں۔"
             },
             "fitness": {
-                "title": "Inclusive Fitness",
-                "description": "Discover accessible fitness trainers and classes tailored to your needs."
+                "title": "समावेशी फिटनेस",
+                "description": "अपनी आवश्यकताओं کے अनुरूप सुलभ फिटनेस प्रशिक्षकों और कक्षाओं की खोज करें।"
             },
             "caregiverHub": {
-                "title": "Caregiver Hub",
-                "description": "Monitor a loved one's health, appointments, and medication adherence."
+                "title": "देखभालकर्ता हब",
+                "description": "किसी प्रियजन के स्वास्थ्य, नियुक्तियों और दवा पालन की निगरानी करें।"
             },
-            "goTo": "Go to {title}"
+            "goTo": "{title} पर जाएं"
         }
     }
 }
