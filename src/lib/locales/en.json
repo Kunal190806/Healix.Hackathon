@@ -1,0 +1,120 @@
+
+{
+    "sidebar": {
+        "dashboard": "Dashboard",
+        "vitalsTracker": "Vitals Tracker",
+        "mealPlanner": "AI Meal Planner",
+        "findMy": {
+            "title": "Find My",
+            "hospital": "Find a Hospital",
+            "doctor": "Find a Doctor",
+            "appointments": "My Appointments"
+        },
+        "prescriptions": {
+            "title": "Prescriptions",
+            "manage": "Manage Prescriptions",
+            "order": "Order Medicines"
+        },
+        "tests": {
+            "title": "Tests",
+            "responseTime": "Response Time Test"
+        },
+        "forums": {
+            "title": "Forums",
+            "journal": "Mental Health Journal",
+            "supportGroups": "Support Groups",
+            "bloodDonors": "Blood Donors",
+            "fitness": "Inclusive Fitness"
+        },
+        "emergency": {
+            "title": "Emergency",
+            "callAmbulance": "Call Ambulance",
+            "ambulanceStatus": "Ambulance Status",
+            "broadcast": "Emergency Broadcast",
+            "preArrival": "Pre-Arrival Info"
+        },
+        "connectDevices": "Connect Devices",
+        "caregiverHub": "Caregiver Hub"
+    },
+    "header": {
+        "logout": "Log out"
+    },
+    "auth": {
+        "login": "Log in",
+        "signup": "Sign up"
+    },
+    "userNav": {
+        "email": "Email"
+    },
+    "dashboard": {
+        "welcome": "Welcome, {name}",
+        "description": "Your all-in-one platform for a healthier, more connected life.",
+        "welcomeGuest": "Welcome to HEALIX",
+        "descriptionGuest": "Your all-in-one platform for a healthier, more connected life. Please sign in or create an account to access your personalized health dashboard.",
+        "login": "Log In",
+        "signup": "Sign Up",
+        "modules": {
+            "emergency": {
+                "title": "Emergency Hub",
+                "description": "Access ambulance, broadcast, and hospital notification services."
+            },
+            "findHospital": {
+                "title": "Find a Hospital",
+                "description": "Search for specialist hospitals based on your condition and location."
+            },
+            "findDoctor": {
+                "title": "Find a Doctor",
+                "description": "Search for doctors by specialization, location, and more."
+            },
+            "myAppointments": {
+                "title": "My Appointments",
+                "description": "View and manage your upcoming and past doctor consultations."
+            },
+            "mealPlanner": {
+                "title": "AI Meal Planner",
+                "description": "Get personalized meal suggestions based on your dietary needs and preferences."
+            },
+            "prescriptionManager": {
+                "title": "Prescription Manager",
+                "description": "Track your medications and set reminders to stay on top of your health."
+            },
+            "orderMedicines": {
+                "title": "Order Medicines",
+                "description": "Upload a prescription or manually add items to order from pharmacies."
+            },
+            "vitalsTracker": {
+                "title": "Vitals Tracker",
+                "description": "Log and monitor key health metrics like blood pressure, sugar levels, and more."
+            },
+            "responseTime": {
+                "title": "Response Time Test",
+                "description": "Measure your reaction time with this simple cognitive test."
+            },
+            "connectDevices": {
+                "title": "Connect Devices",
+                "description": "Sync your smart watch or health band to automatically track your vitals."
+            },
+            "journal": {
+                "title": "Mental Health Journal",
+                "description": "Record your thoughts and emotions to gain insights into your mental well-being."
+            },
+            "supportGroups": {
+                "title": "Peer-Support Groups",
+                "description": "Connect with others in anonymous, judgment-free discussion communities."
+            },
+            "bloodDonors": {
+                "title": "Blood Donor Connector",
+                "description": "Find or register as a blood donor to help save lives in your community."
+            },
+            "fitness": {
+                "title": "Inclusive Fitness",
+                "description": "Discover accessible fitness trainers and classes tailored to your needs."
+            },
+            "caregiverHub": {
+                "title": "Caregiver Hub",
+                "description": "Monitor a loved one's health, appointments, and medication adherence."
+            },
+            "goTo": "Go to {title}"
+        }
+    }
+}

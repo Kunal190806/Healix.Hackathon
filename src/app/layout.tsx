@@ -20,6 +20,8 @@ import { ProfileProvider, useProfile } from '@/hooks/use-profile.tsx';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { ThemeProvider, useTheme } from '@/hooks/use-theme';
 import { ThemeToggleButton } from '@/components/theme-toggle-button';
+import { LanguageProvider, useLanguage } from '@/hooks/use-language';
+import { LanguageToggleButton } from '@/components/language-toggle-button';
 
 
 const inter = Inter({
@@ -36,6 +38,7 @@ const exo2 = Exo_2({
 function UserNav() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
+  const { t } = useLanguage();
   
   const handleLogout = async () => {
     try {
@@ -73,7 +76,7 @@ function UserNav() {
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" />
-            <span>Log out</span>
+            <span>{t('header.logout')}</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -83,10 +86,10 @@ function UserNav() {
   return (
     <div className="flex items-center gap-2">
       <Button variant="ghost" asChild>
-        <Link href="/login">Log in</Link>
+        <Link href="/login">{t('auth.login')}</Link>
       </Button>
       <Button asChild>
-        <Link href="/signup">Sign up</Link>
+        <Link href="/signup">{t('auth.signup')}</Link>
       </Button>
     </div>
   )
@@ -96,44 +99,45 @@ function UserNav() {
 function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { userProfile } = useProfile();
+  const { t } = useLanguage();
   
   const findMyItems = [
-    { href: '/hospitals', label: 'Find a Hospital', icon: Hospital },
-    { href: '/doctors', label: 'Find a Doctor', icon: Stethoscope },
-    { href: '/appointments', label: 'My Appointments', icon: CalendarDays },
+    { href: '/hospitals', label: t('sidebar.findMy.hospital'), icon: Hospital },
+    { href: '/doctors', label: t('sidebar.findMy.doctor'), icon: Stethoscope },
+    { href: '/appointments', label: t('sidebar.findMy.appointments'), icon: CalendarDays },
   ];
 
   const emergencyItems = [
-    { href: '/call-ambulance', label: 'Call Ambulance', icon: PhoneCall },
-    { href: '/ambulance-status', label: 'Ambulance Status', icon: TowerControl },
-    { href: '/emergency-broadcast', label: 'Emergency Broadcast', icon: Users },
-    { href: '/pre-arrival-info', label: 'Pre-Arrival Info', icon: ClipboardPlus },
+    { href: '/call-ambulance', label: t('sidebar.emergency.callAmbulance'), icon: PhoneCall },
+    { href: '/ambulance-status', label: t('sidebar.emergency.ambulanceStatus'), icon: TowerControl },
+    { href: '/emergency-broadcast', label: t('sidebar.emergency.broadcast'), icon: Users },
+    { href: '/pre-arrival-info', label: t('sidebar.emergency.preArrival'), icon: ClipboardPlus },
   ];
 
   const testItems = [
-    { href: '/response-time', label: 'Response Time Test', icon: Timer },
+    { href: '/response-time', label: t('sidebar.tests.responseTime'), icon: Timer },
   ];
 
   const forumItems = [
-    { href: '/journal', label: 'Mental Health Journal', icon: BookHeart },
-    { href: '/support-groups', label: 'Support Groups', icon: Users },
-    { href: '/blood-donors', label: 'Blood Donors', icon: Droplets },
-    { href: '/fitness', label: 'Inclusive Fitness', icon: Dumbbell },
+    { href: '/journal', label: t('sidebar.forums.journal'), icon: BookHeart },
+    { href: '/support-groups', label: t('sidebar.forums.supportGroups'), icon: Users },
+    { href: '/blood-donors', label: t('sidebar.forums.bloodDonors'), icon: Droplets },
+    { href: '/fitness', label: t('sidebar.forums.fitness'), icon: Dumbbell },
   ];
 
   const prescriptionItems = [
-    { href: '/prescriptions', label: 'Manage Prescriptions', icon: ClipboardPlus },
-    { href: '/order-medicines', label: 'Order Medicines', icon: ShoppingCart },
+    { href: '/prescriptions', label: t('sidebar.prescriptions.manage'), icon: ClipboardPlus },
+    { href: '/order-medicines', label: t('sidebar.prescriptions.order'), icon: ShoppingCart },
   ];
   
   const topLevelItems = [
-    { href: '/vitals-tracker', label: 'Vitals Tracker', icon: HeartPulse },
-    { href: '/meal-planner', label: 'AI Meal Planner', icon: UtensilsCrossed },
+    { href: '/vitals-tracker', label: t('sidebar.vitalsTracker'), icon: HeartPulse },
+    { href: '/meal-planner', label: t('sidebar.mealPlanner'), icon: UtensilsCrossed },
   ];
 
   const bottomLevelItems = [
-     { href: '/connect-devices', label: 'Connect Devices', icon: Watch },
-     { href: '/caregiver-hub', label: 'Caregiver Hub', icon: ShieldCheck },
+     { href: '/connect-devices', label: t('sidebar.connectDevices'), icon: Watch },
+     { href: '/caregiver-hub', label: t('sidebar.caregiverHub'), icon: ShieldCheck },
   ];
 
 
@@ -159,7 +163,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                 >
                   <Link href="/">
                     <Home className="mr-2 h-4 w-4" />
-                    Dashboard
+                    {t('sidebar.dashboard')}
                   </Link>
                 </Button>
               </SidebarMenuItem>
@@ -184,7 +188,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                   <AccordionTrigger className="hover:no-underline text-muted-foreground hover:text-foreground [&[data-state=open]]:text-foreground font-semibold text-sm py-2 px-3 rounded-md hover:bg-muted/50 w-full justify-start">
                     <div className="flex items-center">
                        <Search className="mr-2 h-4 w-4" />
-                       Find My
+                       {t('sidebar.findMy.title')}
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="pb-1">
@@ -211,7 +215,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                   <AccordionTrigger className="hover:no-underline text-muted-foreground hover:text-foreground [&[data-state=open]]:text-foreground font-semibold text-sm py-2 px-3 rounded-md hover:bg-muted/50 w-full justify-start">
                     <div className="flex items-center">
                        <Pill className="mr-2 h-4 w-4" />
-                       Prescriptions
+                       {t('sidebar.prescriptions.title')}
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="pb-1">
@@ -238,7 +242,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                    <AccordionTrigger className="hover:no-underline text-muted-foreground hover:text-foreground [&[data-state=open]]:text-foreground font-semibold text-sm py-2 px-3 rounded-md hover:bg-muted/50 w-full justify-start">
                     <div className="flex items-center">
                        <TestTube className="mr-2 h-4 w-4" />
-                       Tests
+                       {t('sidebar.tests.title')}
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="pb-1">
@@ -265,7 +269,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                    <AccordionTrigger className="hover:no-underline text-muted-foreground hover:text-foreground [&[data-state=open]]:text-foreground font-semibold text-sm py-2 px-3 rounded-md hover:bg-muted/50 w-full justify-start">
                     <div className="flex items-center">
                        <MessagesSquare className="mr-2 h-4 w-4" />
-                       Forums
+                       {t('sidebar.forums.title')}
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="pb-1">
@@ -292,7 +296,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                   <AccordionTrigger className="hover:no-underline text-destructive hover:text-destructive/90 [&[data-state=open]]:text-destructive font-semibold text-sm py-2 px-3 rounded-md hover:bg-destructive/10 w-full justify-start">
                     <div className="flex items-center">
                        <Siren className="mr-2 h-4 w-4" />
-                       Emergency
+                       {t('sidebar.emergency.title')}
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="pb-1">
@@ -338,7 +342,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       <SidebarInset>
         <div className={cn('min-h-screen', isAuthPage ? 'bg-background' : 'bg-background/50 backdrop-blur-lg')}>
           {!isAuthPage && (
-            <header className="flex items-center justify-between mb-4 p-4 sm:p-6 lg:p-8 lg:pb-0 h-16 border-b">
+            <header className="flex items-center justify-between p-4 sm:p-6 lg:p-8 lg:pb-0 h-16 border-b">
                 <div className="flex items-center gap-2">
                     <div className="md:hidden">
                       <SidebarTrigger>
@@ -348,6 +352,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                     <span className="text-lg font-logo font-bold md:hidden">HEALIX</span>
                 </div>
                   <div className="flex items-center gap-4 ml-auto">
+                    <LanguageToggleButton />
                     <ThemeToggleButton />
                     <UserNav />
                   </div>
@@ -375,11 +380,13 @@ function AppWithTheme({
   return (
       <html lang="en" className={theme} suppressHydrationWarning>
         <body className={cn(inter.variable, exo2.variable, "font-body antialiased")}>
-          <AuthProvider>
-            <ProfileProvider>
-              <AppLayout>{children}</AppLayout>
-            </ProfileProvider>
-          </AuthProvider>
+          <LanguageProvider>
+            <AuthProvider>
+              <ProfileProvider>
+                <AppLayout>{children}</AppLayout>
+              </ProfileProvider>
+            </AuthProvider>
+          </LanguageProvider>
           <Toaster />
         </body>
       </html>
