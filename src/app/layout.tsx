@@ -334,7 +334,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
         </Sidebar>
       )}
       <SidebarInset>
-        <div className={cn('min-h-screen', isAuthPage ? 'bg-background' : 'bg-background/50 backdrop-blur-sm')}>
+        <div className={cn('min-h-screen', isAuthPage ? 'bg-background' : 'bg-background/50 backdrop-blur-lg')}>
           {!isAuthPage && (
             <header className="flex items-center justify-between mb-4 p-4 sm:p-6 lg:p-8 lg:pb-0 h-16 border-b">
                 <div className="flex items-center gap-2">

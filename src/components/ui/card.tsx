@@ -19,7 +19,7 @@ const Card = React.forwardRef<
         '--mouse-y': `${y}px`,
       } as React.CSSProperties}
       className={cn(
-        "glassmorphism rounded-2xl border bg-card/50 text-card-foreground shadow-sm backdrop-blur-sm",
+        "glassmorphism rounded-2xl border bg-card text-card-foreground shadow-sm backdrop-blur-lg",
         className
       )}
       {...props}
