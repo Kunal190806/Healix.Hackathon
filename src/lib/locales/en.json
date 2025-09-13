@@ -114,7 +114,7 @@
                 "title": "Caregiver Hub",
                 "description": "Monitor a loved one's health, appointments, and medication adherence."
             },
-            "goTo": "Go to {title}"
+            "goTo": "Go to module"
         }
     }
 }

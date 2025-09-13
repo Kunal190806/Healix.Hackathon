@@ -189,7 +189,7 @@ export default function Home() {
             <CardContent>
               <Button asChild variant="ghost" className="w-full justify-start text-primary">
                 <Link href={module.href}>
-                  {t('dashboard.modules.goTo', {title})} <ArrowRight className="ml-2 h-4 w-4" />
+                  {t('dashboard.modules.goTo')} <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
             </CardContent>
