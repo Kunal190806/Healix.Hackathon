@@ -169,7 +169,7 @@ export default function Home() {
     <div className="flex flex-col gap-8">
       <div>
         <h1 className="text-3xl font-bold font-headline tracking-tight text-primary">
-          {t('dashboard.welcome', {name: user.displayName || 'User'})}
+          {t('dashboard.welcome')}
         </h1>
         <p className="text-muted-foreground mt-2">{t('dashboard.description')}</p>
       </div>

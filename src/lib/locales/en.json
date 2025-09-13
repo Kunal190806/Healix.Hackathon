@@ -47,7 +47,7 @@
         "email": "Email"
     },
     "dashboard": {
-        "welcome": "Welcome, {name}",
+        "welcome": "Welcome",
         "description": "Your all-in-one platform for a healthier, more connected life.",
         "welcomeGuest": "Welcome to HEALIX",
         "descriptionGuest": "Your all-in-one platform for a healthier, more connected life. Please sign in or create an account to access your personalized health dashboard.",
