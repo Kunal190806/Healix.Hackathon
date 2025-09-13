@@ -243,8 +243,23 @@ export default function VitalsTracker() {
           description={latestResponseTimeTest ? `Tested on ${format(new Date(latestResponseTimeTest.date), 'MMM d')}` : "No data yet"}
           href="/response-time"
         />
+        <MetricCard 
+          icon={<Eye className="w-6 h-6 text-blue-500" />}
+          title="Vision Test"
+          value={latestEyeTest?.score ?? '--'}
+          description={latestEyeTest ? `Tested on ${format(new Date(latestEyeTest.date), 'MMM d')}` : "No data yet"}
+          href="/eye-test"
+        />
+        <MetricCard 
+          icon={<Ear className="w-6 h-6 text-fuchsia-500" />}
+          title="Hearing Test"
+          value="View"
+          unit="Results"
+          description={latestHearingTest ? `Tested on ${format(new Date(latestHearingTest.date), 'MMM d')}` : "No data yet"}
+          href="/hearing-test"
+        />
         
-        <Link href="/connect-devices" className="w-full h-full col-span-1 lg:col-span-2">
+        <Link href="/connect-devices" className="w-full h-full col-span-1">
           <Card className="flex flex-col items-center justify-center text-center cursor-pointer hover:bg-muted/50 transition-colors h-full">
               <Watch className="h-12 w-12 text-muted-foreground mb-2" />
               <h3 className="font-semibold text-muted-foreground">Connect a Device</h3>

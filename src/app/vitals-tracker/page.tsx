@@ -1,3 +1,4 @@
+
 'use client';
 
 import VitalsTracker from "@/components/vitals-tracker";

@@ -17,7 +17,9 @@
         },
         "tests": {
             "title": "Tests",
-            "responseTime": "Response Time Test"
+            "responseTime": "Response Time Test",
+            "eyeTest": "Vision Test",
+            "hearingTest": "Hearing Test"
         },
         "forums": {
             "title": "Forums",
@@ -89,6 +91,14 @@
             "responseTime": {
                 "title": "Response Time Test",
                 "description": "Measure your reaction time with this simple cognitive test."
+            },
+            "eyeTest": {
+                "title": "Vision Test",
+                "description": "Estimate your visual acuity with a simple Snellen chart test."
+            },
+            "hearingTest": {
+                "title": "Hearing Test",
+                "description": "Screen for hearing loss by testing different sound frequencies."
             },
             "connectDevices": {
                 "title": "Connect Devices",

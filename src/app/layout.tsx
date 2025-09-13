@@ -117,6 +117,8 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 
   const testItems = [
     { href: '/response-time', label: t('sidebar.tests.responseTime'), icon: Timer },
+    { href: '/eye-test', label: t('sidebar.tests.eyeTest'), icon: Eye },
+    { href: '/hearing-test', label: t('sidebar.tests.hearingTest'), icon: Ear },
   ];
 
   const forumItems = [

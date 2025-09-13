@@ -67,6 +67,18 @@ const modules = [
     href: "/response-time",
     color: "text-amber-500",
   },
+    {
+    titleKey: "eyeTest",
+    icon: Eye,
+    href: "/eye-test",
+    color: "text-blue-400",
+  },
+  {
+    titleKey: "hearingTest",
+    icon: Ear,
+    href: "/hearing-test",
+    color: "text-fuchsia-400",
+  },
   {
     titleKey: "connectDevices",
     icon: Watch,
