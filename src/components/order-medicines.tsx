@@ -4,7 +4,6 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { auth } from "@/lib/firebase";
 import type { User } from "firebase/auth";
-import { extractPrescriptionDetails } from "@/ai/flows/extract-prescription-details";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -41,6 +40,15 @@ const generatePrices = () => {
         offline: parseFloat((base * 1.1).toFixed(2)), // 10% more
     }
 }
+
+const sampleScannedMedicines = [
+  { name: 'Crocin Pain Relief', dosage: '500mg' },
+  { name: 'Metformin', dosage: '500mg' },
+  { name: 'Atorvastatin', dosage: '20mg' },
+  { name: 'Amlodipine', dosage: '5mg' },
+  { name: 'Telmisartan', dosage: '40mg' },
+];
+
 
 export default function OrderMedicines() {
   const [user, setUser] = useState<User | null>(null);
@@ -124,26 +132,25 @@ export default function OrderMedicines() {
     }
   };
 
-  const handleScan = async () => {
+  const handleScan = () => {
     if (!capturedImage) return;
     setIsScanning(true);
-    try {
-      const result = await extractPrescriptionDetails({ imageDataUri: capturedImage });
+    
+    // Simulate AI scan
+    setTimeout(() => {
+      const randomMed = sampleScannedMedicines[Math.floor(Math.random() * sampleScannedMedicines.length)];
       const newMedicine: Medicine = {
         id: crypto.randomUUID(),
-        name: result.name,
-        dosage: result.dosage,
+        name: randomMed.name,
+        dosage: randomMed.dosage,
         quantity: 1, // Default quantity
         prices: generatePrices(),
       };
       setMedicines(prev => [...prev, newMedicine]);
       setIsDialogOpen(false);
-      toast({ title: "Scan Complete", description: "Medicine added to your list." });
-    } catch (error) {
-      toast({ variant: "destructive", title: "Scan Failed", description: "Could not extract details." });
-    } finally {
+      toast({ title: "Scan Complete (Simulated)", description: `'${randomMed.name}' added to your list.` });
       setIsScanning(false);
-    }
+    }, 1500);
   };
 
   const handleAddManually = (e: React.FormEvent) => {
@@ -202,13 +209,13 @@ export default function OrderMedicines() {
                 <DialogTrigger asChild>
                   <Button variant="outline" className="w-full">
                     <Camera className="mr-2" />
-                    Scan with AI
+                    Scan Prescription
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[625px]">
                   <DialogHeader>
                     <DialogTitle>Scan Your Prescription</DialogTitle>
-                    <DialogDescription>Upload or take a photo to extract medicine details.</DialogDescription>
+                    <DialogDescription>Upload or take a photo to add a sample medicine.</DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 pt-4">
                     {!capturedImage ? (
@@ -240,7 +247,7 @@ export default function OrderMedicines() {
                           <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={() => setCapturedImage(null)}><X className="h-4 w-4"/></Button>
                         </div>
                         <Button onClick={handleScan} disabled={isScanning} className="w-full">
-                          {isScanning ? <><Loader2 className="mr-2 animate-spin"/>Scanning...</> : <><Wand2 className="mr-2"/>Extract Details</>}
+                          {isScanning ? <><Loader2 className="mr-2 animate-spin"/>Simulating Scan...</> : <><Wand2 className="mr-2"/>Extract Details</>}
                         </Button>
                       </div>
                     )}
@@ -310,3 +317,5 @@ export default function OrderMedicines() {
     </div>
   );
 }
+
+  
