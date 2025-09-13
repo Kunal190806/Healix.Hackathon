@@ -266,7 +266,7 @@ export default function VitalsTracker() {
           href="/hearing-test"
         />
         
-        <Link href="/connect-devices" className="w-full h-full col-span-2">
+        <Link href="/connect-devices" className="w-full h-full col-span-1 lg:col-span-2">
           <Card className="flex flex-col items-center justify-center text-center cursor-pointer hover:bg-muted/50 transition-colors h-full">
               <Watch className="h-12 w-12 text-muted-foreground mb-2" />
               <h3 className="font-semibold text-muted-foreground">Connect a Device</h3>
@@ -277,3 +277,5 @@ export default function VitalsTracker() {
     </div>
   );
 }
+
+    
