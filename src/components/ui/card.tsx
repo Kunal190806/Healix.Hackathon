@@ -1,20 +1,31 @@
 import * as React from "react"
-
+import { useMousePosition } from "@/hooks/use-mouse-position";
 import { cn } from "@/lib/utils"
 
 const Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "rounded-2xl border bg-card/50 text-card-foreground shadow-sm backdrop-blur-sm",
-      className
-    )}
-    {...props}
-  />
-))
+>(({ className, ...props }, ref) => {
+  const internalRef = React.useRef<HTMLDivElement | null>(null);
+  const { x, y } = useMousePosition(internalRef);
+
+  React.useImperativeHandle(ref, () => internalRef.current as HTMLDivElement);
+
+  return (
+    <div
+      ref={internalRef}
+      style={{
+        '--mouse-x': `${x}px`,
+        '--mouse-y': `${y}px`,
+      } as React.CSSProperties}
+      className={cn(
+        "glassmorphism rounded-2xl border bg-card/50 text-card-foreground shadow-sm backdrop-blur-sm",
+        className
+      )}
+      {...props}
+    />
+  );
+});
 Card.displayName = "Card"
 
 const CardHeader = React.forwardRef<
