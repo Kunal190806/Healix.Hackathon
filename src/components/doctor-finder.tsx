@@ -264,15 +264,17 @@ export default function DoctorFinder() {
                       </div>
                       <div className="flex-1 pt-2">
                         <DialogTitle className="text-3xl font-bold font-headline">{doctor.name}</DialogTitle>
-                        <DialogDescription className="mt-1">
-                            <div className="text-lg text-primary font-semibold">{doctor.specialty}</div>
-                            <div>{doctor.experience} years of experience</div>
-                            <div className="flex items-center gap-1 mt-2">
-                                <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
-                                <span className="font-bold text-base">4.8</span>
-                                <span className="text-sm text-muted-foreground">(245 reviews)</span>
-                            </div>
-                            <p className="text-base text-muted-foreground mt-4">{doctor.bio}</p>
+                        <DialogDescription asChild>
+                           <div>
+                              <div className="text-lg text-primary font-semibold">{doctor.specialty}</div>
+                              <div>{doctor.experience} years of experience</div>
+                              <div className="flex items-center gap-1 mt-2">
+                                  <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
+                                  <span className="font-bold text-base">4.8</span>
+                                  <span className="text-sm text-muted-foreground">(245 reviews)</span>
+                              </div>
+                              <div className="text-base text-muted-foreground mt-4">{doctor.bio}</div>
+                           </div>
                         </DialogDescription>
                       </div>
                     </div>
@@ -298,5 +300,3 @@ export default function DoctorFinder() {
     </div>
   );
 }
-
-    
